@@ -10,12 +10,17 @@ Deploy to LXD container using: [TODO]
 
 Use Landscape API to configure:
 
-- Scripts
-- 
+- Scripts [TODO]
 
 ### Create Mirrors
 
 [TODO]
+
+### Snapshots of Landscape Server and Enrolled Instances
+
+[TODO] ./snapshot-take.sh will take a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
+
+[TODO] ./snapshot-restore.sh will restore a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
 
 ### Enroll Ubuntu instances to Landscape
 
