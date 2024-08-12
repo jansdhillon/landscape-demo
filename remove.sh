@@ -27,15 +27,21 @@ for prefix in $prefixes; do
 done
 
 # Prompt user to select a prefix group
-read -p "Enter the number of the group to delete: " choice
+read -r -p "Enter the number of the group to delete: " choice
 prefix=$(echo "$prefixes" | sed -n "${choice}p")
 
 if [ -n "$prefix" ]; then
   echo "Deleting instances with prefix: $prefix"
   group_instances "$prefix" | xargs -I{} lxc delete {} --force
-  for instance in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$prefix"); do
-    multipass delete --purge "$instance"
-  done
+
+  # Delete all Multipass instances with the same prefix
+  multipass_instances=$(multipass list --format csv | awk -F, '{print $1}' | grep "^$prefix")
+  if [ -n "$multipass_instances" ]; then
+    echo "Deleting Multipass instances with prefix: $prefix"
+    echo "$multipass_instances" | xargs -I{} multipass delete --purge {}
+  else
+    echo "No Multipass instances found with prefix: $prefix"
+  fi
 
 else
   echo "Invalid choice"
