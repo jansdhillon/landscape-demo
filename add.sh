@@ -55,8 +55,7 @@ for release in "${multipass_virtualmachines[@]}"; do
   multipass exec "$today"-"$release" -- sudo snap install landscape-client
   echo | openssl s_client -connect $landscape_fqdn:443 | openssl x509 | multipass transfer --parents - "$today"-"$release":/home/ubuntu/certs/landscape.pem
   multipass exec "$today"-"$release" -- sudo cp /home/ubuntu/certs/landscape.pem /var/snap/landscape-client/common/etc/landscape.pem
-  multipass exec "$today"-"$release" -- sudo landscape-client.config --account-name="$landscape_account_name" --computer-title="\$(hostname --long)" --url "https://$landscape_fqdn/message-system" --ping-url "http://$landscape_fqdn/ping" --ssl-public-key=/var/snap/landscape-client/common/etc/landscape.pem --tags="$tags" --script-users="$script_users" --http-proxy="$http_proxy" --https-proxy="$https_proxy" --access-group="$access_group" --registration-key="$registration_key"
-  multipass exec "$today"-"$release" -- sudo snap install canonical-livepatch && canonical-livepatch enable
+  multipass exec "$today"-"$release" -- sudo landscape-client.config --silent --account-name="$landscape_account_name" --computer-title="$(hostname --long)" --url "https://$landscape_fqdn/message-system" --ping-url "http://$landscape_fqdn/ping" --ssl-public-key=/var/snap/landscape-client/common/etc/landscape.pem --tags="$tags" --script-users="$script_users" --http-proxy="$http_proxy" --https-proxy="$https_proxy" --access-group="$access_group" --registration-key="$registration_key"
 done
 
 # Launch LXD instances
