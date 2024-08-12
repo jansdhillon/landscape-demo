@@ -27,7 +27,7 @@ for prefix in $prefixes; do
 done
 
 # Prompt user to select a prefix group
-read -p "Enter the number of the group to delete: " choice
+read -p "Enter the number of the group to stop: " choice
 prefix=$(echo "$prefixes" | sed -n "${choice}p")
 
 if [ -n "$prefix" ]; then
