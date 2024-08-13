@@ -1,6 +1,6 @@
 #!/bin/bash
 
-token="" # FROM ubuntu.com/pro/dashboard
+token="$(grep '^TOKEN=' variables.txt | cut -d'=' -f2)" # FROM ubuntu.com/pro/dashboard
 landscape_fqdn="landscape.example.com"
 landscape_account_name="standalone"
 http_proxy=""
