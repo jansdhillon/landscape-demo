@@ -1,7 +1,7 @@
 #!/bin/bash
 
 token="" # FROM ubuntu.com/pro/dashboard
-landscape_fqdn="landscapedemo.rajanpatel.com"
+landscape_fqdn="landscape.example.com"
 landscape_account_name="standalone"
 http_proxy=""
 https_proxy=""

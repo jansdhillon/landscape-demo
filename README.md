@@ -53,25 +53,32 @@ Deploy to LXD container using cloud-init.yaml
 4.  Install Landscape Quickstart inside LXD container using cloud-init.yaml:
 
     > ```bash
-    > lxc launch ubuntu:24.04 landscapedemo --config=user.user-data="$(cat cloud-init.yaml)" 
+    > lxc launch ubuntu:24.04 landscape-example-com --config=user.user-data="$(cat cloud-init.yaml)"
     > ```
 
-5.  Capture the IP address of the "landscapedemo" LXD container:
+5.  Capture the IP address of the "landscape-example-com" LXD container:
 
     > ```bash
-    > LANDSCAPE_IP=$(lxc list landscapedemo --format csv -c 4 | awk '{print $1}')
+    > LANDSCAPE_IP=$(lxc list landscape-example-com --format csv -c 4 | awk '{print $1}')
+    > ```
+
+6.  Update `/etc/hosts` so other LXD and Multipass Ubuntu instances can resolve `landscape.example.com` to `$LANDSCAPE_IP`
+
+    > ```bash
+    > sudo sed -i "/landscape.example.com/d" /etc/hosts
+    > echo "$LANDSCAPE_IP landscape.example.com" | sudo tee -a /etc/hosts > /dev/null
     > ```
 
 6.  Configure port forwarding for Port 6554, 443, and 80:
 
     > ```bash
-    > for PORT in 6554 443 80; do lxc config device add landscapedemo tcp${PORT}proxyv4 proxy listen=tcp:0.0.0.0:${PORT} connect=tcp:${LANDSCAPE_IP}:${PORT}; done
+    > for PORT in 6554 443 80; do lxc config device add landscape-example-com tcp${PORT}proxyv4 proxy listen=tcp:0.0.0.0:${PORT} connect=tcp:${LANDSCAPE_IP}:${PORT}; done
     > ```
 
 7.  Observe progress of the install:
 
     > ```bash
-    > lxc exec landscapedemo -- bash -c "tail -f /var/log/cloud-init-output.log"
+    > lxc exec landscape-example-com -- bash -c "tail -f /var/log/cloud-init-output.log"
     > ```
 
 8.  When the cloud-init process is complete, you’ll receive two lines similar to this:
@@ -119,4 +126,4 @@ All new instances will be named with a common prefix, to keep things organized. 
 
 Run [./remove.sh](remove.sh) to delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
 
-Assuming your Landscape installation was named "landscapedemo", remove it using: `lxc delete --force landscapedemo`
+Assuming your Landscape installation was named "landscape-example-com", remove it using: `lxc delete --force landscape-example-com`
