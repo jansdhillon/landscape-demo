@@ -92,6 +92,8 @@ Deploy to LXD container using cloud-init.yaml
 
     Press `CTRL`+`C` to terminate the tail process in your terminal window.
 
+9.  Visit `https://landscape.example.com` to finalize configuration.
+
 ## Step 2. Configure Landscape
 
 Use Landscape API to configure scripts:
