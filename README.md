@@ -29,19 +29,42 @@ Deploy to LXD container using cloud-init.yaml
     > curl -o cloud-init.yaml https://raw.githubusercontent.com/canonical/landscape-scripts/main/provisioning/cloud-init-quickstart.yaml
     > ```
 
-2.  Create a variables.txt file with the following contents. Change variables values where appropriate.
+2.  Create a variables.txt file with the following contents.
+
+    ```text
+    EMAIL={EMAIL_ADDRESS}
+    TOKEN={PRO_TOKEN}
+    HOSTNAME={HOST_NAME}
+    DOMAIN={DOMAIN}
+    TIMEZONE={TIME_ZONE}
+    SMTP_HOST={SMTP_HOST}
+    SMTP_PORT={SMTP_PORT}
+    SMTP_USERNAME={SMTP_USERNAME}
+    SMTP_PASSWORD={SMTP_PASSWORD}
+    LANDSCAPE_VERSION={LANDSCAPE_VERSION}
+    CERTBOT={CERTBOT_INSTALL_METHOD}
+    SSL_CERTIFICATE_PATH={PATH_TO_CERT.PEM}
+    SSL_CERTIFICATE_KEY_PATH={PATH_TO_PRIVKEY.PEM}
+    SSL_CERTIFICATE_CHAIN_PATH={PATH_TO_CHAIN.PEM}
+    ```
+
+    An example of my variables.txt appears below, with tokens and keys redacted.
 
     ```text
     EMAIL=rajan.patel@canonical.com
     TOKEN=REDACTED
-    HOSTNAME=landscape
-    DOMAIN=example.com
+    HOSTNAME=landscapedemo
+    DOMAIN=rajanpatel.com
     TIMEZONE=America/New_York
     SMTP_HOST=smtp.sendgrid.net
     SMTP_PORT=587
     SMTP_USERNAME=apikey
     SMTP_PASSWORD=REDACTED
     LANDSCAPE_VERSION=24.04
+    CERTBOT=''
+    SSL_CERTIFICATE_FILE=/etc/letsencrypt/live/rajanpatel.com/cert.pem
+    SSL_CERTIFICATE_KEY_FILE=/etc/letsencrypt/live/rajanpatel.com/privkey.pem
+    SSL_CERTIFICATE_CHAIN_FILE=/etc/letsencrypt/live/rajanpatel.com/chain.pem
     ```
 
 3.  Update cloud-init.yaml with the contents of variables.txt
@@ -49,6 +72,45 @@ Deploy to LXD container using cloud-init.yaml
     > ```bash
     > while IFS='=' read -r key value; do sed -i "s|{% set $key = '.*' %}|{% set $key = '$value' %}|" cloud-init.yaml; done < variables.txt
     > ```
+
+4.  Configure SSL with variables.txt
+
+    For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, specify `CERTBOT=apt` or `CERTBOT=snap` cloud-init to install the **certbot** package and configure Apache. Leaving the CERTBOT variable blank `CERTBOT=''` will result in certbot not being installed. Not installing certbot on Landscape Server makes sense for instances with restricted inbound connectivity on Port 80 and 443.
+
+    Instead of using certbot within the Landscape Server LXD container to acquire and configure SSL certificates, you can specify the path of your certificates in variables.txt. Obtain a wildcard subdomain SSL certificate from LetsEncrypt by running:
+    
+    ```bash
+    sudo snap install certbot --classic
+    sudo certbot certonly --manual --preferred-challenges dns -d "*.$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2)"
+    ```
+    
+    The following bash commands will update the downloaded cloud-init.yaml file appropriately:
+
+    -  cert.pem: This is the server certificate issued for your domain. It is your primary certificate that identifies your server.
+
+       ```bash
+       SSL_CERTIFICATE_PATH=$(grep '^SSL_CERTIFICATE_PATH=' variables.txt | cut -d'=' -f2)
+       SSL_CERTIFICATE=$(sudo awk '{print "    " $0}' "$SSL_CERTIFICATE_PATH" | sed ':a;N;$!ba;s/\n/\\n/g')
+       sed -i "/# - SSL_CERTIFICATE_FILE/a \\  - | \\n    cat <<EOF > /etc/ssl/certs/landscape_server.pem\\n${SSL_CERTIFICATE}\\n    EOF" cloud-init.yaml
+       ```
+
+    -  chain.pem: This file contains the intermediate CA certificates needed to establish a chain of trust from your server certificate to the root CA certificate. In many cases, this file is what you need for the CA certificate(s).
+
+       ```bash
+       SSL_CERTIFICATE_KEY_PATH=$(grep '^SSL_CERTIFICATE_KEY_PATH=' variables.txt | cut -d'=' -f2)
+       SSL_CERTIFICATE_KEY=$(sudo awk '{print "    " $0}' "$SSL_CERTIFICATE_KEY_PATH" | sed ':a;N;$!ba;s/\n/\\n/g')
+       sed -i "/# - SSL_CERTIFICATE_KEY_FILE/a \\  - | \\n    cat <<EOF > /etc/ssl/certs/landscape_server.pem\\n${SSL_CERTIFICATE_KEY}\\n    EOF" cloud-init.yaml
+       ```
+
+    - privkey.pem: This is your private key associated with the server certificate. It should be kept secure and private.
+
+      ```bash
+      SSL_CERTIFICATE_CHAIN_PATH=$(grep '^SSL_CERTIFICATE_CHAIN_PATH=' variables.txt | cut -d'=' -f2)
+      SSL_CERTIFICATE_CHAIN=$(sudo awk '{print "    " $0}' "$SSL_CERTIFICATE_CHAIN_PATH" | sed ':a;N;$!ba;s/\n/\\n/g')
+      sed -i "/# - SSL_CERTIFICATE_CHAIN_FILE/a \\  - | \\n    cat <<EOF > /etc/ssl/certs/landscape_server.pem\\n${SSL_CERTIFICATE_CHAIN}\\n    EOF" cloud-init.yaml
+      ```
+
+    -  fullchain.pem: This file includes both your server certificate (cert.pem) and the intermediate CA certificates (chain.pem), providing a complete certificate chain. Since the cert.pem and chain.pem files are independently configured, this file does not need to be used. (It could be used in lieu of cert.pem above, if the SSLCertificateChainFile configurations are commented out in the Apache site configuration.)
 
 4.  Install Landscape Quickstart inside LXD container using cloud-init.yaml:
 
