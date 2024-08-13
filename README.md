@@ -118,6 +118,8 @@ Deploy to LXD container using cloud-init.yaml
     > lxc launch ubuntu:24.04 landscape-example-com --config=user.user-data="$(cat cloud-init.yaml)"
     > ```
 
+> **NOTE:** The remainder of the steps assume you're using landscape.example.com as the FQDN of your Landscape Server instance, adjust the commands as needed if you are not using this domain.
+
 5.  Capture the IP address of the "landscape-example-com" LXD container:
 
     > ```bash
