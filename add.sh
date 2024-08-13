@@ -32,7 +32,7 @@ EOF
 
 arch="amd64"
 lxd_virtualmachines=("jammy" "noble" "focal")
-lxd_containers=("jammy" "noble" "focal" "bionic")
+lxd_containers=("jammy" "noble" "bionic")
 multipass_virtualmachines=("core24")
 
 declare -A lxd_virtualmachine_fingerprints
