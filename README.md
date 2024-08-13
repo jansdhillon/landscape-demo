@@ -122,7 +122,7 @@ Deploy to LXD container using cloud-init.yaml
 
 #### NOTE
 
-The remainder of the steps assume you're using landscape.example.com as the FQDN of your Landscape Server instance, adjust the commands as needed if you are not using this domain.
+The remainder of the steps assume you're using landscape.example.com as the FQDN of your Landscape Server LXD instance. If you decide to use landscape.example.com, you must use the self-signed certificate that is provided upon installation. If you choose to use your own domain name, you have the choice of configuring a valid certificate (recommended), or using the self-signed one.
 
 ---
 
