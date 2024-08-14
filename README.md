@@ -102,7 +102,7 @@ SSL_CERTIFICATE_CHAIN_FILE=/etc/letsencrypt/live/rajanpatel.com/chain.pem
 
 ## Step 4. Run scripts
 
-[./add.sh](add.sh) will create Ubuntu instances
+[./add.sh](add.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
 
 All new instances will be named with a common prefix, to keep things organized. The prefix is in `DAYHHMM` format
 
@@ -115,9 +115,9 @@ The add.sh is going to launch arch="amd64" Ubuntu instances as follows:
 
 Older fingerprints of each image will be used, when available, for demoing security patching with Livepatch and Landscape.
 
-[./stop.sh](stop.sh) will stop every Ubuntu instance with your chosen `DAYHHMM` prefix.
+[./stop.sh](stop.sh) can stop every Ubuntu instance with your chosen `DAYHHMM` prefix.
 
-[./remove.sh](stop.sh) will delete every Ubuntu instance with your chosen `DAYHHMM` prefix.
+[./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
 
 ---
 
@@ -126,11 +126,3 @@ Older fingerprints of each image will be used, when available, for demoing secur
 - Run `pro fix` commands on each Landscape-managed Ubuntu instance after provisioning. This simulates patch drift between various machines, and makes for more interesting demos.
 - snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
 - restore.sh will restore a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
-
---- 
-
-## How to remove
-
-Run [./remove.sh](remove.sh) to delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
-
-Assuming your Landscape installation was named "landscape-example-com", remove it using: `lxc delete --force landscape-example-com`
