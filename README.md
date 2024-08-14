@@ -136,9 +136,8 @@ Visit https://landscape.example.com to finalize Landscape Server configuration,
 then press Enter to continue provisioning Ubuntu instances...
 ```
 
-[./stop.sh](stop.sh) can stop every Ubuntu instance with your chosen `DAYHHMM` prefix.
-
-[./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
+-  [./start.sh](start.sh) and [./stop.sh](stop.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
+-  [./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
 
 ---
 
