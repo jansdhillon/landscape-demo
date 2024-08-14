@@ -4,7 +4,15 @@ You need the Multipass, LXD, and yq snap packages to be installed on your Linux 
 
 ## Step 1. Install and configure prerequisites
 
-Install and configure the packages add.sh, remove.sh, and delete.sh expect to find on your machine.
+Clone this repository and make scripts executable:
+
+```bash
+git clone git@github.com:rajannpatel/ubuntu-instances.git
+cd ubuntu-instances
+chmod +x *.sh
+```
+
+Install and configure the packages the scripts in this repository expect to find on your machine.
 
 > ```bash
 > sudo snap install yq
@@ -92,7 +100,9 @@ SSL_CERTIFICATE_KEY_FILE=/etc/letsencrypt/live/rajanpatel.com/privkey.pem
 SSL_CERTIFICATE_CHAIN_FILE=/etc/letsencrypt/live/rajanpatel.com/chain.pem
 ```
 
-## Step 4. Run add.sh to create Ubuntu Instances
+## Step 4. Run scripts
+
+[./add.sh](add.sh) will create Ubuntu instances
 
 All new instances will be named with a common prefix, to keep things organized. The prefix is in `DAYHHMM` format
 
@@ -105,17 +115,17 @@ The add.sh is going to launch arch="amd64" Ubuntu instances as follows:
 
 Older fingerprints of each image will be used, when available, for demoing security patching with Livepatch and Landscape.
 
-## Step 5. Snapshots of Landscape Server and Enrolled Instances
+[./stop.sh](stop.sh) will stop every Ubuntu instance with your chosen `DAYHHMM` prefix.
 
-[TODO] ./snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
-
-[TODO] ./restore.sh will restore a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
+[./remove.sh](stop.sh) will delete every Ubuntu instance with your chosen `DAYHHMM` prefix.
 
 ---
 
 ## TODO:
 
-- Send `pro fix` commands to each Ubuntu instance with security coverage in Livepatch and Landscape, at provisioning time. This simulates patch drift between various machines, and makes for more interesting demos.
+- Run `pro fix` commands on each Landscape-managed Ubuntu instance after provisioning. This simulates patch drift between various machines, and makes for more interesting demos.
+- snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
+- restore.sh will restore a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
 
 --- 
 
