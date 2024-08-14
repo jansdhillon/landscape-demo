@@ -1,40 +1,40 @@
 #!/bin/bash
 
 # List all LXC instances in CSV format and extract instance names
-instance_list=$(lxc list --format csv | awk -F, '{print $1}' | sort | uniq)
+INSTANCE_LIST=$(lxc list --format csv | awk -F, '{print $1}' | sort | uniq)
 
 # Function to group instances by common prefix
 group_instances() {
-  local prefix="$1"
-  echo "$instance_list" | grep "^$prefix" | sort
+  local PREFIX="$1"
+  echo "$INSTANCE_LIST" | grep "^$PREFIX" | sort
 }
 
 # Generate a list of prefixes that are shared by more than one instance
-prefixes=$(echo "$instance_list" | sed 's/-.*//' | sort | uniq -c | awk '$1 > 1 {print $2}')
+PREFIXES=$(echo "$INSTANCE_LIST" | sed 's/-.*//' | sort | uniq -c | awk '$1 > 1 {print $2}')
 
 # Check if there are any valid prefixes
-if [ -z "$prefixes" ]; then
+if [ -z "$PREFIXES" ]; then
   echo "Multiple instances with common prefixes not found."
   exit 1
 fi
 
 # List available prefixes
 echo "Available prefixes with more than one instance:"
-i=1
-for prefix in $prefixes; do
-  echo "$i. $prefix"
-  i=$((i + 1))
+I=1
+for PREFIX in $PREFIXES; do
+  echo "$I. $PREFIX"
+  I=$((I + 1))
 done
 
 # Prompt user to select a prefix group
-read -p "Enter the number of the group to stop: " choice
-prefix=$(echo "$prefixes" | sed -n "${choice}p")
+read -r -p "Enter the number of the group to stop: " CHOICE
+PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 
-if [ -n "$prefix" ]; then
-  echo "Stopping instances with prefix: $prefix"
-  group_instances "$prefix" | xargs -I{} lxc stop {}
-  for instance in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$prefix"); do
-    multipass stop "$instance"
+if [ -n "$PREFIX" ]; then
+  echo "Stopping instances with prefix: $PREFIX"
+  group_instances "$PREFIX" | xargs -I{} lxc stop {}
+  for INSTANCE in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$PREFIX"); do
+    multipass stop "$INSTANCE"
   done
 
 else
