@@ -9,6 +9,12 @@ group_instances() {
   echo "$INSTANCE_LIST" | grep "^$PREFIX" | sort
 }
 
+# Function to find the Landscape LXD instance using the "-lds-" prefix
+find_lds() {
+  local PREFIX="$1-lds-"
+  echo "$INSTANCE_LIST" | grep "^$PREFIX"
+}
+
 # Generate a list of prefixes that are shared by more than one instance
 PREFIXES=$(echo "$INSTANCE_LIST" | sed 's/-.*//' | sort | uniq -c | awk '$1 > 1 {print $2}')
 
@@ -32,6 +38,10 @@ PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 
 if [ -n "$PREFIX" ]; then
   echo "Deleting instances with prefix: $PREFIX"
+
+  LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
+  sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+
   group_instances "$PREFIX" | xargs -I{} lxc delete {} --force
 
   # Delete all Multipass instances with the same prefix
