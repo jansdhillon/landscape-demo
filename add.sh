@@ -44,7 +44,7 @@ if [[ -n "$SSL_CERTIFICATE_CHAIN_PATH" ]]; then
 fi
 
 # Launch Noble instance with the Landscape Server cloud-init.yaml
-INSTANCE_NAME="$TODAY-${LANDSCAPE_FQDN//./-}"
+INSTANCE_NAME="$TODAY-lds-${LANDSCAPE_FQDN//./-}"
 sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
 lxc launch ubuntu:24.04 "$INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml)"
 lxc exec "$INSTANCE_NAME" -- cloud-init status --wait
@@ -127,7 +127,7 @@ CONTAINER_FINGERPRINTS=(
 # Launch Multipass instances
 
 for RELEASE in "${MULTIPASS_VIRTUALMACHINES[@]}"; do
-  INSTANCE_NAME="$TODAY-$RELEASE"
+  INSTANCE_NAME="$TODAY-vm-$RELEASE-$(shuf -i 100-999 -n 1)"
   echo "$RELEASE virtual machine: latest"
   multipass launch "$RELEASE" -n "$INSTANCE_NAME"
   multipass exec "$INSTANCE_NAME" -- sudo snap install landscape-client
@@ -146,7 +146,7 @@ get_fingerprint() {
 }
 
 for RELEASE in "${LXD_VIRTUALMACHINES[@]}"; do
-  INSTANCE_NAME="$TODAY-$RELEASE"
+  INSTANCE_NAME="$TODAY-vm-$RELEASE-$(shuf -i 100-999 -n 1)"
   if [[ -n "${LXD_VIRTUALMACHINE_FINGERPRINTS[$RELEASE]}" ]]; then
     FINGERPRINT=${LXD_VIRTUALMACHINE_FINGERPRINTS[$RELEASE]}
   else
@@ -155,14 +155,14 @@ for RELEASE in "${LXD_VIRTUALMACHINES[@]}"; do
   fi
   if [ -n "$FINGERPRINT" ]; then
     echo "$RELEASE VM image fingerprint: $FINGERPRINT"
-    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME-vm" --vm --config=user.user-data="$CLOUD_INIT"
+    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --vm --config=user.user-data="$CLOUD_INIT"
   else
     echo "No fingerprint found for release $RELEASE VM."
   fi
 done
 
 for RELEASE in "${LXD_CONTAINERS[@]}"; do
-  INSTANCE_NAME="$TODAY-$RELEASE"
+  INSTANCE_NAME="$TODAY-c-$RELEASE-$(shuf -i 100-999 -n 1)"
   if [[ -n "${CONTAINER_FINGERPRINTS[$RELEASE]}" ]]; then
     FINGERPRINT=${CONTAINER_FINGERPRINTS[$RELEASE]}
   else
@@ -171,7 +171,7 @@ for RELEASE in "${LXD_CONTAINERS[@]}"; do
   fi
   if [ -n "$FINGERPRINT" ]; then
     echo "$RELEASE container image fingerprint: $FINGERPRINT"
-    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME-c" --config=user.user-data="$CLOUD_INIT"
+    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --config=user.user-data="$CLOUD_INIT"
   else
     echo "No fingerprint found for release $RELEASE container."
   fi

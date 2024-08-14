@@ -9,6 +9,12 @@ group_instances() {
   echo "$INSTANCE_LIST" | grep "^$PREFIX" | sort
 }
 
+# Function to find the Landscape LXD instance using the "-lds-" prefix
+find_lds() {
+  local PREFIX="$1-lds-"
+  echo "$INSTANCE_LIST" | grep "^$PREFIX"
+}
+
 # Generate a list of prefixes that are shared by more than one instance
 PREFIXES=$(echo "$INSTANCE_LIST" | sed 's/-.*//' | sort | uniq -c | awk '$1 > 1 {print $2}')
 
@@ -32,6 +38,11 @@ PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 
 if [ -n "$PREFIX" ]; then
   echo "Starting instances with prefix: $PREFIX"
+  INSTANCE_NAME=$(find_lds "$PREFIX")
+  LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
+  sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+  LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
+  echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
   group_instances "$PREFIX" | xargs -I{} lxc start {}
   for INSTANCE in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$PREFIX"); do
     multipass start "$INSTANCE"
