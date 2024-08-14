@@ -133,7 +133,7 @@ for RELEASE in "${MULTIPASS_VIRTUALMACHINES[@]}"; do
   multipass exec "$INSTANCE_NAME" -- sudo snap install landscape-client
   echo | openssl s_client -connect "$LANDSCAPE_FQDN":443 | openssl x509 | multipass transfer --parents - "$INSTANCE_NAME":/home/ubuntu/certs/landscape.pem
   multipass exec "$INSTANCE_NAME" -- sudo cp /home/ubuntu/certs/landscape.pem /var/snap/landscape-client/common/etc/landscape.pem
-  multipass exec "$INSTANCE_NAME" -- sudo landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="$INSTANCE_NAME" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/var/snap/landscape-client/common/etc/landscape.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
+  multipass exec "$INSTANCE_NAME" -- sudo landscape-client.config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="$INSTANCE_NAME" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/var/snap/landscape-client/common/etc/landscape.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
 done
 
 # Launch LXD instances
