@@ -100,7 +100,7 @@ SSL_CERTIFICATE_KEY_FILE=/etc/letsencrypt/live/rajanpatel.com/privkey.pem
 SSL_CERTIFICATE_CHAIN_FILE=/etc/letsencrypt/live/rajanpatel.com/chain.pem
 ```
 
-## Step 4. Run scripts
+## Step 3. Run scripts
 
 [./add.sh](add.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
 
