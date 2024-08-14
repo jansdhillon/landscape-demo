@@ -115,6 +115,27 @@ The add.sh is going to launch arch="amd64" Ubuntu instances as follows:
 
 Older fingerprints of each image will be used, when available, for demoing security patching with Livepatch and Landscape.
 
+You will be prompted for the sudo password, when the script attempts to write to `/etc/hosts` or read SSL certificates from protected locations. cloud-init may sometimes print `status: error` in the output when running add.sh with certain SSL configurations, this can be safely ignored.
+
+Example output:
+
+```text
+rajan@unicron:~/Projects/ubuntu-instances$ ./add.sh 
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  3832  100  3832    0     0  23221      0 --:--:-- --:--:-- --:--:-- 23365
+[sudo] password for rajan: 
+Creating wed0022-landscape-example-com
+Starting wed0022-landscape-example-com    
+................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+status: done
+Device tcp6554proxyv4 added to wed0022-landscape-example-com
+Device tcp443proxyv4 added to wed0022-landscape-example-com
+Device tcp80proxyv4 added to wed0022-landscape-example-com
+Visit https://landscape.example.com to finalize Landscape Server configuration,
+then press Enter to continue provisioning Ubuntu instances...
+```
+
 [./stop.sh](stop.sh) can stop every Ubuntu instance with your chosen `DAYHHMM` prefix.
 
 [./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
