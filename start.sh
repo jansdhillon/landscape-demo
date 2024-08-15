@@ -41,7 +41,7 @@ if [ -n "$PREFIX" ]; then
   INSTANCE_NAME=$(find_lds "$PREFIX")
   if [ -n "$INSTANCE_NAME" ]; then
     lxc start $INSTANCE_NAME --verbose
-    until lxc info $INSTANCE_NAME | grep -q 'Status: Running'; do
+    until lxc info $INSTANCE_NAME | grep -q 'Status: RUNNING'; do
       sleep 1
     done
     LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
