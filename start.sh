@@ -39,18 +39,20 @@ PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 if [ -n "$PREFIX" ]; then
   echo "Starting instances with prefix: $PREFIX"
   INSTANCE_NAME=$(find_lds "$PREFIX")
-  lxc start $INSTANCE_NAME --wait
-  LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
-  if [ -n "$LANDSCAPE_FQDN" ]; then
-    sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
-  else
-    echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
+  if [ -n "$INSTANCE_NAME" ]; then
+    lxc start $INSTANCE_NAME --wait --verbose
+    LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
+    if [ -n "$LANDSCAPE_FQDN" ]; then
+      sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+    else
+      echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
+    fi
   fi
   LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
   echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
   group_instances "$PREFIX" | xargs -I{} lxc start {}
   for INSTANCE in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$PREFIX"); do
-    multipass start "$INSTANCE"
+    multipass start "$INSTANCE" --verbose
   done
 
 else

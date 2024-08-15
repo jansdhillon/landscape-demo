@@ -46,13 +46,13 @@ if [ -n "$PREFIX" ]; then
     echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
   fi
 
-  group_instances "$PREFIX" | xargs -I{} lxc delete {} --force
+  group_instances "$PREFIX" | xargs -I{} lxc delete {} --force --verbose
 
   # Delete all Multipass instances with the same prefix
   MULTIPASS_INSTANCES=$(multipass list --format csv | awk -F, '{print $1}' | grep "^$PREFIX")
   if [ -n "$MULTIPASS_INSTANCES" ]; then
     echo "Deleting Multipass instances with prefix: $PREFIX"
-    echo "$MULTIPASS_INSTANCES" | xargs -I{} multipass delete --purge {}
+    echo "$MULTIPASS_INSTANCES" | xargs -I{} multipass delete --purge {} --verbose
   else
     echo "No Multipass instances found with prefix: $PREFIX"
   fi

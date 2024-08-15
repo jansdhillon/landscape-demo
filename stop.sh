@@ -44,9 +44,9 @@ if [ -n "$PREFIX" ]; then
   else
     echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
   fi
-  group_instances "$PREFIX" | xargs -I{} lxc stop {}
+  group_instances "$PREFIX" | xargs -I{} lxc stop {} --verbose
   for INSTANCE in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$PREFIX"); do
-    multipass stop "$INSTANCE"
+    multipass stop "$INSTANCE" --verbose
   done
 
 else

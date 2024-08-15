@@ -50,8 +50,8 @@ if [ -n "$LANDSCAPE_FQDN" ]; then
 else
   echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
 fi
-lxc launch ubuntu:24.04 "$INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml)"
-lxc exec "$INSTANCE_NAME" -- cloud-init status --wait
+lxc launch ubuntu:24.04 "$INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml) --verbose"
+lxc exec "$INSTANCE_NAME" --verbose -- cloud-init status --wait
 LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
 echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
 
@@ -175,7 +175,7 @@ for RELEASE in "${LXD_CONTAINERS[@]}"; do
   fi
   if [ -n "$FINGERPRINT" ]; then
     echo "$RELEASE container image fingerprint: $FINGERPRINT"
-    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --config=user.user-data="$CLOUD_INIT"
+    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --config=user.user-data="$CLOUD_INIT --verbose"
   else
     echo "No fingerprint found for release $RELEASE container."
   fi
