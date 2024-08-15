@@ -54,7 +54,7 @@ echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
 for PORT in 6554 443 80; do lxc config device add "$INSTANCE_NAME" tcp${PORT}proxyv4 proxy listen=tcp:0.0.0.0:${PORT} connect=tcp:"${LANDSCAPE_IP}":${PORT}; done
 
 echo "Visit https://$LANDSCAPE_FQDN to finalize Landscape Server configuration,"
-read -r -p "then press Enter to continue provisioning Ubuntu instances..."
+read -r -p "then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit..."
 
 TOKEN="$(grep '^TOKEN=' variables.txt | cut -d'=' -f2)" # FROM ubuntu.com/pro/dashboard
 LANDSCAPE_ACCOUNT_NAME="standalone"
