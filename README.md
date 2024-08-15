@@ -17,7 +17,7 @@ Install and configure the packages the scripts in this repository expect to find
 > ```bash
 > sudo snap install yq
 > sudo snap install multipass
-> snap list lxd &> /dev/null && sudo snap refresh lxd --channel latest/stable || sudo snap install lxd --channel latest/stable
+> sudo snap install lxd
 > ```
 
 Initialize LXD
