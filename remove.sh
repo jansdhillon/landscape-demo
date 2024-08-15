@@ -40,7 +40,11 @@ if [ -n "$PREFIX" ]; then
   echo "Deleting instances with prefix: $PREFIX"
 
   LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
-  sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+  if [ -n "$LANDSCAPE_FQDN" ]; then
+    sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+  else
+    echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
+  fi
 
   group_instances "$PREFIX" | xargs -I{} lxc delete {} --force
 

@@ -39,7 +39,11 @@ PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 if [ -n "$PREFIX" ]; then
   echo "Stopping instances with prefix: $PREFIX"
   LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
-  sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+  if [ -n "$LANDSCAPE_FQDN" ]; then
+    sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+  else
+    echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
+  fi
   group_instances "$PREFIX" | xargs -I{} lxc stop {}
   for INSTANCE in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$PREFIX"); do
     multipass stop "$INSTANCE"
