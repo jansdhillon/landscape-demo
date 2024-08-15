@@ -40,7 +40,7 @@ if [ -n "$PREFIX" ]; then
   echo "Starting instances with prefix: $PREFIX"
   INSTANCE_NAME=$(find_lds "$PREFIX")
   if [ -n "$INSTANCE_NAME" ]; then
-    lxc start $INSTANCE_NAME --wait --verbose
+    lxc start $INSTANCE_NAME --verbose
     LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
     if [ -n "$LANDSCAPE_FQDN" ]; then
       sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
