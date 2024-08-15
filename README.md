@@ -6,11 +6,11 @@ You need the Multipass, LXD, and yq snap packages to be installed on your Linux 
 
 Clone this repository and make scripts executable:
 
-```bash
-git clone git@github.com:rajannpatel/ubuntu-instances.git
-cd ubuntu-instances
-chmod +x *.sh
-```
+> ```bash
+> git clone git@github.com:rajannpatel/ubuntu-instances.git
+> cd ubuntu-instances
+> chmod +x *.sh
+> ```
 
 Install and configure the packages the scripts in this repository expect to find on your machine.
 
@@ -28,10 +28,10 @@ Initialize LXD
 
 For the LXD container to reach the external network, the MTU on the bridge must match the default network adapter. This extra step is necessary in some virtualized environments, such as Google Cloud's Compute Engine where the MTU is lower, or Oracle Cloud where jumbo frames are enabled by default, and the MTU is higher. This is not likely to impact you on most networks, where the default MTU is 1500.
 
-```bash
-read -r INTERFACE < <(ip route | awk '$1=="default"{print $5; exit}')
-lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
-```
+> ```bash
+> read -r INTERFACE < <(ip route | awk '$1=="default"{print $5; exit}')
+> lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
+> ```
 
 Edit the variables.txt file, only TOKEN, HOSTNAME, and LANDSCAPE_VERSION are mandatory. The HOSTNAME and DOMAIN will be combined by the add.sh script to create a fully qualified domain name (FQDN).
 
@@ -71,10 +71,10 @@ To use valid SSL certificates on your Landscape Server LXD instance, there are t
 
 To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
 
-```bash
-sudo snap install certbot --classic
-sudo certbot certonly --manual --preferred-challenges dns -d "*.$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2)"
-```
+> ```bash
+> sudo snap install certbot --classic
+> sudo certbot certonly --manual --preferred-challenges dns -d "*.$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2)"
+> ```
 
 -  **cert.pem**: This is the server certificate issued for your domain. It is your primary certificate that identifies your server.
 -  **chain.pem**: This file contains the intermediate CA certificates needed to establish a chain of trust from your server certificate to the root CA certificate. In many cases, this file is what you need for the CA certificate(s).
