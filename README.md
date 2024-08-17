@@ -1,6 +1,6 @@
 # Landscape Demo
 
-
+Spin up a Landscape and Livepatch demo with containers and virtual machines with outstanding ESM security patching tasks.
 
 ## Step 1. Install and configure prerequisites
 
@@ -37,15 +37,15 @@ For the LXD container to reach the external network, the MTU on the bridge must 
 
 ## Step 2. Deploy landscape.example.com locally
 
-### [./add.sh](./add.sh)
+### [./create.sh](./create.sh)
 
-[./add.sh](add.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
+[./create.sh](create.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
 
 All new instances will be named with a common prefix, to keep things organized. The prefix is in `DAYHHMM` format
 
 Landscape Server will be launched in an Ubuntu 24.04 LXD container.
 
-The add.sh is going to launch arch="amd64" Ubuntu instances as follows:
+The [./create.sh](create.sh) script is going to launch arch="amd64" Ubuntu instances as follows:
 - lxd_virtualmachines=("jammy" "noble" "focal")
 - lxd_containers=("jammy" "noble" "bionic")
 - multipass_virtualmachines=("core24")
@@ -57,7 +57,7 @@ You will be prompted for the sudo password, when the script attempts to write to
 Example output:
 
 ```text
-rajan@unicron:~/Projects/ubuntu-instances$ ./add.sh 
+rajan@unicron:~/Projects/ubuntu-instances$ ./create.sh 
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  3832  100  3832    0     0  23221      0 --:--:-- --:--:-- --:--:-- 23365
@@ -106,8 +106,8 @@ To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
 
 ## Step 3. Run scripts
 
--  [./start.sh](start.sh) and [./stop.sh](stop.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
--  [./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
+-  [./control.sh](control.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
+-  [./destroy.sh](destroy.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
 
 ---
 
