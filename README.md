@@ -68,8 +68,6 @@ To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
 
 ## Step 3. Create the Ubuntu instances
 
-### [./create.sh](./create.sh)
-
 -  [./create.sh](create.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
 
 All new instances will be named with a common prefix, to keep things organized. The prefix is in `DAYHHMM` format
