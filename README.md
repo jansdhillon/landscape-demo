@@ -35,7 +35,7 @@ For the LXD container to reach the external network, the MTU on the bridge must 
 > lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
 > ```
 
-## Step 3. Decide between self-signed SSL and valid SSL certificates
+## Step 2. Decide between self-signed SSL and valid SSL certificates
 
 Option 1: Use self-signed SSL certificates, and launch 
 
@@ -66,7 +66,7 @@ To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
 -  **privkey.pem**: This is your private key associated with the server certificate. It should be kept secure and private.
 -  **fullchain.pem**: This file includes both your server certificate (cert.pem) and the intermediate CA certificates (chain.pem), providing a complete certificate chain. Since the cert.pem and chain.pem files are independently configured, this file does not need to be used.
 
-## Step 3. Provision the Ubuntu instances
+## Step 3. Create the Ubuntu instances
 
 ### [./create.sh](./create.sh)
 
@@ -107,7 +107,7 @@ Visit https://landscape.example.com to finalize Landscape Server configuration,
 then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit...
 ```
 
-## Starting, Stopping, and Deleting
+## Starting, Stopping, and Deleting the Ubuntu instances
 
 -  [./control.sh](control.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
 -  [./destroy.sh](destroy.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
