@@ -1,10 +1,10 @@
 # Landscape Demo
 
-Spin up a Landscape and Livepatch demo with containers and virtual machines with outstanding ESM security patching tasks. The demo will run on landscape.example.com, and your system's /etc/hosts file will get modified so that you can access the demo at that address. If you have your own domain, you have the option of configuring a valid SSL certificate for it. Postfix configurations can also be made.
+Spin up a preconfigured Landscape and Livepatch demo with containers and virtual machines with outstanding ESM security patching tasks. The demo will run on landscape.example.com, and your system's /etc/hosts file will get modified so that you can access the demo at that address. If you have your own domain, you have the option of configuring a valid SSL certificate for it. Postfix configurations can also be set before launching the Landscape instance.
 
 ## Step 1. Install and configure prerequisites
 
-You need the Multipass, LXD, and yq snap packages to be installed on your Linux machine to run a local Landscape demo. Optionally, you need the landscape-api snap package installed to perform headless Landscape configurations, without interacting with the Landscape GUI.
+You need the Multipass, LXD, and yq snap packages to be installed on your Linux machine to run a local Landscape demo.
 
 Clone this repository and make scripts executable:
 
@@ -66,20 +66,23 @@ To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
 -  **privkey.pem**: This is your private key associated with the server certificate. It should be kept secure and private.
 -  **fullchain.pem**: This file includes both your server certificate (cert.pem) and the intermediate CA certificates (chain.pem), providing a complete certificate chain. Since the cert.pem and chain.pem files are independently configured, this file does not need to be used.
 
-## Step 3. Deploy landscape.example.com, or landscape.yourdomain.com locally
+## Step 3. Provision the Ubuntu instances
 
 ### [./create.sh](./create.sh)
 
-[./create.sh](create.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
+-  [./create.sh](create.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
 
 All new instances will be named with a common prefix, to keep things organized. The prefix is in `DAYHHMM` format
 
 Landscape Server will be launched in an Ubuntu 24.04 LXD container.
 
 The [./create.sh](create.sh) script is going to launch arch="amd64" Ubuntu instances as follows:
-- lxd_virtualmachines=("jammy" "noble" "focal")
-- lxd_containers=("jammy" "noble" "bionic")
-- multipass_virtualmachines=("core24")
+
+```bash
+lxd_virtualmachines=("jammy" "noble" "focal")
+lxd_containers=("jammy" "noble" "bionic")
+multipass_virtualmachines=("core24")
+```
 
 Older fingerprints of each image will be used, when available, for demoing security patching with Livepatch and Landscape.
 
@@ -116,3 +119,4 @@ then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit...
 - Run `pro fix` commands on each Landscape-managed Ubuntu instance after provisioning. This simulates patch drift between various machines, and makes for more interesting demos.
 - snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
 - restore.sh will restore a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
+- landscape-api enhancements to preconfigure scripts, repository mirrors, and profiles, to make the demo more complete.
