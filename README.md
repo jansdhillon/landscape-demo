@@ -1,6 +1,6 @@
 # Landscape Demo
 
-Spin up a Landscape and Livepatch demo with containers and virtual machines with outstanding ESM security patching tasks.
+Spin up a Landscape and Livepatch demo with containers and virtual machines with outstanding ESM security patching tasks. The demo will run on landscape.example.com, and your system's /etc/hosts file will get modified so that you can access the demo at that address. If you have your own domain, you have the option of configuring a valid SSL certificate for it. Postfix configurations can also be made.
 
 ## Step 1. Install and configure prerequisites
 
@@ -35,7 +35,38 @@ For the LXD container to reach the external network, the MTU on the bridge must 
 > lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
 > ```
 
-## Step 2. Deploy landscape.example.com locally
+## Step 3. Decide between self-signed SSL and valid SSL certificates
+
+Option 1: Use self-signed SSL certificates, and launch 
+
+To use self-signed SSL certificates, either remove the CERTBOT variable, and remove all 3 SSL_ prefixed variables, or leave them blank:
+
+```text
+CERTBOT=
+SSL_CERTIFICATE_PATH=
+SSL_CERTIFICATE_KEY_PATH=
+SSL_CERTIFICATE_CHAIN_PATH=
+```
+
+To use valid SSL certificates on your Landscape Server LXD instance, there are two ways to obtain and install them.
+
+1.  For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, specify `CERTBOT=apt` or `CERTBOT=snap` in variables.txt to install the certbot package and configure Apache.
+
+2.  For instances with restricted inbound connectivity on Port 80 and 443, not installing certbot on Landscape Server makes sense. Setting `CERTBOT=` to equal nothing will result in certbot not being installed in the Landscape Server LXD instance. Instead of using certbot within the Landscape Server LXD instance to acquire and configure SSL certificates, the paths to the certificates can be provided as the values for the SSL_CERTIFICATE_PATH, SSL_CERTIFICATE_KEY_PATH, and SSL_CERTIFICATE_CHAIN_PATH variables.
+
+To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
+
+> ```bash
+> sudo snap install certbot --classic
+> sudo certbot certonly --manual --preferred-challenges dns -d "*.$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2)"
+> ```
+
+-  **cert.pem**: This is the server certificate issued for your domain. It is your primary certificate that identifies your server.
+-  **chain.pem**: This file contains the intermediate CA certificates needed to establish a chain of trust from your server certificate to the root CA certificate. In many cases, this file is what you need for the CA certificate(s).
+-  **privkey.pem**: This is your private key associated with the server certificate. It should be kept secure and private.
+-  **fullchain.pem**: This file includes both your server certificate (cert.pem) and the intermediate CA certificates (chain.pem), providing a complete certificate chain. Since the cert.pem and chain.pem files are independently configured, this file does not need to be used.
+
+## Step 3. Deploy landscape.example.com, or landscape.yourdomain.com locally
 
 ### [./create.sh](./create.sh)
 
@@ -73,38 +104,7 @@ Visit https://landscape.example.com to finalize Landscape Server configuration,
 then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit...
 ```
 
-## Step 2. Decide between self-signed SSL and valid SSL certificates
-
-Option 1: Use self-signed SSL certificates, and launch 
-
-To use self-signed SSL certificates, either remove the CERTBOT variable, and remove all 3 SSL_ prefixed variables, or leave them blank:
-
-```text
-CERTBOT=
-SSL_CERTIFICATE_PATH=
-SSL_CERTIFICATE_KEY_PATH=
-SSL_CERTIFICATE_CHAIN_PATH=
-```
-
-To use valid SSL certificates on your Landscape Server LXD instance, there are two ways to obtain and install them.
-
-1.  For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, specify `CERTBOT=apt` or `CERTBOT=snap` in variables.txt to install the certbot package and configure Apache.
-
-2.  For instances with restricted inbound connectivity on Port 80 and 443, not installing certbot on Landscape Server makes sense. Setting `CERTBOT=` to equal nothing will result in certbot not being installed in the Landscape Server LXD instance. Instead of using certbot within the Landscape Server LXD instance to acquire and configure SSL certificates, the paths to the certificates can be provided as the values for the SSL_CERTIFICATE_PATH, SSL_CERTIFICATE_KEY_PATH, and SSL_CERTIFICATE_CHAIN_PATH variables.
-
-To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
-
-> ```bash
-> sudo snap install certbot --classic
-> sudo certbot certonly --manual --preferred-challenges dns -d "*.$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2)"
-> ```
-
--  **cert.pem**: This is the server certificate issued for your domain. It is your primary certificate that identifies your server.
--  **chain.pem**: This file contains the intermediate CA certificates needed to establish a chain of trust from your server certificate to the root CA certificate. In many cases, this file is what you need for the CA certificate(s).
--  **privkey.pem**: This is your private key associated with the server certificate. It should be kept secure and private.
--  **fullchain.pem**: This file includes both your server certificate (cert.pem) and the intermediate CA certificates (chain.pem), providing a complete certificate chain. Since the cert.pem and chain.pem files are independently configured, this file does not need to be used.
-
-## Step 3. Run scripts
+## Starting, Stopping, and Deleting
 
 -  [./control.sh](control.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
 -  [./destroy.sh](destroy.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
