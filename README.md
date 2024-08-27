@@ -37,9 +37,9 @@ For the LXD container to reach the external network, the MTU on the bridge must 
 
 ## Step 2. Decide between self-signed SSL and valid SSL certificates
 
-Option 1: Use self-signed SSL certificates, and launch 
+### Option 1: Use self-signed SSL certificates, and launch 
 
-To use self-signed SSL certificates, either remove the CERTBOT variable, and remove all 3 SSL_ prefixed variables, or leave them blank:
+To use self-signed SSL certificates, edit [variables.txt](variables.txt) and either remove the CERTBOT variable, and remove all 3 SSL_ prefixed variables, or leave them blank:
 
 ```text
 CERTBOT=
@@ -48,9 +48,11 @@ SSL_CERTIFICATE_KEY_PATH=
 SSL_CERTIFICATE_CHAIN_PATH=
 ```
 
+### Option 2: Use a valid SSL certificate
+
 To use valid SSL certificates on your Landscape Server LXD instance, there are two ways to obtain and install them.
 
-1.  For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, specify `CERTBOT=apt` or `CERTBOT=snap` in variables.txt to install the certbot package and configure Apache.
+1.  For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, edit [variables.txt](variables.txt) and specify `CERTBOT=apt` or `CERTBOT=snap` to install the certbot package inside the Ubuntu instance running Landscape, and configure Apache to use the valid SSL certificate.
 
 2.  For instances with restricted inbound connectivity on Port 80 and 443, not installing certbot on Landscape Server makes sense. Setting `CERTBOT=` to equal nothing will result in certbot not being installed in the Landscape Server LXD instance. Instead of using certbot within the Landscape Server LXD instance to acquire and configure SSL certificates, the paths to the certificates can be provided as the values for the SSL_CERTIFICATE_PATH, SSL_CERTIFICATE_KEY_PATH, and SSL_CERTIFICATE_CHAIN_PATH variables.
 
@@ -77,7 +79,7 @@ Landscape Server will be launched in an Ubuntu 24.04 LXD container.
 The [./create.sh](create.sh) script is going to launch arch="amd64" Ubuntu instances as follows:
 
 ```bash
-lxd_virtualmachines=("jammy" "noble" "focal")
+lxd_virtualmachines=("focal")
 lxd_containers=("jammy" "noble" "bionic")
 multipass_virtualmachines=("core24")
 ```
