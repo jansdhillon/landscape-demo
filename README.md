@@ -37,7 +37,7 @@ For the LXD container to reach the external network, the MTU on the bridge must 
 
 ## Step 2. Decide between self-signed SSL and valid SSL certificates
 
-### Option 1: Use self-signed SSL certificates, and launch 
+### Option 1: Use self-signed SSL certificates and launch landscape.example.com
 
 To use self-signed SSL certificates, edit [variables.txt](variables.txt) and either remove the CERTBOT variable, and remove all 3 SSL_ prefixed variables, or leave them blank:
 
