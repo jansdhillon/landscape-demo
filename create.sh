@@ -27,6 +27,8 @@ curl -o cloud-init.yaml https://raw.githubusercontent.com/canonical/landscape-sc
 # populate the template with information from variables.txt
 while IFS='=' read -r KEY VALUE; do sed -i "s|{% set $KEY = '.*' %}|{% set $KEY = '$VALUE' %}|" cloud-init.yaml; done < variables.txt
 
+sudo -v
+
 # check for optional SSL configurations
 if [[ -n "$SSL_CERTIFICATE_PATH" ]]; then
   SSL_CERTIFICATE=$(sudo awk '{print "    " $0}' "$SSL_CERTIFICATE_PATH" | sed ':a;N;$!ba;s/\n/\\n/g')
@@ -53,7 +55,9 @@ fi
 lxc launch ubuntu:24.04 "$INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml) --verbose"
 lxc exec "$INSTANCE_NAME" --verbose -- cloud-init status --wait
 LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
-echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
+sudo bash -c "echo \"$LANDSCAPE_IP $LANDSCAPE_FQDN\" >> /etc/hosts"
+
+sudo -k
 
 for PORT in 6554 443 80; do lxc config device add "$INSTANCE_NAME" tcp${PORT}proxyv4 proxy listen=tcp:0.0.0.0:${PORT} connect=tcp:"${LANDSCAPE_IP}":${PORT}; done
 
@@ -86,7 +90,7 @@ runcmd:
   - systemctl disable unattended-upgrades
   - apt-get remove -y unattended-upgrades
   - pro attach $TOKEN
-  - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
+  - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
   - pro enable livepatch
 EOF
 )
@@ -107,14 +111,14 @@ runcmd:
   - apt-get remove -y unattended-upgrades
   - pro attach $TOKEN
   - echo | openssl s_client -connect $LANDSCAPE_FQDN:443 | openssl x509 | tee /etc/landscape/server.pem
-  - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/etc/landscape/server.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
+  - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/etc/landscape/server.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
   - pro enable livepatch
 EOF
 )
 fi
 
 ARCH="amd64"
-LXD_VIRTUALMACHINES=("jammy" "noble" "focal")
+LXD_VIRTUALMACHINES=("focal")
 LXD_CONTAINERS=("jammy" "noble" "bionic")
 MULTIPASS_VIRTUALMACHINES=("core24")
 

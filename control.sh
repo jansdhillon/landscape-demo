@@ -23,18 +23,23 @@ update_hosts_file() {
   local LANDSCAPE_FQDN
   INSTANCE=$(find_lds "$PREFIX")
   if [ -n "$INSTANCE" ]; then
-    if [ "$ACTION" = "add" ]; then      
+    if [ "$ACTION" = "add" ]; then
       LANDSCAPE_IP=$(lxc info "$INSTANCE" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
-      LANDSCAPE_FQDN=$(lxc exec "$INSTANCE" -- hostname --long)
+      LANDSCAPE_FQDN=$(lxc exec "$INSTANCE" -- hostname)
       if [ -n "$LANDSCAPE_FQDN" ]; then
-        echo "$ACTION $LANDSCAPE_FQDN to $(hostname)'s /etc/hosts requires sudo"
-        echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
+        echo "$ACTION $LANDSCAPE_FQDN to $(hostname)'s /etc/hosts"
+        sudo -v
+        sudo bash -c "echo \"$LANDSCAPE_IP $LANDSCAPE_FQDN\" >> /etc/hosts"
+        sudo -k
       else
         echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
       fi
     elif [ "$ACTION" = "remove" ]; then
-      LANDSCAPE_FQDN=$(lxc exec "$INSTANCE" -- hostname --long)
+      LANDSCAPE_FQDN=$(lxc exec "$INSTANCE" -- hostname)
+      echo "$ACTION $LANDSCAPE_FQDN to $(hostname)'s /etc/hosts"
+      sudo -v
       sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
+      sudo -k
     fi
   fi
 }
@@ -51,7 +56,8 @@ manage_instance() {
     done
     update_hosts_file "add" "$INSTANCE"
   elif [ "$ACTION" = "stop" ]; then
-    if [ $(lxc info "$INSTANCE" | grep -q 'Status: RUNNING') ]; then
+    output=$(lxc exec "$INSTANCE" -- hostname)
+    if ! echo "$output" | grep -q '^Error:'; then
       update_hosts_file "remove" "$INSTANCE"
     fi
     lxc stop "$INSTANCE"
@@ -79,16 +85,30 @@ done
 read -r -p "Enter the number of the group to manage: " CHOICE
 PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 
-# Prompt user to choose start or stop
-read -r -p "Would you like to start or stop the instances? (start/stop): " ACTION
+# Prompt user to choose 1 for start or 2 for stop
+read -r -p "Would you like to start or stop the instances?
+1 to start
+2 to stop
 
-if [[ "$ACTION" != "start" && "$ACTION" != "stop" ]]; then
-  echo "Invalid choice. Please enter 'start' or 'stop'."
+Enter your choice (1 or 2): " ACTION
+
+if [[ "$ACTION" != "1" && "$ACTION" != "2" ]]; then
+  echo "Invalid choice. Please enter '1' for start or '2' for stop."
   exit 1
 fi
 
+# Convert numerical input to corresponding action
+if [[ "$ACTION" == "1" ]]; then
+  ACTION="start"
+elif [[ "$ACTION" == "2" ]]; then
+  ACTION="stop"
+fi
+
+# Now, ACTION is either "start" or "stop"
+echo "You chose to $ACTION the instances."
+
 if [ -n "$PREFIX" ]; then
-  echo "${ACTION^}ing instances with prefix: $PREFIX"
+  echo "${ACTION^} instances with prefix: $PREFIX"
 
   # Manage LXC instances
   group_instances "$PREFIX" | while read -r INSTANCE; do
