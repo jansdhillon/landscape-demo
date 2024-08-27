@@ -52,9 +52,12 @@ SSL_CERTIFICATE_CHAIN_PATH=
 
 To use valid SSL certificates on your Landscape Server LXD instance, there are two ways to obtain and install them.
 
-1.  For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, edit [variables.txt](variables.txt) and specify `CERTBOT=apt` or `CERTBOT=snap` to install the certbot package inside the Ubuntu instance running Landscape, and configure Apache to use the valid SSL certificate.
+1.  For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, edit [variables.txt](variables.txt) and specify `CERTBOT=apt` or `CERTBOT=snap` to install the certbot package inside the Ubuntu instance running Landscape as either a snap or deb package, and also set the `HOSTNAME` and `DOMAIN` values to reflect where you will run Landscape, other than the default landscape.example.com.
 
-2.  For instances with restricted inbound connectivity on Port 80 and 443, not installing certbot on Landscape Server makes sense. Setting `CERTBOT=` to equal nothing will result in certbot not being installed in the Landscape Server LXD instance. Instead of using certbot within the Landscape Server LXD instance to acquire and configure SSL certificates, the paths to the certificates can be provided as the values for the SSL_CERTIFICATE_PATH, SSL_CERTIFICATE_KEY_PATH, and SSL_CERTIFICATE_CHAIN_PATH variables.
+2.  For instances with restricted inbound connectivity on Port 80 and 443, not installing certbot on Landscape Server makes sense. Setting `CERTBOT=` to equal nothing will result in certbot not being installed in the Landscape Server LXD instance. Instead of using certbot within the Landscape Server LXD instance to acquire and configure SSL certificates, the paths to the certificates can be provided as the values for:
+   - SSL_CERTIFICATE_PATH
+   - SSL_CERTIFICATE_KEY_PATH
+   - SSL_CERTIFICATE_CHAIN_PATH
 
 To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
 
