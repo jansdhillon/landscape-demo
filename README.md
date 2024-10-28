@@ -75,13 +75,13 @@ To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
 
 ## Step 3. Create the Ubuntu instances
 
--  [./create.sh](create.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
+-  [./add.sh](add.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
 
 All new instances will be named with a common prefix, to keep things organized. The prefix is in `DAYHHMM` format
 
 Landscape Server will be launched in an Ubuntu 24.04 LXD container.
 
-The [./create.sh](create.sh) script is going to launch arch="amd64" Ubuntu instances as follows:
+The [./add.sh](add.sh) script is going to launch arch="amd64" Ubuntu instances as follows:
 
 ```bash
 lxd_virtualmachines=("focal")
@@ -96,7 +96,7 @@ You will be prompted for the sudo password, when the script attempts to write to
 Example output:
 
 ```text
-rajan@unicron:~/Projects/ubuntu-instances$ ./create.sh 
+rajan@unicron:~/Projects/ubuntu-instances$ ./add.sh 
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  3832  100  3832    0     0  23221      0 --:--:-- --:--:-- --:--:-- 23365
@@ -114,8 +114,8 @@ then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit...
 
 ## Starting, Stopping, and Deleting the Ubuntu instances
 
--  [./control.sh](control.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
--  [./destroy.sh](destroy.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
+-  [./start.sh](start.sh) and [./stop.sh](stop.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
+-  [./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
 
 ---
 
