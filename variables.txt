@@ -1,5 +1,5 @@
-EMAIL=
-TOKEN=
+EMAIL=jan.dhillon@canonical.com
+TOKEN=C1gTMmnXnTGuqZ5bMmMYsRPbu9nDY
 HOSTNAME=landscape
 DOMAIN=example.com
 TIMEZONE=America/New_York
