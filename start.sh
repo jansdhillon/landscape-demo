@@ -9,9 +9,9 @@ group_instances() {
   echo "$INSTANCE_LIST" | grep "^$PREFIX" | sort
 }
 
-# Function to find the Landscape LXD instance using the "-lds-" prefix
-find_lds() {
-  local PREFIX="$1-lds-"
+# Function to find the Landscape Standalone LXD instance using the "-standalone-" prefix
+find_standalone() {
+  local PREFIX="$1-standalone-"
   echo "$INSTANCE_LIST" | grep "^$PREFIX"
 }
 
@@ -38,13 +38,13 @@ PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 
 if [ -n "$PREFIX" ]; then
   echo "Starting instances with prefix: $PREFIX"
-  INSTANCE_NAME=$(find_lds "$PREFIX")
+  INSTANCE_NAME=$(find_standalone "$PREFIX")
   if [ -n "$INSTANCE_NAME" ]; then
     lxc start $INSTANCE_NAME --verbose
     until lxc info $INSTANCE_NAME | grep -q 'Status: RUNNING'; do
       sleep 1
     done
-    LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
+    LANDSCAPE_FQDN=$(find_standalone "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
     if [ -n "$LANDSCAPE_FQDN" ]; then
       sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
     else

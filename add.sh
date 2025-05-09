@@ -44,21 +44,47 @@ if [[ -n "$SSL_CERTIFICATE_CHAIN_PATH" ]]; then
 fi
 
 # Launch Noble instance with the Landscape Server cloud-init.yaml
-INSTANCE_NAME="$TODAY-lds-${LANDSCAPE_FQDN//./-}"
+SERVER_INSTANCE_NAME="$TODAY-standalone-${LANDSCAPE_FQDN//./-}"
 if [ -n "$LANDSCAPE_FQDN" ]; then
   sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
 else
   echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
 fi
-lxc launch ubuntu:24.04 "$INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml) --verbose"
-lxc exec "$INSTANCE_NAME" --verbose -- cloud-init status --wait
-LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
+lxc launch ubuntu:24.04 "$SERVER_INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml) --verbose"
+lxc exec "$SERVER_INSTANCE_NAME" --verbose -- cloud-init status --wait
+LANDSCAPE_IP=$(lxc info "$SERVER_INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
 echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
 
-for PORT in 6554 443 80; do lxc config device add "$INSTANCE_NAME" tcp${PORT}proxyv4 proxy listen=tcp:0.0.0.0:${PORT} connect=tcp:"${LANDSCAPE_IP}":${PORT}; done
+for PORT in 6554 443 80; do lxc config device add "$SERVER_INSTANCE_NAME" tcp${PORT}proxyv4 proxy listen=tcp:0.0.0.0:${PORT} connect=tcp:"${LANDSCAPE_IP}":${PORT}; done
 
-echo "Visit https://$LANDSCAPE_FQDN to finalize Landscape Server configuration,"
-read -r -p "then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit..."
+echo "Visit https://$LANDSCAPE_FQDN to create the first admin"
+read -r -p "then press Enter to continue provisioning Landscape Client instances, or CTRL+C to exit..."
+
+# Get the admin username and credentials
+
+while true; do
+  read -r -p "Enter the email of the admin you just created: " ADMIN_EMAIL
+  read -r -s -p "Password: " ADMIN_PASSWORD
+  echo
+
+  RESPONSE=$(curl -skX POST "https://$LANDSCAPE_FQDN/api/v2/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\": \"$ADMIN_EMAIL\", \"password\": \"$ADMIN_PASSWORD\"}")
+
+  JWT=$(echo "$RESPONSE" | yq -r '.token')
+
+  if [ "$JWT" != "null" ] && [ -n "$JWT" ]; then
+    echo "Login successful"
+    break
+  else
+    echo "Login failed. Try again? (y/n)"
+    read -r RETRY
+    if [[ "$RETRY" != "y" && "$RETRY" != "Y" ]]; then
+      echo "Exiting."
+      exit 1
+    fi
+  fi
+done
 
 TOKEN="$(grep '^TOKEN=' variables.txt | cut -d'=' -f2)" # FROM ubuntu.com/pro/dashboard
 LANDSCAPE_ACCOUNT_NAME="standalone"
@@ -72,7 +98,7 @@ REGISTRATION_KEY=""
 # Determine if CERTBOT is set or both SSL_CERTIFICATE_FILE and SSL_CERTIFICATE_KEY_FILE are set
 if [[ -n "$CERTBOT" || (-n "$SSL_CERTIFICATE_FILE" && -n "$SSL_CERTIFICATE_KEY_FILE") ]]; then
     # If CERTBOT is set, or both SSL_CERTIFICATE_FILE and SSL_CERTIFICATE_KEY_FILE are set, use the valid SSL configuration
-CLOUD_INIT=$(cat <<EOF
+CLIENT_CLOUD_INIT=$(cat <<EOF
 #cloud-config
 packages:
   - ansible
@@ -92,7 +118,7 @@ EOF
 )
 else
     # If neither CERTBOT nor both SSL_CERTIFICATE_FILE and SSL_CERTIFICATE_KEY_FILE are set, use a self-signed SSL configuration
-CLOUD_INIT=$(cat <<EOF
+CLIENT_CLOUD_INIT=$(cat <<EOF
 #cloud-config
 packages:
   - ansible
@@ -131,13 +157,13 @@ CONTAINER_FINGERPRINTS=(
 # Launch Multipass instances
 
 for RELEASE in "${MULTIPASS_VIRTUALMACHINES[@]}"; do
-  INSTANCE_NAME="$TODAY-vm-$RELEASE-$(shuf -i 100-999 -n 1)"
+  SERVER_INSTANCE_NAME="$TODAY-vm-$RELEASE-$(shuf -i 100-999 -n 1)"
   echo "$RELEASE virtual machine: latest"
-  multipass launch "$RELEASE" -n "$INSTANCE_NAME"
-  multipass exec "$INSTANCE_NAME" -- sudo snap install landscape-client
-  echo | openssl s_client -connect "$LANDSCAPE_FQDN":443 | openssl x509 | multipass transfer --parents - "$INSTANCE_NAME":/home/ubuntu/certs/landscape.pem
-  multipass exec "$INSTANCE_NAME" -- sudo cp /home/ubuntu/certs/landscape.pem /var/snap/landscape-client/common/etc/landscape.pem
-  multipass exec "$INSTANCE_NAME" -- sudo landscape-client.config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="$INSTANCE_NAME" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/var/snap/landscape-client/common/etc/landscape.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
+  multipass launch "$RELEASE" -n "$SERVER_INSTANCE_NAME"
+  multipass exec "$SERVER_INSTANCE_NAME" -- sudo snap install landscape-client
+  echo | openssl s_client -connect "$LANDSCAPE_FQDN":443 | openssl x509 | multipass transfer --parents - "$SERVER_INSTANCE_NAME":/home/ubuntu/certs/landscape.pem
+  multipass exec "$SERVER_INSTANCE_NAME" -- sudo cp /home/ubuntu/certs/landscape.pem /var/snap/landscape-client/common/etc/landscape.pem
+  multipass exec "$SERVER_INSTANCE_NAME" -- sudo landscape-client.config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="$SERVER_INSTANCE_NAME" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/var/snap/landscape-client/common/etc/landscape.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
 done
 
 # Launch LXD instances
@@ -150,7 +176,7 @@ get_fingerprint() {
 }
 
 for RELEASE in "${LXD_VIRTUALMACHINES[@]}"; do
-  INSTANCE_NAME="$TODAY-vm-$RELEASE-$(shuf -i 100-999 -n 1)"
+  SERVER_INSTANCE_NAME="$TODAY-vm-$RELEASE-$(shuf -i 100-999 -n 1)"
   if [[ -n "${LXD_VIRTUALMACHINE_FINGERPRINTS[$RELEASE]}" ]]; then
     FINGERPRINT=${LXD_VIRTUALMACHINE_FINGERPRINTS[$RELEASE]}
   else
@@ -159,14 +185,14 @@ for RELEASE in "${LXD_VIRTUALMACHINES[@]}"; do
   fi
   if [ -n "$FINGERPRINT" ]; then
     echo "$RELEASE VM image fingerprint: $FINGERPRINT"
-    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --vm --config=user.user-data="$CLOUD_INIT"
+    lxc launch ubuntu:"$FINGERPRINT" "$SERVER_INSTANCE_NAME" --vm --config=user.user-data="$CLIENT_CLOUD_INIT"
   else
     echo "No fingerprint found for release $RELEASE VM."
   fi
 done
 
 for RELEASE in "${LXD_CONTAINERS[@]}"; do
-  INSTANCE_NAME="$TODAY-c-$RELEASE-$(shuf -i 100-999 -n 1)"
+  SERVER_INSTANCE_NAME="$TODAY-c-$RELEASE-$(shuf -i 100-999 -n 1)"
   if [[ -n "${CONTAINER_FINGERPRINTS[$RELEASE]}" ]]; then
     FINGERPRINT=${CONTAINER_FINGERPRINTS[$RELEASE]}
   else
@@ -175,7 +201,7 @@ for RELEASE in "${LXD_CONTAINERS[@]}"; do
   fi
   if [ -n "$FINGERPRINT" ]; then
     echo "$RELEASE container image fingerprint: $FINGERPRINT"
-    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --config=user.user-data="$CLOUD_INIT --verbose"
+    lxc launch ubuntu:"$FINGERPRINT" "$SERVER_INSTANCE_NAME" --config=user.user-data="$CLIENT_CLOUD_INIT --verbose"
   else
     echo "No fingerprint found for release $RELEASE container."
   fi
