@@ -135,6 +135,32 @@ juju deploy ch:landscape-client --config account-name='standalone' \
 
 juju relate ubuntu landscape-client
 
+# Get the admin username and credentials
+
+while true; do
+  read -r -p "Enter the email of the admin you just created: " ADMIN_EMAIL
+  read -r -s -p "Password: " ADMIN_PASSWORD
+  echo
+
+  RESPONSE=$(curl -skX POST "https://$LANDSCAPE_FQDN/api/v2/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\": \"$ADMIN_EMAIL\", \"password\": \"$ADMIN_PASSWORD\"}")
+
+  JWT=$(echo "$RESPONSE" | yq -r '.token')
+
+  if [ "$JWT" != "null" ] && [ -n "$JWT" ]; then
+    echo "Login successful"
+    break
+  else
+    echo "Login failed. Try again? (y/n)"
+    read -r RETRY
+    if [[ "$RETRY" != "y" && "$RETRY" != "Y" ]]; then
+      echo "Exiting."
+      exit 1
+    fi
+  fi
+done
+
 juju wait-for application landscape-client --query='(status=="active")'
 
 echo "Setup complete! Login at https://$LANDSCAPE_FQDN to approve the pending instances."
