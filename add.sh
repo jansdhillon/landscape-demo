@@ -81,7 +81,19 @@ while true; do
   fi
 done
 
-TOKEN="$(grep '^TOKEN=' variables.txt | cut -d'=' -f2)" # FROM ubuntu.com/pro/dashboard
+# Create scripts
+
+EXAMPLE_CODE=$(echo -n 'Hello World!' | base64)
+
+for i in {1..3}; do
+  URL="https://$LANDSCAPE_FQDN/api?action=CreateScript&version=2011-08-01&code=$EXAMPLE_CODE&title=Test+Script+$i&script_type=V2&access_group=global"
+  echo "Url: $URL"
+  RESPONSE=$(curl -skX GET $URL  -H "Authorization: Bearer $JWT")
+  echo "Response: $RESPONSE" | yq
+done
+
+
+PRO_TOKEN="$(grep '^TOKEN=' variables.txt | cut -d'=' -f2)" # FROM ubuntu.com/pro/dashboard
 LANDSCAPE_ACCOUNT_NAME="standalone"
 HTTP_PROXY=""
 HTTPS_PROXY=""
@@ -106,7 +118,7 @@ runcmd:
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
   - apt-get remove -y unattended-upgrades
-  - pro attach $TOKEN
+  - pro attach $PRO_TOKEN
   - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
   - pro enable livepatch
 EOF
@@ -126,7 +138,7 @@ runcmd:
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
   - apt-get remove -y unattended-upgrades
-  - pro attach $TOKEN
+  - pro attach $PRO_TOKEN
   - echo | openssl s_client -connect $LANDSCAPE_FQDN:443 | openssl x509 | tee /etc/landscape/server.pem
   - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/etc/landscape/server.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
   - pro enable livepatch
