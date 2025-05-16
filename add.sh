@@ -20,10 +20,8 @@ else
   LANDSCAPE_FQDN="landscape.example.com"
 fi
 
-# Provision Landscape Server into LXD Container
+# Deploy Landscape scalable Juju bundle
 
-# get Landscape Server cloud-init.yaml template
-curl -o cloud-init.yaml https://raw.githubusercontent.com/canonical/landscape-scripts/main/provisioning/cloud-init-quickstart.yaml
 # populate the template with information from variables.txt
 while IFS='=' read -r KEY VALUE; do sed -i "s|{% set $KEY = '.*' %}|{% set $KEY = '$VALUE' %}|" cloud-init.yaml; done < variables.txt
 
@@ -44,7 +42,7 @@ if [[ -n "$SSL_CERTIFICATE_CHAIN_PATH" ]]; then
 fi
 
 # Launch Noble instance with the Landscape Server cloud-init.yaml
-INSTANCE_NAME="$TODAY-lds-${LANDSCAPE_FQDN//./-}"
+INSTANCE_NAME="$TODAY-self-hosted-${LANDSCAPE_FQDN//./-}"
 if [ -n "$LANDSCAPE_FQDN" ]; then
   sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
 else
@@ -114,8 +112,8 @@ EOF
 fi
 
 ARCH="amd64"
-LXD_VIRTUALMACHINES=("jammy" "noble" "focal")
-LXD_CONTAINERS=("jammy" "noble" "bionic")
+LXD_VIRTUALMACHINES=("jammy" "noble")
+LXD_CONTAINERS=("jammy" "noble")
 MULTIPASS_VIRTUALMACHINES=("core24")
 
 declare -A LXD_VIRTUALMACHINE_FINGERPRINTS

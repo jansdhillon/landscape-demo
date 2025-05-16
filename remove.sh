@@ -9,9 +9,9 @@ group_instances() {
   echo "$INSTANCE_LIST" | grep "^$PREFIX" | sort
 }
 
-# Function to find the Landscape LXD instance using the "-lds-" prefix
-find_lds() {
-  local PREFIX="$1-lds-"
+# Function to find the Landscape LXD instance using the "-self-hosted-" prefix
+find_self-hosted() {
+  local PREFIX="$1-self-hosted-"
   echo "$INSTANCE_LIST" | grep "^$PREFIX"
 }
 
@@ -39,7 +39,7 @@ PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
 if [ -n "$PREFIX" ]; then
   echo "Deleting instances with prefix: $PREFIX"
 
-  LANDSCAPE_FQDN=$(find_lds "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
+  LANDSCAPE_FQDN=$(find_self-hosted "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
   if [ -n "$LANDSCAPE_FQDN" ]; then
     sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
   else

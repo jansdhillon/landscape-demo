@@ -4,7 +4,7 @@ Spin up a preconfigured Landscape and Livepatch demo with containers and virtual
 
 ## Step 1. Install and configure prerequisites
 
-You need the Multipass, LXD, and yq snap packages to be installed on your Linux machine to run a local Landscape demo.
+You need the Juju, LXD, and yq snap packages to be installed on your Linux machine to run a local Landscape demo.
 
 Clone this repository and make scripts executable:
 
@@ -20,6 +20,7 @@ Install and configure the packages the scripts in this repository expect to find
 > sudo snap install yq
 > sudo snap install multipass
 > sudo snap install lxd
+> sudo snap install juju --classic
 > ```
 
 Initialize LXD
@@ -34,6 +35,18 @@ For the LXD container to reach the external network, the MTU on the bridge must 
 > read -r INTERFACE < <(ip route | awk '$1=="default"{print $5; exit}')
 > lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
 > ```
+
+Create a LXD controller for our Juju model
+
+```bash
+juju bootstrap lxd
+```
+
+Now, let's create a model for our Juju deployment of Landscape:
+
+```bash
+juju add-model landscape
+```
 
 ## Step 2. Decide between self-signed SSL and valid SSL certificates
 
@@ -85,8 +98,7 @@ The [./add.sh](add.sh) script is going to launch arch="amd64" Ubuntu instances a
 
 ```bash
 lxd_virtualmachines=("focal")
-lxd_containers=("jammy" "noble" "bionic")
-multipass_virtualmachines=("core24")
+lxd_containers=("jammy" "noble")
 ```
 
 Older fingerprints of each image will be used, when available, for demoing security patching with Livepatch and Landscape.
@@ -96,14 +108,14 @@ You will be prompted for the sudo password, when the script attempts to write to
 Example output:
 
 ```text
-rajan@unicron:~/Projects/ubuntu-instances$ ./add.sh 
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
+./add.sh 
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                              Dload  Upload   Total   Spent    Left  Speed
 100  3832  100  3832    0     0  23221      0 --:--:-- --:--:-- --:--:-- 23365
 [sudo] password for rajan: 
 Creating wed0022-landscape-example-com
 Starting wed0022-landscape-example-com    
-................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+...
 status: done
 Device tcp6554proxyv4 added to wed0022-landscape-example-com
 Device tcp443proxyv4 added to wed0022-landscape-example-com
@@ -125,3 +137,4 @@ then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit...
 - snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
 - restore.sh will restore a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
 - landscape-api enhancements to preconfigure scripts, repository mirrors, and profiles, to make the demo more complete.
+- Use Juju instead of quickstart
