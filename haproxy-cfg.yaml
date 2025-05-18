@@ -1,5 +1,0 @@
-haproxy:
-    default_timeouts: queue 60000, connect 5000, client 120000, server 120000
-    global_default_bind_options: no-tlsv10
-    services: ""
-    ssl_cert: SELFSIGNED

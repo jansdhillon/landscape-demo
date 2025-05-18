@@ -1,60 +1,106 @@
 #!/bin/bash
 
-# List all LXC instances in CSV format and extract instance names
-INSTANCE_LIST=$(lxc list --format csv | awk -F, '{print $1}' | sort | uniq)
+set -eE -o pipefail
 
-# Function to group instances by common prefix
-group_instances() {
-  local PREFIX="$1"
-  echo "$INSTANCE_LIST" | grep "^$PREFIX" | sort
+LANDSCAPE_FQDN="landscape.example.com"
+LANDSCAPE_MODEL_NAME="landscape"
+NUM_CLIENTS=3
+TOKEN="$(grep '^TOKEN=' variables.txt | cut -d'=' -f2)" # From ubuntu.com/pro/dashboard
+
+cleanup() {
+    echo "Cleaning up and exiting..."
+    rm -rf server.pem
+    sudo sed -i.bak "/$HAPROXY_IP[[:space:]]\+$LANDSCAPE_FQDN/d" /etc/hosts
+    juju destroy-model --no-prompt $LANDSCAPE_MODEL_NAME --no-wait --force
+    exit
 }
 
-# Function to find the Landscape LXD instance using the "-self-hosted-" prefix
-find_self-hosted() {
-  local PREFIX="$1-self-hosted-"
-  echo "$INSTANCE_LIST" | grep "^$PREFIX"
-}
+trap cleanup SIGINT
+trap cleanup ERR
+trap 'echo "Done."' EXIT
 
-# Generate a list of prefixes that are shared by more than one instance
-PREFIXES=$(echo "$INSTANCE_LIST" | sed 's/-.*//' | sort | uniq -c | awk '$1 > 1 {print $2}')
+juju add-model $LANDSCAPE_MODEL_NAME
 
-# Check if there are any valid prefixes
-if [ -z "$PREFIXES" ]; then
-  echo "Multiple instances with common prefixes not found."
-  exit 1
-fi
+# Add the Landscape Server unit and the other charms we need to run Landscape
+juju deploy ch:landscape-server \
+    --config landscape_ppa=ppa:landscape/self-hosted-beta \
+    --revision 124 \
+    --constraints mem=4096 \
+    --channel stable
 
-# List available prefixes
-echo "Available prefixes with more than one instance:"
-I=1
-for PREFIX in $PREFIXES; do
-  echo "$I. $PREFIX"
-  I=$((I + 1))
+juju deploy ch:haproxy --channel stable --revision 75 \
+    --config default_timeouts="queue 60000, connect 5000, client 120000, server 120000" \
+    --config global_default_bind_options=no-tlsv10 \
+    --config services="" \
+    --config ssl_cert=SELFSIGNED
+juju expose haproxy
+
+juju deploy ch:postgresql --config plugin_plpython3u_enable=true \
+    --config plugin_ltree_enable=true \
+    --config plugin_intarray_enable=true \
+    --config plugin_debversion_enable=true \
+    --config plugin_pg_trgm_enable=true \
+    --channel 14/stable \
+    --revision 363
+juju deploy ch:rabbitmq-server --channel 3.9/stable --revision 188
+
+# For Landscape Client to use in the future
+
+juju deploy ubuntu -n $NUM_CLIENTS
+
+echo "Attaching Ubuntu Pro tokens..."
+for ((i = 0; i < NUM_CLIENTS; i++)); do
+    while true; do
+        status=$(juju status ubuntu/$i --format=yaml | yq '.applications.ubuntu.application-status.current')
+        if [[ "$status" == "active" ]]; then
+            break
+        fi
+        sleep 1
+    done
+    juju ssh "ubuntu/$i" "sudo pro attach $TOKEN"
 done
 
-# Prompt user to select a prefix group
-read -r -p "Enter the number of the group to start: " CHOICE
-PREFIX=$(echo "$PREFIXES" | sed -n "${CHOICE}p")
+# Next, setup the relations
+juju relate landscape-server rabbitmq-server
+juju relate landscape-server haproxy
+juju integrate landscape-server:db postgresql:db-admin
 
-if [ -n "$PREFIX" ]; then
-  echo "Starting instances with prefix: $PREFIX"
-  INSTANCE_NAME=$(find_self-hosted "$PREFIX")
-  if [ -n "$INSTANCE_NAME" ]; then
-    lxc start $INSTANCE_NAME --verbose
-    until lxc info $INSTANCE_NAME | grep -q 'Status: RUNNING'; do
-      sleep 1
-    done
-    LANDSCAPE_FQDN=$(find_self-hosted "$PREFIX" | xargs -I{} lxc exec {} -- hostname --long)
-    if [ -n "$LANDSCAPE_FQDN" ]; then
-      sudo sed -i "/$LANDSCAPE_FQDN/d" /etc/hosts
-    else
-      echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
+echo -n "Waiting for Landscape to become active (use \"juju status -m $LANDSCAPE_MODEL_NAME --watch 2s\" in another terminal for a detailed, live view)"
+
+while true; do
+    ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
+    pg_status=$(juju status postgresql --format=yaml | yq '.applications.postgresql.application-status.current')
+
+    if [[ "$ls_status" == "active" && "$pg_status" == "active" ]]; then
+        echo "done."
+        break
     fi
-  fi
-  LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
-  echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
-  group_instances "$PREFIX" | xargs -I{} lxc start {}
+    echo -n "."
+    sleep 1
+done
 
-else
-  echo "Invalid choice"
-fi
+# Get the HAProxy IP
+HAPROXY_IP=$(juju show-unit haproxy/0 | yq .haproxy/0.public-address | cut -d/ -f1)
+echo "$HAPROXY_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
+
+# Get the self-signed cert
+echo | openssl s_client -connect $HAPROXY_IP:443 | openssl x509 | sudo tee server.pem
+
+# base64 encode it to use for Landscape Client units
+
+B64_CERT=$(cat server.pem | base64)
+
+echo "Visit https://$LANDSCAPE_FQDN to finalize Landscape Server configuration,"
+read -r -p "then press Enter to continue provisioning Landscape Client instances, or CTRL+C to exit..."
+
+# Deploy Landscape Client
+
+juju deploy ch:landscape-client --config account-name='standalone' \
+    --config ping-url="http://$HAPROXY_IP/ping" \
+    --config url="https://$HAPROXY_IP/message-system" \
+    --config ssl-public-key="base64:$B64_CERT" \
+    --config ppa="ppa:landscape/self-hosted-beta"
+
+# Relate it to Ubuntu
+
+juju relate ubuntu landscape-client

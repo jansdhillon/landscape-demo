@@ -8,32 +8,38 @@ You need the Juju, LXD, and yq snap packages to be installed on your Linux machi
 
 Clone this repository and make scripts executable:
 
-> ```bash
-> git clone git@github.com:rajannpatel/ubuntu-instances.git
-> cd ubuntu-instances
-> chmod +x *.sh
-> ```
+```bash
+git clone git@github.com:rajannpatel/ubuntu-instances.git
+cd ubuntu-instances
+chmod +x *.sh
+```
 
-Install and configure the packages the scripts in this repository expect to find on your machine.
+Install and configure the packages the scripts in this repository expect to find on your machine:
 
-> ```bash
-> sudo snap install yq
-> sudo snap install lxd
-> sudo snap install juju --classic
-> ```
+```bash
+sudo snap install yq
+sudo snap install lxd
+sudo snap install juju --classic
+```
 
 Initialize LXD
 
-> ```bash
-> lxd init --auto
-> ```
+```bash
+lxd init --auto
+```
 
 For the LXD container to reach the external network, the MTU on the bridge must match the default network adapter. This extra step is necessary in some virtualized environments, such as Google Cloud's Compute Engine where the MTU is lower, or Oracle Cloud where jumbo frames are enabled by default, and the MTU is higher. This is not likely to impact you on most networks, where the default MTU is 1500.
 
-> ```bash
-> read -r INTERFACE < <(ip route | awk '$1=="default"{print $5; exit}')
-> lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
-> ```
+```bash
+read -r INTERFACE < <(ip route | awk '$1=="default"{print $5; exit}')
+lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
+```
+
+Now, bootstrap a local cloud with Juju and LXD, which will allow us to easily manage the lifecycle of our system:
+
+```bash
+juju bootstrap lxd landscape-controller
+```
 
 ## Step 2. Create the Ubuntu instances
 
@@ -85,5 +91,4 @@ then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit...
 - Run `pro fix` commands on each Landscape-managed Ubuntu instance after provisioning. This simulates patch drift between various machines, and makes for more interesting demos.
 - snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD instances.
 - restore.sh will restore a point in time snapshot of Landscape and a selection of LXD instances.
-- REST API enhancements to preconfigure scripts, repository mirrors, and profiles, to make the demo more complete.
-- Use Juju instead of quickstart
+- REST API enhancements to preconfigure scripts, repository mirrors, and profiles to make the demo more complete.
