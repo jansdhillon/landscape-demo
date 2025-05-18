@@ -1,8 +1,8 @@
 # Landscape Demo
 
-Spin up a preconfigured Landscape and Livepatch demo with containers and virtual machines with outstanding ESM security patching tasks. The demo will run on landscape.example.com, and your system's /etc/hosts file will get modified so that you can access the demo at that address. If you have your own domain, you have the option of configuring a valid SSL certificate for it. Postfix configurations can also be set before launching the Landscape instance.
+Spin up a preconfigured Landscape and Livepatch demo with containers and virtual machines with outstanding ESM security patching tasks. The demo will run on landscape.example.com, and your system's `/etc/hosts` file will get modified so that you can access the demo at that address.
 
-## Step 1. Install and configure prerequisites
+## Step 1. Install and configure Landscape Server with Juju
 
 You need the Juju, LXD, and yq snap packages to be installed on your Linux machine to run a local Landscape demo.
 
@@ -18,7 +18,6 @@ Install and configure the packages the scripts in this repository expect to find
 
 > ```bash
 > sudo snap install yq
-> sudo snap install multipass
 > sudo snap install lxd
 > sudo snap install juju --classic
 > ```
@@ -48,53 +47,15 @@ Now, let's create a model for our Juju deployment of Landscape:
 juju add-model landscape
 ```
 
-## Step 2. Decide between self-signed SSL and valid SSL certificates
+## Step 2. Create the Ubuntu instances
 
-### Option 1: Use self-signed SSL certificates and launch landscape.example.com
-
-To use self-signed SSL certificates, edit [variables.txt](variables.txt) and either remove the CERTBOT variable, and remove all 3 SSL_ prefixed variables, or leave them blank:
-
-```text
-CERTBOT=
-SSL_CERTIFICATE_PATH=
-SSL_CERTIFICATE_KEY_PATH=
-SSL_CERTIFICATE_CHAIN_PATH=
-```
-
-### Option 2: Use a valid SSL certificate
-
-Edit [variables.txt](variables.txt) and set the `HOSTNAME` and `DOMAIN` values to reflect where you will run Landscape, other than the default `landscape.example.com`.
-
-To use valid SSL certificates on your Landscape Server LXD instance, there are two ways to obtain and install them.
-
-1.  For Internet-facing Landscape Server installations, with unrestricted incoming Port 80 and 443 traffic, edit [variables.txt](variables.txt) and specify `CERTBOT=apt` or `CERTBOT=snap` to install the certbot package inside the Ubuntu instance running Landscape as either a snap or deb package.
-
-2.  For instances with restricted inbound connectivity on Port 80 and 443, not installing certbot on Landscape Server makes sense. Setting `CERTBOT=` to equal nothing will result in certbot not being installed in the Landscape Server LXD instance. Instead of using certbot within the Landscape Server LXD instance to acquire and configure SSL certificates, the paths to the certificates can be provided as the values for:
-   - SSL_CERTIFICATE_PATH
-   - SSL_CERTIFICATE_KEY_PATH
-   - SSL_CERTIFICATE_CHAIN_PATH
-
-To obtain a wildcard subdomain SSL certificate from LetsEncrypt, run:
-
-> ```bash
-> sudo snap install certbot --classic
-> sudo certbot certonly --manual --preferred-challenges dns -d "*.$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2)"
-> ```
-
--  **cert.pem**: This is the server certificate issued for your domain. It is your primary certificate that identifies your server.
--  **chain.pem**: This file contains the intermediate CA certificates needed to establish a chain of trust from your server certificate to the root CA certificate. In many cases, this file is what you need for the CA certificate(s).
--  **privkey.pem**: This is your private key associated with the server certificate. It should be kept secure and private.
--  **fullchain.pem**: This file includes both your server certificate (cert.pem) and the intermediate CA certificates (chain.pem), providing a complete certificate chain. Since the cert.pem and chain.pem files are independently configured, this file does not need to be used.
-
-## Step 3. Create the Ubuntu instances
-
--  [./add.sh](add.sh) will create Ubuntu instances, starting with Landscape, followed by Ubuntu instances that will enroll with that Landscape instance.
+[./add.sh](add.sh) will create Ubuntu instances, starting with Landscape Server, followed by Landscape Client instances.
 
 All new instances will be named with a common prefix, to keep things organized. The prefix is in `DAYHHMM` format
 
-Landscape Server will be launched in an Ubuntu 24.04 LXD container.
+Landscape Server will be launched in an Ubuntu 24.04.2 LTS ("Noble Numbat") LXD container.
 
-The [./add.sh](add.sh) script is going to launch arch="amd64" Ubuntu instances as follows:
+The [./add.sh](add.sh) script is going to launch AMD64 Ubuntu instances as follows:
 
 ```bash
 lxd_virtualmachines=("focal")
@@ -127,14 +88,14 @@ then press Enter to continue provisioning Ubuntu instances, or CTRL+C to exit...
 ## Starting, Stopping, and Deleting the Ubuntu instances
 
 -  [./start.sh](start.sh) and [./stop.sh](stop.sh) can start and stop every Ubuntu instance with your chosen `DAYHHMM` prefix, 
--  [./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines, and Multipass virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
+-  [./remove.sh](stop.sh) can delete sets of LXD containers and virtual machines. If more than one instance is detected with a `DAYHHMM` prefix, it will be added to a list. Choose which grouping of containers and virtual machines you wish to delete.
 
 ---
 
 ## TODO:
 
 - Run `pro fix` commands on each Landscape-managed Ubuntu instance after provisioning. This simulates patch drift between various machines, and makes for more interesting demos.
-- snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
-- restore.sh will restore a point in time snapshot of Landscape and a selection of LXD and Multipass instances.
-- landscape-api enhancements to preconfigure scripts, repository mirrors, and profiles, to make the demo more complete.
+- snapshot.sh will take a point in time snapshot of Landscape and a selection of LXD instances.
+- restore.sh will restore a point in time snapshot of Landscape and a selection of LXD instances.
+- REST API enhancements to preconfigure scripts, repository mirrors, and profiles, to make the demo more complete.
 - Use Juju instead of quickstart

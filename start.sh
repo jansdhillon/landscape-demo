@@ -54,9 +54,6 @@ if [ -n "$PREFIX" ]; then
   LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
   echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
   group_instances "$PREFIX" | xargs -I{} lxc start {}
-  for INSTANCE in $(multipass list --format csv | awk -F, '{print $1}' | grep "^$PREFIX"); do
-    multipass start "$INSTANCE" --verbose
-  done
 
 else
   echo "Invalid choice"

@@ -5,9 +5,6 @@ TODAY=$(date +%a%H%M | tr '[:upper:]' '[:lower:]')
 # Extract values from variables.txt
 HOSTNAME=$(grep '^HOSTNAME=' variables.txt | cut -d'=' -f2 | tr -d '[:space:]')
 DOMAIN=$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2 | tr -d '[:space:]')
-CERTBOT=$(grep '^CERTBOT=' variables.txt | cut -d'=' -f2)
-SSL_CERTIFICATE_PATH=$(grep '^SSL_CERTIFICATE_PATH=' variables.txt | cut -d'=' -f2)
-SSL_CERTIFICATE_KEY_PATH=$(grep '^SSL_CERTIFICATE_KEY_PATH=' variables.txt | cut -d'=' -f2)
 
 # Construct Landscape FQDN based on available values
 if [ -n "$HOSTNAME" ] && [ -n "$DOMAIN" ]; then
@@ -20,7 +17,7 @@ else
   LANDSCAPE_FQDN="landscape.example.com"
 fi
 
-# Deploy Landscape scalable Juju bundle
+# Deploy Landscape units with Juju
 
 # populate the template with information from variables.txt
 while IFS='=' read -r KEY VALUE; do sed -i "s|{% set $KEY = '.*' %}|{% set $KEY = '$VALUE' %}|" cloud-init.yaml; done < variables.txt
@@ -48,7 +45,7 @@ if [ -n "$LANDSCAPE_FQDN" ]; then
 else
   echo "Error: LANDSCAPE_FQDN is empty. Aborting changes to /etc/hosts."
 fi
-lxc launch ubuntu:24.04 "$INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml) --verbose"
+lxc launch ubuntu:noble "$INSTANCE_NAME" --config=user.user-data="$(cat cloud-init.yaml) --verbose"
 lxc exec "$INSTANCE_NAME" --verbose -- cloud-init status --wait
 LANDSCAPE_IP=$(lxc info "$INSTANCE_NAME" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1)
 echo "$LANDSCAPE_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
@@ -114,7 +111,6 @@ fi
 ARCH="amd64"
 LXD_VIRTUALMACHINES=("jammy" "noble")
 LXD_CONTAINERS=("jammy" "noble")
-MULTIPASS_VIRTUALMACHINES=("core24")
 
 declare -A LXD_VIRTUALMACHINE_FINGERPRINTS
 LXD_VIRTUALMACHINE_FINGERPRINTS=(
@@ -125,18 +121,6 @@ declare -A CONTAINER_FINGERPRINTS
 CONTAINER_FINGERPRINTS=(
   ["bionic"]="c533845b5db1747674ee915cbb20df6eb47c953bb7caf1fec5b35ae9ccf98c18"
 )
-
-# Launch Multipass instances
-
-for RELEASE in "${MULTIPASS_VIRTUALMACHINES[@]}"; do
-  INSTANCE_NAME="$TODAY-vm-$RELEASE-$(shuf -i 100-999 -n 1)"
-  echo "$RELEASE virtual machine: latest"
-  multipass launch "$RELEASE" -n "$INSTANCE_NAME"
-  multipass exec "$INSTANCE_NAME" -- sudo snap install landscape-client
-  echo | openssl s_client -connect "$LANDSCAPE_FQDN":443 | openssl x509 | multipass transfer --parents - "$INSTANCE_NAME":/home/ubuntu/certs/landscape.pem
-  multipass exec "$INSTANCE_NAME" -- sudo cp /home/ubuntu/certs/landscape.pem /var/snap/landscape-client/common/etc/landscape.pem
-  multipass exec "$INSTANCE_NAME" -- sudo landscape-client.config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="$INSTANCE_NAME" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --ssl-public-key=/var/snap/landscape-client/common/etc/landscape.pem --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
-done
 
 # Launch LXD instances
 

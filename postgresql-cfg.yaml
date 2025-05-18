@@ -1,0 +1,6 @@
+postgresql:
+    plugin_plpython3u_enable: true
+    plugin_ltree_enable: true
+    plugin_intarray_enable: true
+    plugin_debversion_enable: true
+    plugin_pg_trgm_enable: true
