@@ -35,18 +35,6 @@ For the LXD container to reach the external network, the MTU on the bridge must 
 > lxc network set lxdbr0 bridge.mtu=$(ip link show $INTERFACE | awk '/mtu/ {print $5}')
 > ```
 
-Create a LXD controller for our Juju model
-
-```bash
-juju bootstrap lxd
-```
-
-Now, let's create a model for our Juju deployment of Landscape:
-
-```bash
-juju add-model landscape
-```
-
 ## Step 2. Create the Ubuntu instances
 
 [./add.sh](add.sh) will create Ubuntu instances, starting with Landscape Server, followed by Landscape Client instances.
