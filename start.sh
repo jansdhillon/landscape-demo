@@ -8,7 +8,7 @@ LANDSCAPE_MODEL_NAME="landscape"
 
 while [[ -z $PRO_TOKEN ]]; do
     echo -n "'PRO_TOKEN' is not set. Visit https://ubuntu.com/pro/dashboard to get it,"
-    read -r -p " and enter it here, or press CTRL+C to exit: " PRO_TOKEN
+    read -r -p " and enter it here: " PRO_TOKEN
 done
 
 cleanup() {
@@ -76,16 +76,8 @@ juju add-machine -n 2 --constraints="virt-type=virtual-machine"
 juju add-unit -n 2 ubuntu --to 9,10
 
 printf "Waiting for Ubuntu instances to become active"
+juju wait-for application ubuntu --query='(status=="active")'
 for i in {0..4}; do
-    while true; do
-        status=$(juju status "ubuntu/$i" --format=yaml | yq '.applications.ubuntu.application-status.current')
-        if [[ "$status" == "active" ]]; then
-            echo "done."
-            break
-        fi
-        printf "."
-        sleep 1
-    done
     echo "Attaching Ubuntu Pro token..."
     juju ssh "ubuntu/$i" "sudo pro attach $PRO_TOKEN"
 done
@@ -97,17 +89,8 @@ juju relate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
 printf "Waiting for the Landscape Server and PostgreSQL apps to become active"
-while true; do
-    ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
-    pg_status=$(juju status postgresql --format=yaml | yq '.applications.postgresql.application-status.current')
-
-    if [[ "$ls_status" == "active" && "$pg_status" == "active" ]]; then
-        echo "done."
-        break
-    fi
-    printf "."
-    sleep 1
-done
+juju wait-for application landscape-client --query='(status=="active")'
+juju wait-for application postgresql --query='(status=="active")'
 
 # Get the HAProxy IP
 
@@ -135,5 +118,7 @@ juju deploy ch:landscape-client --config account-name='standalone' \
 # Relate it to Ubuntu
 
 juju relate ubuntu landscape-client
+
+juju wait-for application landscape-client --query='(status=="active")'
 
 echo "Setup complete! Login at https://$LANDSCAPE_FQDN to approve the pending instances."
