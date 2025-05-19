@@ -4,7 +4,6 @@ set -eE -o pipefail
 
 LANDSCAPE_FQDN="landscape.example.com"
 LANDSCAPE_MODEL_NAME="landscape"
-NUM_CLIENTS=3
 TOKEN="$(grep '^TOKEN=' variables.txt | cut -d'=' -f2)" # From ubuntu.com/pro/dashboard
 
 cleanup() {
@@ -24,32 +23,47 @@ juju add-model $LANDSCAPE_MODEL_NAME
 # Add the Landscape Server unit and the other charms we need to run Landscape
 juju deploy ch:landscape-server \
     --config landscape_ppa=ppa:landscape/self-hosted-beta \
-    --revision 124 \
     --constraints mem=4096 \
-    --channel stable
+    --base ubuntu@22.04
 
-juju deploy ch:haproxy --channel stable --revision 75 \
+juju deploy ch:haproxy \
+    --channel stable \
+    --revision 75 \
     --config default_timeouts="queue 60000, connect 5000, client 120000, server 120000" \
     --config global_default_bind_options=no-tlsv10 \
     --config services="" \
-    --config ssl_cert=SELFSIGNED
+    --config ssl_cert=SELFSIGNED \
+    --base ubuntu@22.04
+
 juju expose haproxy
 
-juju deploy ch:postgresql --config plugin_plpython3u_enable=true \
+juju deploy ch:postgresql \
+    --config plugin_plpython3u_enable=true \
     --config plugin_ltree_enable=true \
     --config plugin_intarray_enable=true \
     --config plugin_debversion_enable=true \
     --config plugin_pg_trgm_enable=true \
     --channel 14/stable \
-    --revision 363
-juju deploy ch:rabbitmq-server --channel 3.9/stable --revision 188
+    --revision 363 \
+    --base ubuntu@22.04 \
+    -n 3
+
+juju deploy ch:rabbitmq-server \
+    --channel 3.9/stable \
+    --revision 188 \
+    --base ubuntu@22.04
 
 # For Landscape Client to use in the future
 
-juju deploy ubuntu -n $NUM_CLIENTS
+juju deploy ubuntu -n 3
 
-echo "Attaching Ubuntu Pro tokens..."
-for ((i = 0; i < NUM_CLIENTS; i++)); do
+# Create VMs
+juju add-machine -n 2 --constraints="virt-type=virtual-machine"
+
+juju add-unit -n 2 ubuntu --to 9,10
+
+echo "Provisioning machines and attaching Ubuntu Pro tokens..."
+for ((i = 0; i < 5; i++)); do
     while true; do
         status=$(juju status ubuntu/$i --format=yaml | yq '.applications.ubuntu.application-status.current')
         if [[ "$status" == "active" ]]; then
@@ -65,7 +79,7 @@ juju relate landscape-server rabbitmq-server
 juju relate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-echo -n "Waiting for Landscape to become active (use \"juju status -m $LANDSCAPE_MODEL_NAME --watch 2s\" in another terminal for a detailed, live view)"
+echo -n "Setting up Landscape (use \"juju status -m $LANDSCAPE_MODEL_NAME --watch 2s\" in another terminal for a detailed, live view)"
 
 while true; do
     ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
@@ -80,11 +94,11 @@ while true; do
 done
 
 # Get the HAProxy IP
-HAPROXY_IP=$(juju show-unit haproxy/0 | yq .haproxy/0.public-address | cut -d/ -f1)
-echo "$HAPROXY_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
+HAPROXY_IP=$(juju show-unit haproxy/0 | yq '."haproxy/0".public-address')
+echo "$HAPROXY_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts > /dev/null
 
 # Get the self-signed cert
-echo | openssl s_client -connect $HAPROXY_IP:443 | openssl x509 | sudo tee server.pem
+echo | openssl s_client -connect $HAPROXY_IP:443 | openssl x509 | sudo tee server.pem > /dev/null
 
 # base64 encode it to use for Landscape Client units
 
