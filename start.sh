@@ -16,7 +16,6 @@ cleanup() {
 
 trap cleanup SIGINT
 trap cleanup ERR
-trap 'echo "Done."' EXIT
 
 juju add-model $LANDSCAPE_MODEL_NAME
 
@@ -80,6 +79,7 @@ juju relate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
 echo -n "Setting up Landscape (use \"juju status -m $LANDSCAPE_MODEL_NAME --watch 2s\" in another terminal for a detailed, live view)"
+echo
 
 while true; do
     ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
@@ -89,7 +89,7 @@ while true; do
         echo "done."
         break
     fi
-    echo -n "."
+    printf "."
     sleep 1
 done
 
@@ -118,3 +118,5 @@ juju deploy ch:landscape-client --config account-name='standalone' \
 # Relate it to Ubuntu
 
 juju relate ubuntu landscape-client
+
+echo "Setup complete! Login at https://$LANDSCAPE_FQDN to approve the pending instances."
