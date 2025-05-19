@@ -3,7 +3,15 @@
 set -eE -o pipefail
 
 LANDSCAPE_FQDN="landscape.example.com"
-LANDSCAPE_MODEL_NAME="landscape"
+MODEL_NAME="landscape"
+# fka "series"
+CLIENT_BASE="ubuntu@24.04"
+SERVER_BASE="ubuntu@22.04"
+# Ubuntu / Landscape Client
+NUM_LS_CLIENT_UNITS=1
+# Postgres units
+NUM_DB_UNITS=1
+PPA="ppa:landscape/self-hosted-beta"
 
 
 while [[ -z $PRO_TOKEN ]]; do
@@ -15,15 +23,19 @@ cleanup() {
     echo "Cleaning up model and exiting..."
     rm -rf server.pem
     echo "Modifying /etc/hosts requires elevated privileges."
-    sudo sed -i.bak "/$HAPROXY_IP[[:space:]]\+$LANDSCAPE_FQDN/d" /etc/hosts
-    juju destroy-model --no-prompt $LANDSCAPE_MODEL_NAME --no-wait --force
+
+    if [ -n "$HAPROXY_IP" ] && [ -n "$LANDSCAPE_FQDN" ]; then
+        sudo sed -i.bak "/$HAPROXY_IP[[:space:]]\+$LANDSCAPE_FQDN/d" /etc/hosts
+    fi
+
+    juju destroy-model --no-prompt $MODEL_NAME --no-wait --force
     exit
 }
 
 trap cleanup SIGINT
 trap cleanup ERR
 
-juju add-model $LANDSCAPE_MODEL_NAME
+juju add-model $MODEL_NAME
 
 echo "Provisioning machines..."
 
@@ -31,9 +43,9 @@ echo "Provisioning machines..."
 # based on https://github.com/canonical/landscape-bundles/blob/scalable-stable/bundle.yaml
 
 juju deploy ch:landscape-server \
-    --config landscape_ppa=ppa:landscape/self-hosted-beta \
+    --config landscape_ppa=$PPA \
     --constraints mem=4096 \
-    --base ubuntu@22.04
+    --base $SERVER_BASE
 
 juju deploy ch:haproxy \
     --channel stable \
@@ -57,7 +69,7 @@ juju deploy ch:postgresql \
     --revision 468 \
     --base ubuntu@22.04 \
     --constraints mem=2048 \
-    -n 3
+    -n $NUM_DB_UNITS
 
 juju deploy ch:rabbitmq-server \
     --channel 3.9/stable \
@@ -67,18 +79,13 @@ juju deploy ch:rabbitmq-server \
 
 # For Landscape Client to use in the future
 
-juju deploy ubuntu -n 3
+juju deploy ubuntu -n $NUM_LS_CLIENT_UNITS --base $CLIENT_BASE
 
-# Create VMs
-
-juju add-machine -n 2 --constraints="virt-type=virtual-machine"
-
-juju add-unit -n 2 ubuntu --to 9,10
-
-printf "Waiting for Ubuntu instances to become active"
+echo "Waiting for Ubuntu instances to become active"
 juju wait-for application ubuntu --query='(status=="active")'
-for i in {0..4}; do
-    echo "Attaching Ubuntu Pro token..."
+echo "Attaching Ubuntu Pro token..."
+for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
+    echo "Attaching token to ubuntu/$i"
     juju ssh "ubuntu/$i" "sudo pro attach $PRO_TOKEN"
 done
 
@@ -88,9 +95,8 @@ juju relate landscape-server rabbitmq-server
 juju relate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-printf "Waiting for the Landscape Server and PostgreSQL apps to become active"
-juju wait-for application landscape-client --query='(status=="active")'
-juju wait-for application postgresql --query='(status=="active")'
+echo "Waiting for the apps to become active"
+juju wait-for model $MODEL_NAME --query='forEach(applications, app => app.status == "active")'
 
 # Get the HAProxy IP
 
@@ -113,7 +119,7 @@ juju deploy ch:landscape-client --config account-name='standalone' \
     --config ping-url="http://$HAPROXY_IP/ping" \
     --config url="https://$HAPROXY_IP/message-system" \
     --config ssl-public-key="base64:$B64_CERT" \
-    --config ppa="ppa:landscape/self-hosted-beta"
+    --config ppa=$PPA
 
 # Relate it to Ubuntu
 

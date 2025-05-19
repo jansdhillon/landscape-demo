@@ -13,7 +13,8 @@ cd ubuntu-instances
 chmod +x start.sh
 ```
 
-In this demo we will use the Juju, LXD, and yq snaps:
+In this demo we will use the Juju, LXD, and yq snaps. Install
+them if you have not already:
 
 ```bash
 sudo snap install yq
@@ -21,13 +22,8 @@ sudo snap install lxd
 sudo snap install juju --classic
 ```
 
-Initialize LXD:
+- 💡 **TIP**: Make sure LXD has been initialized before proceeding. You should see `lxd` when running `groups`, otherwise see [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
 
-```bash
-sudo usermod -aG lxd "$USER"
-newgrp lxd
-lxd init --auto
-```
 
 Now, create a local LXD cloud with Juju, which will allow us to easily orchestrate the lifecycle of our Landscape system:
 
@@ -43,7 +39,7 @@ We need an Ubuntu Pro token to use Landscape, which we can get [here](https://ub
 export PRO_TOKEN=... # your token here
 ```
 
-[./start.sh](start.sh) will create Ubuntu instances, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances.
+[./start.sh](start.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are  managed by Landscape Server.
 
 - 💡 **TIP**: Use `juju status --watch 2s` for a live view of the Juju model's lifecycle.
 
