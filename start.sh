@@ -5,12 +5,9 @@ set -eE -o pipefail
 LANDSCAPE_FQDN="landscape.example.com"
 MODEL_NAME="landscape"
 # fka "series"
-CLIENT_BASE="ubuntu@24.04"
-SERVER_BASE="ubuntu@22.04"
-# Ubuntu / Landscape Client
-NUM_LS_CLIENT_UNITS=1
-# Postgres units
-NUM_DB_UNITS=1
+CLIENT_BASE="ubuntu@20.04"
+NUM_LS_CLIENT_UNITS=3
+SERVER_BASE="ubuntu@22.04" #jammy
 PPA="ppa:landscape/self-hosted-beta"
 
 
@@ -69,7 +66,7 @@ juju deploy ch:postgresql \
     --revision 468 \
     --base ubuntu@22.04 \
     --constraints mem=2048 \
-    -n $NUM_DB_UNITS
+    -n 2
 
 juju deploy ch:rabbitmq-server \
     --channel 3.9/stable \
@@ -79,7 +76,7 @@ juju deploy ch:rabbitmq-server \
 
 # For Landscape Client to use in the future
 
-juju deploy ubuntu -n $NUM_LS_CLIENT_UNITS --base $CLIENT_BASE
+juju deploy --base $CLIENT_BASE ubuntu -n $NUM_LS_CLIENT_UNITS
 
 echo "Waiting for Ubuntu instances to become active"
 juju wait-for application ubuntu --query='(status=="active")'
@@ -95,7 +92,7 @@ juju relate landscape-server rabbitmq-server
 juju relate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-echo "Waiting for the apps to become active"
+echo "Waiting for the model to settle"
 while true; do
     ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
     pg_status=$(juju status postgresql --format=yaml | yq '.applications.postgresql.application-status.current')
@@ -161,15 +158,52 @@ while true; do
   fi
 done
 
-# Create scripts
+make_rest_api_request() {
+  local url=$1
+  local method=$2
+  local token=$3
+  local body=$4
 
-EXAMPLE_CODE=$(echo -n "#\!/bin/bash\necho 'Hello World!'" | base64)
+  if [[ -n "$body" ]]; then
+    RESPONSE=$(curl -skX "$method" "$url" \
+      -H "Authorization: Bearer $token" \
+      -H "Content-Type: application/json" \
+      -d "$body")
+  else
+    RESPONSE=$(curl -skX "$method" "$url" \
+      -H "Authorization: Bearer $token")
+  fi
 
-for i in {1..3}; do
-  URL="https://$LANDSCAPE_FQDN/api?action=CreateScript&version=2011-08-01&code=$EXAMPLE_CODE&title=Test+Script+$i&script_type=V2&access_group=global"
-  RESPONSE=$(curl -skX GET $URL  -H "Authorization: Bearer $JWT")
   echo "Response: $RESPONSE" | yq
-done
+}
+
+EXAMPLE_CODE=$(base64 <<< '#!/bin/bash\n
+echo "Hello world!" | tee hello.txt')
+
+URL="https://${LANDSCAPE_FQDN}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
+
+make_rest_api_request "$URL" "GET" "$JWT"
+
+URL="https://${LANDSCAPE_FQDN}/api/v2/script-profiles"
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
+BODY=$(cat <<EOF
+{
+  "all_computers": true,
+  "script_id": 1,
+  "tags": [],
+  "time_limit": 300,
+  "title": "Cron",
+  "trigger": {
+    "trigger_type": "recurring",
+    "interval": "0 0 * * *",
+    "start_after": "$NOW"
+  },
+  "username": "root"
+}
+EOF
+)
+
+make_rest_api_request "$URL" "POST" "$JWT" "$BODY"
 
 juju wait-for application landscape-client --query='(status=="active")'
 
