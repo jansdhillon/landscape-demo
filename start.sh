@@ -161,6 +161,16 @@ while true; do
   fi
 done
 
+# Create scripts
+
+EXAMPLE_CODE=$(echo -n "#\!/bin/bash\necho 'Hello World!'" | base64)
+
+for i in {1..3}; do
+  URL="https://$LANDSCAPE_FQDN/api?action=CreateScript&version=2011-08-01&code=$EXAMPLE_CODE&title=Test+Script+$i&script_type=V2&access_group=global"
+  RESPONSE=$(curl -skX GET $URL  -H "Authorization: Bearer $JWT")
+  echo "Response: $RESPONSE" | yq
+done
+
 juju wait-for application landscape-client --query='(status=="active")'
 
 echo "Setup complete! Login at https://$LANDSCAPE_FQDN to approve the pending instances."
