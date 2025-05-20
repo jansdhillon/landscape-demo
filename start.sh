@@ -96,7 +96,17 @@ juju relate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
 echo "Waiting for the apps to become active"
-juju wait-for model $MODEL_NAME --query='forEach(applications, app => app.status == "active")'
+while true; do
+    ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
+    pg_status=$(juju status postgresql --format=yaml | yq '.applications.postgresql.application-status.current')
+
+    if [[ "$ls_status" == "active" && "$pg_status" == "active" ]]; then
+        echo "done."
+        break
+    fi
+    printf "."
+    sleep 1
+done
 
 # Get the HAProxy IP
 
