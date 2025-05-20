@@ -5,12 +5,12 @@ Spin up a preconfigured, local Landscape demo. The demo will use `landscape.exam
 ## Install and configure Landscape Server with Juju
 
 
-Clone this repository and make `start.sh` executable:
+Clone this repository and make `run.sh` executable:
 
 ```bash
 git clone git@github.com:jansdhillon/ubuntu-instances.git
 cd ubuntu-instances
-chmod +x start.sh
+chmod +x run.sh
 ```
 
 In this demo we will use the Juju, LXD, and yq snaps. Install
@@ -39,7 +39,7 @@ We need an Ubuntu Pro token to use Landscape, which we can get [here](https://ub
 export PRO_TOKEN=... # your token here
 ```
 
-[./start.sh](start.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are  managed by Landscape Server.
+[./run.sh](run.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are  managed by Landscape Server.
 
 - 💡 **TIP**: Use `juju status --watch 2s` for a live view of the Juju model's lifecycle.
 
