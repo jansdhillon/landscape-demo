@@ -31,9 +31,11 @@ NUM_DB_UNITS=2
 ADMIN_EMAIL="admin@example.com"
 ADMIN_PASSWORD="pwd"
 ADMIN_NAME="Landscape Admin"
+bold=$(echo -e "\e[1m")
+reset=$(echo -e "\e[0m")
 
 while [[ -z $PRO_TOKEN ]]; do
-  printf "'PRO_TOKEN' is not set. Visit https://ubuntu.com/pro/dashboard to get it,"
+  printf "'PRO_TOKEN' is not set. Visit %shttps://ubuntu.com/pro/dashboard%s to get it," "$bold" "$reset"
   read -r -p " and enter it here: " PRO_TOKEN
 done
 
@@ -109,7 +111,7 @@ juju integrate landscape-server rabbitmq-server
 juju integrate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-printf "Waiting for the model to settle...\nUse \"juju status --watch 2s\" in another terminal for a live view.\n"
+printf "Waiting for the model to settle...\n%sUse \"juju status --watch 2s\"%s in another terminal for a live view.\n" "$bold" "$reset"
 
 juju wait-for model "${MODEL_NAME}" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
@@ -128,7 +130,7 @@ while true; do
     break
   else
     printf "Failed to get certificate.\n"
-    printf "Trying again... (CTRL+C to abort)\n"
+    printf "Trying again... \(CTRL+C to abort\)\n"
     sleep 5
   fi
 done
@@ -147,7 +149,7 @@ while true; do
     break
   else
     printf "Login failed. Response: %s\n" "$login_response"
-    printf "Trying again... (CTRL+C to abort)\n"
+    printf "Trying again... \(CTRL+C to abort\)\n"
     sleep 5
   fi
 done
@@ -245,4 +247,4 @@ EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=
 
 make_rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 
-printf "Setup complete 🚀 \nYou can now login at https://%s/new_dashboard using the following credentials:\nEmail: %s\nPassword: %s\n" "$LANDSCAPE_FQDN" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+echo "${bold}Setup complete 🚀${reset}\nYou can now login at ${bold}https://${LANDSCAPE_FQDN}/new_dashboard${reset} using the following credentials:\n${bold}Email:${reset} ${ADMIN_EMAIL}\n${bold}Password:${reset} ${ADMIN_PASSWORD}"
