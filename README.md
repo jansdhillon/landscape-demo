@@ -8,8 +8,8 @@ Spin up a preconfigured, local Landscape demo. The demo will use `landscape.exam
 Clone this repository and make `run.sh` executable:
 
 ```bash
-git clone git@github.com:jansdhillon/ubuntu-instances.git
-cd ubuntu-instances
+git clone git@github.com:jansdhillon/landscape-demo.git
+cd landscape-demo
 chmod +x run.sh
 ```
 
@@ -35,9 +35,6 @@ export PRO_TOKEN=... # your token here
 
 [./run.sh](run.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are managed by Landscape Server.
 
-- 💡 **TIP**: Use `juju status --watch 2s` for a live view of the Juju model's lifecycle.
-
-
 ## Logging in 
 
 The first administrator account is created for you, and the credentials are as follows:
@@ -59,8 +56,7 @@ Additionally, in the [Activities tab](https://landscape.example.com/new_dashboar
 After the script has finished running, we can verify the script ran by SSH'ing into the Landscape Client unit:
 
 ```bash
-juju ssh landscape-client/0
-cat hello.txt
+juju ssh root@landscape-client/0 "sudo cat hello.txt" # scripts are run as root so we must use sudo to see the file
 # Hello world!
 ```
 

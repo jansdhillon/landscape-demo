@@ -192,7 +192,8 @@ make_rest_api_request "PATCH" "${SET_PREFERENCES_URL}" "${BODY}"
 # Create a script
 
 EXAMPLE_CODE=$(base64 <<<'#!/bin/bash
-echo "Hello world!" | tee hello.txt')
+echo "Hello world!" | tee hello.txt'
+)
 
 CREATE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
 
@@ -249,4 +250,6 @@ EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=
 
 make_rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 
-printf "Setup complete\!\nYou can now login at https://%s/new_dashboard using the following credentials:\nEmail: %s\nPassword: %s\n" "$LANDSCAPE_FQDN" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+printf "Setup complete 🚀 \nYou can now login at https://%s/new_dashboard using the following credentials:\nEmail: %s\nPassword: %s\n" "$LANDSCAPE_FQDN" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+
+exit
