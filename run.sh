@@ -19,10 +19,16 @@ EOF
 
 LANDSCAPE_FQDN="landscape.example.com"
 MODEL_NAME="landscape"
-REGISTRATION_KEY="landscapetiktok"
+REGISTRATION_KEY="key"
 # fka "series"
 PPA="ppa:landscape/self-hosted-beta"
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
+# Landsacpe Client units
+NUM_LS_CLIENT_UNITS=3
+CLIENT_BASE="ubuntu@20.04"
+SERVER_BASE="ubuntu@22.04"
+# Postgres units
+NUM_DB_UNITS=2
 
 while [[ -z $PRO_TOKEN ]]; do
   echo -n "'PRO_TOKEN' is not set. Visit https://ubuntu.com/pro/dashboard to get it,"
@@ -55,7 +61,7 @@ echo "Provisioning machines..."
 juju deploy ch:landscape-server \
   --config landscape_ppa="${PPA}" \
   --constraints mem=4096 \
-  --base "${SERVER_BASE}" \
+  --base "$SERVER_BASE" \
   --config registration_key="${REGISTRATION_KEY}"
 
 juju deploy ch:haproxy \
@@ -79,7 +85,8 @@ juju deploy ch:postgresql \
   --channel 14/stable \
   --revision 468 \
   --base ubuntu@22.04 \
-  --constraints mem=2048
+  --constraints mem=2048 \
+  -n "$NUM_DB_UNITS"
 
 juju deploy ch:rabbitmq-server \
   --channel 3.9/stable \
@@ -87,26 +94,17 @@ juju deploy ch:rabbitmq-server \
   --base ubuntu@22.04 \
   --config consumer-timeout=259200000
 
+# For Landscape Client to use in the future
+juju deploy --base $CLIENT_BASE lxd -n $NUM_LS_CLIENT_UNITS
 
-
-# Create VM for Landscape Client to use in the future
-juju add-machine --constraints="virt-type=virtual-machine" --base "ubuntu@20.04"
-
-# LXD Container for Landscape Client
-juju deploy --base "ubuntu@22.04" lxd
-
-juju wait-for machine 5
-
-juju deploy ubuntu --to 5 --constraints="virt-type=virtual-machine"
-
-echo "Waiting for units to become active..."
+echo "Waiting for LXD units to become active..."
 juju wait-for application lxd --query='(status=="active")'
 
-echo "Attaching Ubuntu Pro token to LXD container"
-juju ssh "lxd/0" "sudo pro attach ${PRO_TOKEN}"
-
-echo "Attaching Ubuntu Pro token to Ubuntu VM"
-juju ssh "ubuntu/0" "sudo pro attach ${PRO_TOKEN}"
+echo "Attaching Ubuntu Pro token..."
+for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
+  echo "Attaching token to lxd/${i}"
+  juju ssh "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
+done
 
 # Next, setup the relations
 
@@ -156,8 +154,6 @@ juju deploy ch:landscape-client --config account-name='standalone' \
 # Relate it to LXD
 
 juju relate lxd landscape-client
-
-juju relate ubuntu landscape-client
 
 # Get the admin username and credentials
 
