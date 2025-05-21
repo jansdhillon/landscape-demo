@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -eE -o pipefail
-
 cat <<EOF
 @@@@@@@@@@@@@@@@@@
 @@@@---@@@@@@@@@@@
@@ -25,11 +23,11 @@ REGISTRATION_KEY="key"
 PPA="ppa:landscape/self-hosted-beta"
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 # Landsacpe Client units
-NUM_LS_CLIENT_UNITS=1
+NUM_LS_CLIENT_UNITS=3
 CLIENT_BASE="ubuntu@20.04"
 SERVER_BASE="ubuntu@22.04"
 # Postgres units
-NUM_DB_UNITS=1
+NUM_DB_UNITS=2
 ADMIN_EMAIL="admin@example.com"
 ADMIN_PASSWORD="pwd"
 ADMIN_NAME="Landscape Admin"
@@ -43,9 +41,9 @@ cleanup() {
   printf "Cleaning up model and exiting...\n"
   rm -rf server.pem
 
-  if [ -n "${HAPROXY_IP}" ] && [ -n "${LANDSCAPE_FQDN}" ]; then
+  if [ -n "${HAPROXY_IP}" ]; then
     printf "Modifying /etc/hosts requires elevated privileges.\n"
-    sudo sed -i.bak "/${HAPROXY_IP}[[:space:]]\+${LANDSCAPE_FQDN}/d" /etc/hosts
+    sudo sed -i "/${HAPROXY_IP}[[:space:]]\\+landscape\.example\.com/d" /etc/hosts
   fi
 
   juju destroy-controller --no-prompt "${CONTROLLER_NAME}" --destroy-all-models --no-wait --force
@@ -53,7 +51,6 @@ cleanup() {
 }
 
 trap cleanup SIGINT
-trap cleanup ERR
 
 juju bootstrap lxd "${CONTROLLER_NAME}"
 
@@ -71,8 +68,7 @@ juju deploy ch:landscape-server \
   --config registration_key="${REGISTRATION_KEY}" \
   --config admin_name="${ADMIN_NAME}" \
   --config admin_email="${ADMIN_EMAIL}" \
-  --config admin_password="${ADMIN_PASSWORD}" \
-  --config min_install=true
+  --config admin_password="${ADMIN_PASSWORD}"
 
 juju deploy ch:haproxy \
   --channel stable \
@@ -113,7 +109,8 @@ juju integrate landscape-server rabbitmq-server
 juju integrate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-printf "Waiting for the model to settle...\n"
+printf "Waiting for the model to settle...\nUse \"juju status --watch 2s\" in another terminal for a live view.\n"
+
 juju wait-for model "${MODEL_NAME}" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
 # Get the HAProxy IP
@@ -123,11 +120,9 @@ printf "%s %s" "$HAPROXY_IP" "$LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/nu
 
 while true; do
   # Get the self-signed cert
-  set +e
   B64_CERT=$(
     echo | openssl s_client -connect "$HAPROXY_IP:443" 2>/dev/null | openssl x509 2>/dev/null | base64
   )
-  set -e
 
   if [ "${B64_CERT}" != "null" ] && [ -n "${B64_CERT}" ]; then
     break
@@ -246,7 +241,7 @@ juju wait-for model "${MODEL_NAME}" --timeout 3600s --query='forEach(units, unit
 
 # Manually execute the script on the Landscape Client instances
 
-EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=2011-08-01&query=id:1&script_id=1&username=root&time_limit=300"
+EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=2011-08-01&query=id:2+OR+id:1+OR+id:3&script_id=1&username=root&time_limit=300"
 
 make_rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 
