@@ -251,5 +251,3 @@ EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=
 make_rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 
 printf "Setup complete 🚀 \nYou can now login at https://%s/new_dashboard using the following credentials:\nEmail: %s\nPassword: %s\n" "$LANDSCAPE_FQDN" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
-
-exit
