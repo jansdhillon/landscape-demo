@@ -12,16 +12,15 @@ cat <<EOF
 @@@@-#-######-@@@@
 @@@@-########-@@@@
 @@@@@@@@@@@@@@@@@@
+
 Welcome to Landscape!
+
 EOF
 
 LANDSCAPE_FQDN="landscape.example.com"
-NUM_LS_CLIENT_UNITS=3
 MODEL_NAME="landscape"
 REGISTRATION_KEY="landscapetiktok"
 # fka "series"
-CLIENT_BASE="ubuntu@20.04" # focal
-SERVER_BASE="ubuntu@22.04" # jammy
 PPA="ppa:landscape/self-hosted-beta"
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 
@@ -54,10 +53,10 @@ echo "Provisioning machines..."
 # based on https://github.com/canonical/landscape-bundles/blob/scalable-stable/bundle.yaml
 
 juju deploy ch:landscape-server \
-  --config landscape_ppa=$PPA \
+  --config landscape_ppa="${PPA}" \
   --constraints mem=4096 \
-  --base $SERVER_BASE \
-  --config registration_key=$REGISTRATION_KEY
+  --base "${SERVER_BASE}" \
+  --config registration_key="${REGISTRATION_KEY}"
 
 juju deploy ch:haproxy \
   --channel stable \
@@ -80,8 +79,7 @@ juju deploy ch:postgresql \
   --channel 14/stable \
   --revision 468 \
   --base ubuntu@22.04 \
-  --constraints mem=2048 \
-  -n 2
+  --constraints mem=2048
 
 juju deploy ch:rabbitmq-server \
   --channel 3.9/stable \
@@ -89,17 +87,26 @@ juju deploy ch:rabbitmq-server \
   --base ubuntu@22.04 \
   --config consumer-timeout=259200000
 
-# For Landscape Client to use in the future
-juju deploy --base $CLIENT_BASE ubuntu -n $NUM_LS_CLIENT_UNITS
 
-echo "Waiting for Ubuntu units to become active..."
-juju wait-for application ubuntu --query='(status=="active")'
 
-echo "Attaching Ubuntu Pro token..."
-for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
-  echo "Attaching token to ubuntu/$i"
-  juju ssh "ubuntu/$i" "sudo pro attach $PRO_TOKEN"
-done
+# Create VM for Landscape Client to use in the future
+juju add-machine --constraints="virt-type=virtual-machine" --base "ubuntu@20.04"
+
+# LXD Container for Landscape Client
+juju deploy --base "ubuntu@22.04" lxd
+
+juju wait-for machine 5
+
+juju deploy ubuntu --to 5 --constraints="virt-type=virtual-machine"
+
+echo "Waiting for units to become active..."
+juju wait-for application lxd --query='(status=="active")'
+
+echo "Attaching Ubuntu Pro token to LXD container"
+juju ssh "lxd/0" "sudo pro attach ${PRO_TOKEN}"
+
+echo "Attaching Ubuntu Pro token to Ubuntu VM"
+juju ssh "ubuntu/0" "sudo pro attach ${PRO_TOKEN}"
 
 # Next, setup the relations
 
@@ -126,27 +133,29 @@ HAPROXY_IP=$(juju show-unit "haproxy/0" | yq '."haproxy/0".public-address')
 echo "$HAPROXY_IP $LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
 
 # Get the self-signed cert
-echo | openssl s_client -connect "$HAPROXY_IP:443" | openssl x509 | sudo tee server.pem >/dev/null
+echo | openssl s_client -connect "${HAPROXY_IP}:443" | openssl x509 | sudo tee server.pem >/dev/null
 
 # base64 encode it to use for Landscape Client units
 
 B64_CERT=$(cat server.pem | base64)
 
-echo "Visit https://$LANDSCAPE_FQDN to finalize Landscape Server configuration,"
+echo "Visit https://${LANDSCAPE_FQDN} to finalize Landscape Server configuration,"
 read -r -p "then press Enter to continue provisioning Landscape Client instances, or CTRL+C to exit..."
 
 # Deploy Landscape Client
 
 juju deploy ch:landscape-client --config account-name='standalone' \
-  --config ping-url="http://$HAPROXY_IP/ping" \
-  --config url="https://$HAPROXY_IP/message-system" \
-  --config ssl-public-key="base64:$B64_CERT" \
-  --config ppa=$PPA \ 
-  --config registration-key=$REGISTRATION_KEY \
+  --config ping-url="http://${HAPROXY_IP}/ping" \
+  --config url="https://${HAPROXY_IP}/message-system" \
+  --config ssl-public-key="base64:${B64_CERT}" \
+  --config ppa="${PPA}" \
+  --config registration-key="${REGISTRATION_KEY}" \
   --config script-users="ALL" \
   --config include-manager-plugins="ScriptExecution"
 
-# Relate it to Ubuntu
+# Relate it to LXD
+
+juju relate lxd landscape-client
 
 juju relate ubuntu landscape-client
 
@@ -161,17 +170,17 @@ while true; do
 
   RESPONSE=$(curl -skX POST "https://${LANDSCAPE_FQDN}/api/v2/login" \
     -H "Content-Type: application/json" \
-    -d "{\"email\": \"$ADMIN_EMAIL\", \"password\": \"$ADMIN_PASSWORD\"}")
+    -d "{\"email\": \"${ADMIN_EMAIL}\", \"password\": \"${ADMIN_PASSWORD}\"}")
 
-  JWT=$(echo "$RESPONSE" | yq -r '.token')
+  JWT=$(echo "${RESPONSE}" | yq -r '.token')
 
-  if [ "$JWT" != "null" ] && [ -n "$JWT" ]; then
-    echo "Login successful!"
+  if [ "${JWT}" != "null" ] && [ -n "${JWT}" ]; then
+    echo "Login successful\!"
     break
   else
     echo "Login failed. Try again? (y/n)"
     read -r RETRY
-    if [[ "$RETRY" != "y" && "$RETRY" != "Y" ]]; then
+    if [[ "${RETRY}" != "y" && "${RETRY}" != "Y" ]]; then
       echo "Exiting."
       exit 1
     fi
@@ -189,7 +198,7 @@ make_rest_api_request() {
       -H "Content-Type: application/json" \
       -d "$body")
   else
-    RESPONSE=$(curl -skX "$method" "$url" \
+    RESPONSE=$(curl -skX "${method}" "$url" \
       -H "Authorization: Bearer $JWT")
   fi
 
@@ -233,7 +242,7 @@ juju wait-for application landscape-client --query='(status=="active")'
 
 # Manually execute the script on the Landscape Client instances
 
-EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=2011-08-01&query=id:2+OR+id:1+OR+id:3&script_id=1&username=root&time_limit=300"
+EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=2011-08-01&query=id:2+OR+id:1&script_id=1&username=root&time_limit=300"
 
 make_rest_api_request "$EXECUTE_SCRIPT_URL" "GET"
 
