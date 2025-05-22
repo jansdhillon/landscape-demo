@@ -143,12 +143,6 @@ printf "Waiting for the model to settle...\nUse %s in another terminal for a liv
 
 juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
-printf "Attaching Ubuntu Pro token...\n"
-for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
-  printf "Attaching token to lxd/${i}\n"
-  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
-done
-
 # Get the HAProxy IP
 
 HAPROXY_IP=$(juju show-unit -m "$MODEL_NAME" "haproxy/0"  | yq '."haproxy/0".public-address')
@@ -260,7 +254,11 @@ juju -m "$MODEL_NAME" integrate lxd landscape-client
 
 printf "Waiting for the Landscape Clients to register\n"
 
-sleep 10
+printf "Attaching Ubuntu Pro token...\n"
+for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
+  printf "Attaching token to lxd/${i}\n"
+  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
+done
 
 juju wait-for application landscape-client --query='forEach(units, unit => unit.workload-status == "active")'
 
