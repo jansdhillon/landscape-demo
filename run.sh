@@ -138,47 +138,17 @@ juju integrate landscape-server rabbitmq-server
 juju integrate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-# we SHOULD be able to use juju wait-for model here but it's broken
-
-application_is_active() {
-  local application=$1
-
-  status=$(juju status -m "$MODEL_NAME" "$application" --format=yaml | yq -r ".applications.\"$application\".\"application-status\".current")
-
-  if [[ "$status" == "active" ]]; then
-    echo true
-  else
-    echo false
-  fi
-}
-
-wait_for_model() {
-  echo -e "Waiting for the model to settle...\nUse $(bold_orange_text 'juju status --watch 2s') in another terminal for a live view."
-  while true; do
-    if [[ $(application_is_active "landscape-server") == true && \
-          $(application_is_active "postgresql") == true && \
-          $(application_is_active "haproxy") == true && \
-          $(application_is_active "rabbitmq-server") == true ]]; then
-        sleep 5 # it will often go righ tback into maitenance
-
-        if [[ $(application_is_active "landscape-server") == true && \
-              $(application_is_active "postgresql") == true && \
-              $(application_is_active "haproxy") == true && \
-              $(application_is_active "rabbitmq-server") == true ]]; then
-            printf " done.\n"
-            break
-        fi
-    else
-      printf ".\n"
-      sleep 1
-    fi
-  done
-}
+msg=$(bold_orange_text 'juju status --watch 2s')
+printf "Waiting for the model to settle...\nUse %s in another terminal for a live view.\n" "$msg"
 
 
-wait_for_model
+juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
-# juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
+printf "%sAttaching Ubuntu Pro token...%s\n" "$ORANGE" "$RESET_TEXT"
+for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
+  printf "Attaching token to lxd/${i}\n"
+  juju ssh "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
+done
 
 # Get the HAProxy IP
 
@@ -211,7 +181,7 @@ while true; do
   JWT=$(printf "%s" $login_response | yq -r '.token')
 
   if [ "${JWT}" != "null" ] && [ -n "${JWT}" ]; then
-    printf "Login successful\!\n"
+    printf 'Login successful!\n'
     break
   else
     printf "Login failed. Response: %s\n" "$login_response"
@@ -287,25 +257,11 @@ juju deploy ch:landscape-client --config account-name='standalone' \
   --config script-users="ALL" \
   --config include-manager-plugins="ScriptExecution"
 
-printf "Attaching Ubuntu Pro token...\n"
-for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
-  printf "Attaching token to lxd/${i}\n"
-  juju ssh "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
-done
-
 juju integrate lxd landscape-client
 
-printf "Waiting for the Landscape Clients to register"
+printf "Waiting for the Landscape Clients to register\n"
 
-while true; do
-  if [[ $(application_is_active "landscape-client") == true ]]; then
-    printf " done.\n"
-    break
-  else
-    printf ".\n"
-    sleep 1
-  fi
-done
+juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
 # Manually execute the script on the Landscape Client instances
 
