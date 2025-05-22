@@ -22,10 +22,10 @@ sudo snap install lxd
 sudo snap install juju --classic
 ```
 
-- 💡 **TIP**: Make sure LXD has been initialized before proceeding. You should see `lxd` when running `groups`, otherwise see [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
+LXD has additional initialization steps that must be followed before proceeding. See [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
 
 
-Now, create a local LXD cloud with Juju, which will allow us to easily orchestrate the lifecycle of our Landscape system:
+Then, create a local LXD cloud with Juju, which will allow us to easily orchestrate the lifecycle of our Landscape system:
 
 ```bash
 juju bootstrap lxd landscape-controller
