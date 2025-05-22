@@ -59,7 +59,6 @@ juju ssh landscape-client/0 "sudo cat /root/hello.txt"
 We can easily clean up our resources with Juju and the following:
 
 ```bash
-printf "Modifying /etc/hosts requires elevated privileges.\n"
 # Delete any line with "landscape.example.com" from /etc/hosts
 sudo sed -i '/landscape\.example\.com/d' /etc/hosts
 # Destroy the "landscape" model, matching "MODEL_NAME" in variables.txt
