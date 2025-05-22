@@ -61,11 +61,11 @@ We can easily clean up our resources with Juju and the following:
 ```bash
 # Get the IPv4 address of our HAProxy Unit
 HAPROXY_IP=$(juju show-unit haproxy/0 | yq '."haproxy/0".public-address')
-# Remove landscape.example.com entries from /etc/hosts
+# Remove landscape.example.com from /etc/hosts
 if [ -n "${HAPROXY_IP}" ]; then
     printf "Modifying /etc/hosts requires elevated privileges.\n"
     sudo sed -i "/${HAPROXY_IP}[[:space:]]\\+landscape\.example\.com/d" /etc/hosts
 fi
-# Destroy the "landscape" model, matching "MODEL" in variables.txt
+# Destroy the "landscape" model, matching "MODEL_NAME" in variables.txt
 juju destroy-model --no-prompt landscape --no-wait --force
 ```
