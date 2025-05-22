@@ -43,6 +43,7 @@ ADMIN_PASSWORD=$(read_var "ADMIN_PASSWORD")
 ADMIN_NAME=$(read_var "ADMIN_NAME")
 PRO_TOKEN=$(read_var "PRO_TOKEN")
 MIN_INSTALL=$(read_var "MIN_INSTALL")
+CRON_INTERVAL=$(read_var "CRON_INTERVAL")
 
 BOLD="\e[1m"
 ORANGE="\e[33m"
@@ -142,7 +143,7 @@ juju integrate landscape-server:db postgresql:db-admin
 application_is_active() {
   local application=$1
 
-  status=$(juju status "$application" --format=yaml | yq -r ".applications.\"$application\".\"application-status\".current")
+  status=$(juju status -m "$MODEL_NAME" "$application" --format=yaml | yq -r ".applications.\"$application\".\"application-status\".current")
 
   if [[ "$status" == "active" ]]; then
     echo true
@@ -272,7 +273,7 @@ BODY=$(
   "title": "Cron",
   "trigger": {
     "trigger_type": "recurring",
-    "interval": "* * * * *",
+    "interval": "${CRON_INTERVAL}",
     "start_after": "${NOW}"
   },
   "username": "root"

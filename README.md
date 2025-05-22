@@ -41,16 +41,9 @@ PRO_TOKEN=... # your token here
 
 [./run.sh](run.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are managed by Landscape Server.
 
-## Logging in 
-
-The first administrator account is created for you, and the credentials are as follows:
-
-- Email: `admin@example.com`
-- Password: `pwd`
-
 ## Script Execution
 
-[./example.sh](example.sh) was added to Landscape, and a script profile for it, which makes it execute on the Landscape Client instance on a set interval.
+[./example.sh](example.sh) was added to Landscape, along with a script profile which makes it execute on the Landscape Client instances on a set interval.
 
 Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it was already (or set to be) manually executed on the Landscape Client instance.
 

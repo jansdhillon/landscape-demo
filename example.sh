@@ -1,2 +1,2 @@
 #!/bin/bash
-echo "Hello world!" | tee hello.txt'
+echo "Hello world!" | tee hello.txt
