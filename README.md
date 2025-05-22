@@ -59,13 +59,9 @@ juju ssh landscape-client/0 "sudo cat /root/hello.txt"
 We can easily clean up our resources with Juju and the following:
 
 ```bash
-# Get the IPv4 address of our HAProxy Unit
-HAPROXY_IP=$(juju show-unit haproxy/0 | yq '."haproxy/0".public-address')
-# Remove landscape.example.com from /etc/hosts
-if [ -n "${HAPROXY_IP}" ]; then
-    printf "Modifying /etc/hosts requires elevated privileges.\n"
-    sudo sed -i "/${HAPROXY_IP}[[:space:]]\\+landscape\.example\.com/d" /etc/hosts
-fi
+printf "Modifying /etc/hosts requires elevated privileges.\n"
+# Delete any line with "landscape.example.com" from /etc/hosts
+sudo sed -i '/landscape\.example\.com/d' /etc/hosts
 # Destroy the "landscape" model, matching "MODEL_NAME" in variables.txt
 juju destroy-model --no-prompt landscape --no-wait --force
 ```
