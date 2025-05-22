@@ -25,6 +25,12 @@ sudo snap install juju --classic
 - 💡 **TIP**: Make sure LXD has been initialized before proceeding. You should see `lxd` when running `groups`, otherwise see [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
 
 
+Now, create a local LXD cloud with Juju, which will allow us to easily orchestrate the lifecycle of our Landscape system:
+
+```bash
+juju bootstrap lxd landscape-controller
+```
+
 ## Create the Ubuntu instances for Landscape
 
 We need an Ubuntu Pro token to use Landscape, which we can get [here](https://ubuntu.com/pro/dashboard). Save the token value to the `PRO_TOKEN` environment variable:
@@ -44,19 +50,14 @@ The first administrator account is created for you, and the credentials are as f
 
 ## Script Execution
 
-[./run.sh](run.sh) created a script and a script profile for it, which makes it execute on the Landscape Client instance on a set interval:
-
-```bash
-#!/bin/bash
-echo "Hello world!" | tee hello.txt'
-```
+[./example.sh](example.sh) was added to Landscape, and a script profile for it, which makes it execute on the Landscape Client instance on a set interval.
 
 Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it was already (or set to be) manually executed on the Landscape Client instance.
 
 After the script has finished running, we can verify the script ran by SSH'ing into the Landscape Client unit:
 
 ```bash
-juju ssh root@landscape-client/0 "sudo cat hello.txt" # scripts are run as root so we must use sudo to see the file
+juju ssh root@landscape-client/0 "sudo cat hello.txt"
 # Hello world!
 ```
 
@@ -72,6 +73,6 @@ if [ -n "${HAPROXY_IP}" ]; then
     printf "Modifying /etc/hosts requires elevated privileges.\n"
     sudo sed -i "/${HAPROXY_IP}[[:space:]]\\+landscape\.example\.com/d" /etc/hosts
 fi
-# Destroy the controller and model for Landscape
-juju destroy-controller --no-prompt landscape-controller --destroy-all-models --no-wait --force
+# Destroy the model for Landscape
+juju destroy-model --no-prompt landscape --no-wait --force
 ```

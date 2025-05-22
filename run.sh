@@ -1,5 +1,45 @@
 #!/bin/bash
 
+read_var() {
+  local var=$1
+  local res
+
+  res=$(grep "^$var=" variables.txt | cut -d'=' -f2- | xargs)
+
+  while [[ -z $res ]]; do
+    printf "'%s' is not set.\n" "$var" >&2
+    read -r -p " enter it here: " res
+  done
+
+  echo "$res"
+}
+
+LANDSCAPE_FQDN=$(read_var "LANDSCAPE_FQDN")
+MODEL_NAME=$(read_var "MODEL_NAME")
+REGISTRATION_KEY=$(read_var "REGISTRATION_KEY")
+# fka "series"
+PPA=$(read_var "PPA")
+NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
+# Landsacpe Client units
+NUM_LS_CLIENT_UNITS=$(read_var "NUM_LS_CLIENT_UNITS")
+CLIENT_BASE=$(read_var "CLIENT_BASE")
+SERVER_BASE=$(read_var "SERVER_BASE")
+# Postgres units
+NUM_DB_UNITS=$(read_var "NUM_DB_UNITS")
+ADMIN_EMAIL=$(read_var "ADMIN_EMAIL")
+ADMIN_PASSWORD=$(read_var "ADMIN_PASSWORD")
+ADMIN_NAME=$(read_var "ADMIN_NAME")
+PRO_TOKEN=$(read_var "PRO_TOKEN")
+
+BOLD="\e[1m"
+ORANGE="\e[33m"
+RESET_TEXT="\e[0m"
+
+bold_orange_text() {
+  local text=$1
+  echo -e "${BOLD}${ORANGE}${text}${RESET_TEXT}"
+}
+
 cat <<EOF
 @@@@@@@@@@@@@@@@@@
 @@@@---@@@@@@@@@@@
@@ -10,51 +50,23 @@ cat <<EOF
 @@@@-#-######-@@@@
 @@@@-########-@@@@
 @@@@@@@@@@@@@@@@@@
-
-Welcome to Landscape!
-
 EOF
 
-LANDSCAPE_FQDN="landscape.example.com"
-MODEL_NAME="landscape"
-CONTROLLER_NAME="landscape-controller"
-REGISTRATION_KEY="key"
-# fka "series"
-PPA="ppa:landscape/self-hosted-beta"
-NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
-# Landsacpe Client units
-NUM_LS_CLIENT_UNITS=3
-CLIENT_BASE="ubuntu@20.04"
-SERVER_BASE="ubuntu@22.04"
-# Postgres units
-NUM_DB_UNITS=2
-ADMIN_EMAIL="admin@example.com"
-ADMIN_PASSWORD="pwd"
-ADMIN_NAME="Landscape Admin"
-bold=$(echo -e "\e[1m")
-reset=$(echo -e "\e[0m")
-
-while [[ -z $PRO_TOKEN ]]; do
-  printf "'PRO_TOKEN' is not set. Visit %shttps://ubuntu.com/pro/dashboard%s to get it," "$bold" "$reset"
-  read -r -p " and enter it here: " PRO_TOKEN
-done
+bold_orange_text 'Welcome to Landscape!'
 
 cleanup() {
   printf "Cleaning up model and exiting...\n"
-  rm -rf server.pem
 
   if [ -n "${HAPROXY_IP}" ]; then
     printf "Modifying /etc/hosts requires elevated privileges.\n"
     sudo sed -i "/${HAPROXY_IP}[[:space:]]\\+landscape\.example\.com/d" /etc/hosts
   fi
 
-  juju destroy-controller --no-prompt "${CONTROLLER_NAME}" --destroy-all-models --no-wait --force
+  juju destroy-model --no-prompt "${MODEL_NAME}" --no-wait --force
   exit
 }
 
 trap cleanup SIGINT
-
-juju bootstrap lxd "${CONTROLLER_NAME}"
 
 juju add-model "${MODEL_NAME}"
 
@@ -111,9 +123,24 @@ juju integrate landscape-server rabbitmq-server
 juju integrate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-printf "Waiting for the model to settle...\n%sUse \"juju status --watch 2s\"%s in another terminal for a live view.\n" "$bold" "$reset"
+echo -e "Waiting for the model to settle...\nUse $(bold_orange_text 'juju status --watch 2s') in another terminal for a live view.\n"
 
-juju wait-for model "${MODEL_NAME}" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
+# we SHOULD be able to use juju wait-for model here but it's broken
+while true; do
+    ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
+    pg_status=$(juju status postgresql --format=yaml | yq '.applications.postgresql.application-status.current')
+    ha_status=$(juju status haproxy --format=yaml | yq '.applications.landscape-server.application-status.current')
+    rmq_status=$(juju status rabbitmq-server --format=yaml | yq '.applications.postgresql.application-status.current')
+
+    if [[ "$ls_status" == "active" && "$pg_status" == "active" ]]; then
+        echo "done."
+        break
+    fi
+    printf "."
+    sleep 1
+done
+
+# juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
 # Get the HAProxy IP
 
@@ -188,9 +215,7 @@ make_rest_api_request "PATCH" "${SET_PREFERENCES_URL}" "${BODY}"
 
 # Create a script
 
-EXAMPLE_CODE=$(base64 <<<'#!/bin/bash
-echo "Hello world!" | tee hello.txt'
-)
+EXAMPLE_CODE=$(base64 < example.sh)
 
 CREATE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
 
@@ -247,4 +272,4 @@ EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=
 
 make_rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 
-echo "${bold}Setup complete 🚀${reset}\nYou can now login at ${bold}https://${LANDSCAPE_FQDN}/new_dashboard${reset} using the following credentials:\n${bold}Email:${reset} ${ADMIN_EMAIL}\n${bold}Password:${reset} ${ADMIN_PASSWORD}"
+echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_FQDN}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}"
