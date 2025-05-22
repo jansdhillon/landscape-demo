@@ -89,7 +89,7 @@ printf "Provisioning machines...\n"
 # Add the Landscape Server unit and the other apps we need to run Landscape
 # based on https://github.com/canonical/landscape-bundles/blob/scalable-stable/bundle.yaml
 
-juju deploy ch:landscape-server \
+juju deploy -m "$MODEL_NAME" ch:landscape-server \
   --config landscape_ppa="${PPA}" \
   --constraints mem=4096 \
   --base "${SERVER_BASE}" \
@@ -99,7 +99,7 @@ juju deploy ch:landscape-server \
   --config admin_password="${ADMIN_PASSWORD}" \
   --config min_install="${MIN_INSTALL}"
 
-juju deploy ch:haproxy \
+juju deploy -m "$MODEL_NAME" ch:haproxy \
   --channel stable \
   --revision 75 \
   --config default_timeouts="queue 60000, connect 5000, client 120000, server 120000" \
@@ -108,9 +108,9 @@ juju deploy ch:haproxy \
   --config ssl_cert=SELFSIGNED \
   --base ubuntu@22.04
 
-juju expose haproxy
+juju expose -m "$MODEL_NAME" haproxy
 
-juju deploy ch:postgresql \
+juju deploy -m "$MODEL_NAME" ch:postgresql \
   --config plugin_plpython3u_enable=true \
   --config plugin_ltree_enable=true \
   --config plugin_intarray_enable=true \
@@ -123,36 +123,35 @@ juju deploy ch:postgresql \
   --constraints mem=2048 \
   -n "${NUM_DB_UNITS}"
 
-juju deploy ch:rabbitmq-server \
+juju deploy -m "$MODEL_NAME" ch:rabbitmq-server \
   --channel 3.9/stable \
   --revision 188 \
   --base ubuntu@22.04 \
   --config consumer-timeout=259200000
 
 # For Landscape Client to use in the future
-juju deploy --base "${CLIENT_BASE}" lxd -n "${NUM_LS_CLIENT_UNITS}"
+juju deploy -m "$MODEL_NAME" --base "${CLIENT_BASE}" lxd -n "${NUM_LS_CLIENT_UNITS}"
 
 # Next, setup the relations
 
-juju integrate landscape-server rabbitmq-server
-juju integrate landscape-server haproxy
-juju integrate landscape-server:db postgresql:db-admin
+juju integrate -m "$MODEL_NAME" landscape-server rabbitmq-server
+juju integrate -m "$MODEL_NAME" landscape-server haproxy
+juju integrate -m "$MODEL_NAME" landscape-server:db postgresql:db-admin
 
 msg=$(bold_orange_text 'juju status --watch 2s')
 printf "Waiting for the model to settle...\nUse %s in another terminal for a live view.\n" "$msg"
 
-
 juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
-printf "%sAttaching Ubuntu Pro token...%s\n" "$ORANGE" "$RESET_TEXT"
+printf "Attaching Ubuntu Pro token...\n"
 for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
   printf "Attaching token to lxd/${i}\n"
-  juju ssh "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
+  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
 done
 
 # Get the HAProxy IP
 
-HAPROXY_IP=$(juju show-unit "haproxy/0" | yq '."haproxy/0".public-address')
+HAPROXY_IP=$(juju show-unit -m "$MODEL_NAME" "haproxy/0"  | yq '."haproxy/0".public-address')
 printf "Modifying /etc/hosts requires elevated privileges.\n"
 printf "%s %s\n" "$HAPROXY_IP" "$LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
 
@@ -181,7 +180,7 @@ while true; do
   JWT=$(printf "%s" $login_response | yq -r '.token')
 
   if [ "${JWT}" != "null" ] && [ -n "${JWT}" ]; then
-    printf 'Login successful!\n'
+    printf 'Login successful.\n'
     break
   else
     printf "Login failed. Response: %s\n" "$login_response"
@@ -216,7 +215,7 @@ rest_api_request "PATCH" "${SET_PREFERENCES_URL}" '{"auto_register_new_computers
 
 # Create a script
 
-EXAMPLE_CODE=$(base64 < example.sh)
+EXAMPLE_CODE=$(base64 <example.sh)
 
 CREATE_SCRIPT_URL="https://${HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
 
@@ -248,7 +247,7 @@ rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${BODY}"
 
 # Deploy Landscape Client
 
-juju deploy ch:landscape-client --config account-name='standalone' \
+juju -m "$MODEL_NAME" deploy ch:landscape-client --config account-name='standalone' \
   --config ping-url="http://${HAPROXY_IP}/ping" \
   --config url="https://${HAPROXY_IP}/message-system" \
   --config ssl-public-key="base64:${B64_CERT}" \
@@ -257,11 +256,13 @@ juju deploy ch:landscape-client --config account-name='standalone' \
   --config script-users="ALL" \
   --config include-manager-plugins="ScriptExecution"
 
-juju integrate lxd landscape-client
+juju -m "$MODEL_NAME" integrate lxd landscape-client
 
 printf "Waiting for the Landscape Clients to register\n"
 
-juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
+sleep 10
+
+juju wait-for application landscape-client --query='forEach(units, unit => unit.workload-status == "active")'
 
 # Manually execute the script on the Landscape Client instances
 
