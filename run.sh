@@ -118,15 +118,12 @@ juju deploy -m "$MODEL_NAME" ch:postgresql \
   --config plugin_pg_trgm_enable=true \
   --config experimental_max_connections=500 \
   --channel 14/stable \
-  --revision 468 \
   --base ubuntu@22.04 \
   --constraints mem=2048 \
   -n "${NUM_DB_UNITS}"
 
 juju deploy -m "$MODEL_NAME" ch:rabbitmq-server \
   --channel 3.9/stable \
-  --revision 188 \
-  --base ubuntu@22.04 \
   --config consumer-timeout=259200000
 
 # For Landscape Client to use in the future
@@ -138,16 +135,16 @@ juju integrate -m "$MODEL_NAME" landscape-server rabbitmq-server
 juju integrate -m "$MODEL_NAME" landscape-server haproxy
 juju integrate -m "$MODEL_NAME" landscape-server:db postgresql:db-admin
 
+msg=$(bold_orange_text 'juju status --watch 2s')
+printf "Waiting for the model to settle...\nUse %s in another terminal for a live view.\n" "$msg"
+
+juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
+
 printf "Attaching Ubuntu Pro token...\n"
 for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
   printf "Attaching token to lxd/${i}\n"
   juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
 done
-
-msg=$(bold_orange_text 'juju status --watch 2s')
-printf "Waiting for the model to settle...\nUse %s in another terminal for a live view.\n" "$msg"
-
-juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
 # Get the HAProxy IP
 
