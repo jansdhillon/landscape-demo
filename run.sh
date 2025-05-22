@@ -165,7 +165,7 @@ wait_for_model() {
               $(application_is_active "postgresql") == true && \
               $(application_is_active "haproxy") == true && \
               $(application_is_active "rabbitmq-server") == true ]]; then
-            echo " done."
+            printf " done.\n"
             break
         fi
     fi
@@ -183,7 +183,7 @@ wait_for_model
 # Get the HAProxy IP
 
 HAPROXY_IP=$(juju show-unit "haproxy/0" | yq '."haproxy/0".public-address')
-printf "%s %s" "$HAPROXY_IP" "$LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
+printf "%s %s\n" "$HAPROXY_IP" "$LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
 
 while true; do
   # Get the self-signed cert
@@ -203,7 +203,7 @@ done
 # Get the JWT
 # We do this in a loop to avoid transient 503s
 while true; do
-  login_response=$(curl -skX POST "https://${LANDSCAPE_FQDN}/api/v2/login" \
+  login_response=$(curl -skX POST "https://${HAPROXY_IP}/api/v2/login" \
     -H "Content-Type: application/json" \
     -d "{\"email\": \"${ADMIN_EMAIL}\", \"password\": \"${ADMIN_PASSWORD}\"}")
 
@@ -219,7 +219,7 @@ while true; do
   fi
 done
 
-make_rest_api_request() {
+rest_api_request() {
   local method=$1
   local url=$2
   local body=$3
@@ -239,7 +239,7 @@ make_rest_api_request() {
 
 # enable auto registration
 
-SET_PREFERENCES_URL="https://${LANDSCAPE_FQDN}/api/v2/preferences"
+SET_PREFERENCES_URL="https://${$HAPROXY_IP}/api/v2/preferences"
 
 BODY=$(
   cat <<EOF
@@ -249,19 +249,19 @@ BODY=$(
 EOF
 )
 
-make_rest_api_request "PATCH" "${SET_PREFERENCES_URL}" "${BODY}"
+rest_api_request "PATCH" "${SET_PREFERENCES_URL}" "${BODY}"
 
 # Create a script
 
 EXAMPLE_CODE=$(base64 < example.sh)
 
-CREATE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
+CREATE_SCRIPT_URL="https://${$HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
 
-make_rest_api_request "GET" "${CREATE_SCRIPT_URL}"
+rest_api_request "GET" "${CREATE_SCRIPT_URL}"
 
 # Create a script profile
 
-CREATE_SCRIPT_PROFILE_URL="https://${LANDSCAPE_FQDN}/api/v2/script-profiles"
+CREATE_SCRIPT_PROFILE_URL="https://${$HAPROXY_IP}/api/v2/script-profiles"
 
 BODY=$(
   cat <<EOF
@@ -281,7 +281,7 @@ BODY=$(
 EOF
 )
 
-make_rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${BODY}"
+rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${BODY}"
 
 # Deploy Landscape Client
 
@@ -306,7 +306,7 @@ printf "Waiting for the Landscape Clients to register"
 
 while true; do
   if [[ $(application_is_active "landscape-client") == true ]]; then
-    echo " done."
+    printf " done.\n"
     break
   fi
 
@@ -325,8 +325,8 @@ for i in $(seq 1 $NUM_LS_CLIENT_UNITS); do
   fi
 done
 
-EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=2011-08-01&query=${QUERY}&script_id=1&username=root&time_limit=300"
+EXECUTE_SCRIPT_URL="https://${HAPROXY_IP}/api/?action=ExecuteScript&version=2011-08-01&query=${QUERY}&script_id=1&username=root&time_limit=300"
 
-make_rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
+rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 
 echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_FQDN}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}"

@@ -50,7 +50,7 @@ Additionally, in the [Activities tab](https://landscape.example.com/new_dashboar
 After the script has finished running, we can verify the script ran by SSH'ing into the Landscape Client unit:
 
 ```bash
-juju ssh root@landscape-client/0 "sudo cat hello.txt"
+juju ssh landscape-client/0 "sudo cat /root/hello.txt"
 # Hello world!
 ```
 
