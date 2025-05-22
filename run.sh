@@ -138,6 +138,12 @@ juju integrate -m "$MODEL_NAME" landscape-server rabbitmq-server
 juju integrate -m "$MODEL_NAME" landscape-server haproxy
 juju integrate -m "$MODEL_NAME" landscape-server:db postgresql:db-admin
 
+printf "Attaching Ubuntu Pro token...\n"
+for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
+  printf "Attaching token to lxd/${i}\n"
+  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
+done
+
 msg=$(bold_orange_text 'juju status --watch 2s')
 printf "Waiting for the model to settle...\nUse %s in another terminal for a live view.\n" "$msg"
 
@@ -254,11 +260,7 @@ juju integrate -m "$MODEL_NAME" lxd landscape-client
 
 printf "Waiting for the Landscape Clients to register\n"
 
-printf "Attaching Ubuntu Pro token...\n"
-for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
-  printf "Attaching token to lxd/${i}\n"
-  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
-done
+sleep 10
 
 juju wait-for application landscape-client --query='forEach(units, unit => unit.workload-status == "active")'
 
