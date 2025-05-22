@@ -241,7 +241,7 @@ rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${BODY}"
 
 # Deploy Landscape Client
 
-juju -m "$MODEL_NAME" deploy ch:landscape-client --config account-name='standalone' \
+juju deploy -m "$MODEL_NAME" ch:landscape-client --config account-name='standalone' \
   --config ping-url="http://${HAPROXY_IP}/ping" \
   --config url="https://${HAPROXY_IP}/message-system" \
   --config ssl-public-key="base64:${B64_CERT}" \
@@ -250,7 +250,7 @@ juju -m "$MODEL_NAME" deploy ch:landscape-client --config account-name='standalo
   --config script-users="ALL" \
   --config include-manager-plugins="ScriptExecution"
 
-juju -m "$MODEL_NAME" integrate lxd landscape-client
+juju integrate -m "$MODEL_NAME" lxd landscape-client
 
 printf "Waiting for the Landscape Clients to register\n"
 
