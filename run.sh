@@ -4,14 +4,26 @@ read_var() {
   local var=$1
   local res
 
-  res=$(grep "^$var=" variables.txt | cut -d'=' -f2- | xargs)
+  res=$(grep "^$var=" variables.txt | cut -d'=' -f2-)
 
   while [[ -z $res ]]; do
     printf "'%s' is not set.\n" "$var" >&2
-    read -r -p " enter it here: " res
+
+    if [[ "$var" == "PRO_TOKEN" ]]; then
+      if [[ -n $PRO_TOKEN ]]; then
+        printf "Using 'PRO_TOKEN' environment variable...\n" >&2
+        res=$PRO_TOKEN
+      else
+        printf "Visit https://ubuntu.com/pro/dashboard to get it, then\n" >&2
+      fi
+    fi
+
+    if [[ -z $res ]]; then
+      read -r -p " enter it here: " res
+    fi
   done
 
-  echo "$res"
+  echo -ne "${res}"
 }
 
 LANDSCAPE_FQDN=$(read_var "LANDSCAPE_FQDN")
@@ -30,6 +42,7 @@ ADMIN_EMAIL=$(read_var "ADMIN_EMAIL")
 ADMIN_PASSWORD=$(read_var "ADMIN_PASSWORD")
 ADMIN_NAME=$(read_var "ADMIN_NAME")
 PRO_TOKEN=$(read_var "PRO_TOKEN")
+MIN_INSTALL=$(read_var "MIN_INSTALL")
 
 BOLD="\e[1m"
 ORANGE="\e[33m"
@@ -82,7 +95,8 @@ juju deploy ch:landscape-server \
   --config registration_key="${REGISTRATION_KEY}" \
   --config admin_name="${ADMIN_NAME}" \
   --config admin_email="${ADMIN_EMAIL}" \
-  --config admin_password="${ADMIN_PASSWORD}"
+  --config admin_password="${ADMIN_PASSWORD}" \
+  --config min_install="${MIN_INSTALL}"
 
 juju deploy ch:haproxy \
   --channel stable \
@@ -123,22 +137,45 @@ juju integrate landscape-server rabbitmq-server
 juju integrate landscape-server haproxy
 juju integrate landscape-server:db postgresql:db-admin
 
-echo -e "Waiting for the model to settle...\nUse $(bold_orange_text 'juju status --watch 2s') in another terminal for a live view.\n"
-
 # we SHOULD be able to use juju wait-for model here but it's broken
-while true; do
-    ls_status=$(juju status landscape-server --format=yaml | yq '.applications.landscape-server.application-status.current')
-    pg_status=$(juju status postgresql --format=yaml | yq '.applications.postgresql.application-status.current')
-    ha_status=$(juju status haproxy --format=yaml | yq '.applications.landscape-server.application-status.current')
-    rmq_status=$(juju status rabbitmq-server --format=yaml | yq '.applications.postgresql.application-status.current')
 
-    if [[ "$ls_status" == "active" && "$pg_status" == "active" ]]; then
-        echo "done."
-        break
+application_is_active() {
+  local application=$1
+
+  status=$(juju status "$application" --format=yaml | yq -r ".applications.\"$application\".\"application-status\".current")
+
+  if [[ "$status" == "active" ]]; then
+    echo true
+  else
+    echo false
+  fi
+}
+
+wait_for_model() {
+  echo -e "Waiting for the model to settle...\nUse $(bold_orange_text 'juju status --watch 2s') in another terminal for a live view."
+  while true; do
+    if [[ $(application_is_active "landscape-server") == true && \
+          $(application_is_active "postgresql") == true && \
+          $(application_is_active "haproxy") == true && \
+          $(application_is_active "rabbitmq-server") == true ]]; then
+        sleep 5
+
+        if [[ $(application_is_active "landscape-server") == true && \
+              $(application_is_active "postgresql") == true && \
+              $(application_is_active "haproxy") == true && \
+              $(application_is_active "rabbitmq-server") == true ]]; then
+            echo " done."
+            break
+        fi
     fi
+
     printf "."
     sleep 1
-done
+  done
+}
+
+
+wait_for_model
 
 # juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
 
@@ -157,7 +194,7 @@ while true; do
     break
   else
     printf "Failed to get certificate.\n"
-    printf "Trying again... \(CTRL+C to abort\)\n"
+    printf 'Trying again... (CTRL+C to abort)\n'
     sleep 5
   fi
 done
@@ -176,7 +213,7 @@ while true; do
     break
   else
     printf "Login failed. Response: %s\n" "$login_response"
-    printf "Trying again... \(CTRL+C to abort\)\n"
+    printf 'Trying again... (CTRL+C to abort)\n'
     sleep 5
   fi
 done
@@ -264,11 +301,30 @@ done
 
 juju integrate lxd landscape-client
 
-juju wait-for model "${MODEL_NAME}" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
+printf "Waiting for the Landscape Clients to register"
+
+while true; do
+  if [[ $(application_is_active "landscape-client") == true ]]; then
+    echo " done."
+    break
+  fi
+
+  printf "."
+  sleep 1
+done
 
 # Manually execute the script on the Landscape Client instances
 
-EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=2011-08-01&query=id:2+OR+id:1+OR+id:3&script_id=1&username=root&time_limit=300"
+QUERY=""
+
+for i in $(seq 1 $NUM_LS_CLIENT_UNITS); do
+  QUERY+="id:$i"
+  if [[ $i -lt $NUM_LS_CLIENT_UNITS ]]; then
+    QUERY+="+OR+"
+  fi
+done
+
+EXECUTE_SCRIPT_URL="https://${LANDSCAPE_FQDN}/api/?action=ExecuteScript&version=2011-08-01&query=${QUERY}&script_id=1&username=root&time_limit=300"
 
 make_rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 

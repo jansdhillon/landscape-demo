@@ -33,10 +33,10 @@ juju bootstrap lxd landscape-controller
 
 ## Create the Ubuntu instances for Landscape
 
-We need an Ubuntu Pro token to use Landscape, which we can get [here](https://ubuntu.com/pro/dashboard). Save the token value to the `PRO_TOKEN` environment variable:
+You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [variables.txt](./variables.txt) for `PRO_TOKEN`. Alternatively, set it as an environment variable:
 
 ```bash
-export PRO_TOKEN=... # your token here
+PRO_TOKEN=... # your token here
 ```
 
 [./run.sh](run.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are managed by Landscape Server.
@@ -73,6 +73,6 @@ if [ -n "${HAPROXY_IP}" ]; then
     printf "Modifying /etc/hosts requires elevated privileges.\n"
     sudo sed -i "/${HAPROXY_IP}[[:space:]]\\+landscape\.example\.com/d" /etc/hosts
 fi
-# Destroy the model for Landscape
+# Destroy the "landscape" model, matching "MODEL" in variables.txt
 juju destroy-model --no-prompt landscape --no-wait --force
 ```
