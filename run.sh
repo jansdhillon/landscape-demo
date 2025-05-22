@@ -183,6 +183,7 @@ wait_for_model
 # Get the HAProxy IP
 
 HAPROXY_IP=$(juju show-unit "haproxy/0" | yq '."haproxy/0".public-address')
+printf "Modifying /etc/hosts requires elevated privileges.\n"
 printf "%s %s\n" "$HAPROXY_IP" "$LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
 
 while true; do
@@ -239,7 +240,7 @@ rest_api_request() {
 
 # enable auto registration
 
-SET_PREFERENCES_URL="https://${$HAPROXY_IP}/api/v2/preferences"
+SET_PREFERENCES_URL="https://${HAPROXY_IP}/api/v2/preferences"
 
 BODY=$(
   cat <<EOF
@@ -255,13 +256,13 @@ rest_api_request "PATCH" "${SET_PREFERENCES_URL}" "${BODY}"
 
 EXAMPLE_CODE=$(base64 < example.sh)
 
-CREATE_SCRIPT_URL="https://${$HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
+CREATE_SCRIPT_URL="https://${HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
 
 rest_api_request "GET" "${CREATE_SCRIPT_URL}"
 
 # Create a script profile
 
-CREATE_SCRIPT_PROFILE_URL="https://${$HAPROXY_IP}/api/v2/script-profiles"
+CREATE_SCRIPT_PROFILE_URL="https://${HAPROXY_IP}/api/v2/script-profiles"
 
 BODY=$(
   cat <<EOF
