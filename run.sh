@@ -159,7 +159,7 @@ wait_for_model() {
           $(application_is_active "postgresql") == true && \
           $(application_is_active "haproxy") == true && \
           $(application_is_active "rabbitmq-server") == true ]]; then
-        sleep 5
+        sleep 5 # it will often go righ tback into maitenance
 
         if [[ $(application_is_active "landscape-server") == true && \
               $(application_is_active "postgresql") == true && \
@@ -168,10 +168,10 @@ wait_for_model() {
             printf " done.\n"
             break
         fi
+    else
+      printf ".\n"
+      sleep 1
     fi
-
-    printf "."
-    sleep 1
   done
 }
 
@@ -229,7 +229,7 @@ rest_api_request() {
     response=$(curl -skX "${method}" "${url}" \
       -H "Authorization: Bearer ${JWT}" \
       -H "Content-Type: application/json" \
-      -d "${body}")
+      -d "$body")
   else
     response=$(curl -skX "${method}" "${url}" \
       -H "Authorization: Bearer ${JWT}")
@@ -242,15 +242,7 @@ rest_api_request() {
 
 SET_PREFERENCES_URL="https://${HAPROXY_IP}/api/v2/preferences"
 
-BODY=$(
-  cat <<EOF
-{
-  "auto_register_new_computers": true
-}
-EOF
-)
-
-rest_api_request "PATCH" "${SET_PREFERENCES_URL}" "${BODY}"
+rest_api_request "PATCH" "${SET_PREFERENCES_URL}" '{"auto_register_new_computers": true}'
 
 # Create a script
 
@@ -309,10 +301,10 @@ while true; do
   if [[ $(application_is_active "landscape-client") == true ]]; then
     printf " done.\n"
     break
+  else
+    printf ".\n"
+    sleep 1
   fi
-
-  printf "."
-  sleep 1
 done
 
 # Manually execute the script on the Landscape Client instances
@@ -330,4 +322,4 @@ EXECUTE_SCRIPT_URL="https://${HAPROXY_IP}/api/?action=ExecuteScript&version=2011
 
 rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 
-echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_FQDN}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}"
+echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_FQDN}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}\n"
