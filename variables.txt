@@ -10,5 +10,5 @@ SERVER_BASE=ubuntu@24.04
 ADMIN_EMAIL=admin@example.com
 ADMIN_NAME=Landscape Admin
 ADMIN_PASSWORD=Super_secure!p@$$w0rd!
-MIN_INSTALL=true
+MIN_INSTALL=false
 CRON_INTERVAL=* * * * *
