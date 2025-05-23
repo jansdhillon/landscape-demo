@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eEuxo pipefail
+
 read_var() {
   local var=$1
   local res
@@ -34,7 +36,6 @@ PPA=$(read_var "PPA")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 # Landsacpe Client units
 NUM_LS_CLIENT_UNITS=$(read_var "NUM_LS_CLIENT_UNITS")
-CLIENT_BASE=$(read_var "CLIENT_BASE")
 SERVER_BASE=$(read_var "SERVER_BASE")
 # Postgres units
 NUM_DB_UNITS=$(read_var "NUM_DB_UNITS")
@@ -71,7 +72,7 @@ bold_orange_text 'Welcome to Landscape!'
 cleanup() {
   printf "Cleaning up model and exiting...\n"
 
-  if [ -n "${HAPROXY_IP}" ]; then
+  if [ -n "${HAPROXY_IP:-}" ]; then
     printf "Modifying /etc/hosts requires elevated privileges.\n"
     sudo sed -i "/${HAPROXY_IP}[[:space:]]\\+landscape\.example\.com/d" /etc/hosts
   fi
@@ -81,6 +82,7 @@ cleanup() {
 }
 
 trap cleanup SIGINT
+trap cleanup ERR
 
 juju add-model "${MODEL_NAME}"
 
@@ -127,7 +129,11 @@ juju deploy -m "$MODEL_NAME" ch:rabbitmq-server \
   --config consumer-timeout=259200000
 
 # For Landscape Client to use in the future
-juju deploy -m "$MODEL_NAME" --base "${CLIENT_BASE}" lxd -n "${NUM_LS_CLIENT_UNITS}"
+juju deploy -m "$MODEL_NAME" \
+  --base "ubuntu@20.04" \
+  --constraints virt-type="virtual-machine" \
+  -n "${NUM_LS_CLIENT_UNITS}" \
+  lxd 
 
 # Next, setup the relations
 
@@ -135,18 +141,81 @@ juju integrate -m "$MODEL_NAME" landscape-server rabbitmq-server
 juju integrate -m "$MODEL_NAME" landscape-server haproxy
 juju integrate -m "$MODEL_NAME" landscape-server:db postgresql:db-admin
 
-msg=$(bold_orange_text 'juju status --watch 2s')
-printf "Waiting for the model to settle...\nUse %s in another terminal for a live view.\n" "$msg"
+# we SHOULD be able to use juju wait-for here but it's broken/buggy
+application_is_active() {
+  local application=$1
+  status=$(juju status -m "$MODEL_NAME" "$application" --format=yaml | yq ".applications.${application}.application-status.current")
 
-juju wait-for model "$MODEL_NAME" --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
+  if [[ "$status" == "active" ]]; then
+    echo true
+  else
+    echo false
+  fi
+}
+
+wait_for_application() {
+  local applicaiton=$1
+  printf "Waiting for %s\n" "$applicaiton"
+  while true; do
+    if [[ $(application_is_active "$applicaiton") == true ]]; then
+      printf " done.\n"
+      break
+    else
+      sleep 1
+      printf "."
+    fi
+  done
+}
+
+wait_for_model() {
+  echo -e "Waiting for the model to settle...\nUse $(bold_orange_text 'juju status --watch 2s') in another terminal for a live view."
+  while true; do
+    if [[ $(application_is_active "landscape-server") == true && \
+          $(application_is_active "postgresql") == true && \
+          $(application_is_active "haproxy") == true && \
+          $(application_is_active "rabbitmq-server") == true ]]; then
+        sleep 5 # it will often go righ tback into maitenance
+
+        if [[ $(application_is_active "landscape-server") == true && \
+              $(application_is_active "postgresql") == true && \
+              $(application_is_active "haproxy") == true && \
+              $(application_is_active "rabbitmq-server") == true ]]; then
+            printf " done.\n"
+            break
+        fi
+    else
+      sleep 1
+      printf "."
+    fi
+  done
+}
+
+wait_for_model
 
 printf "Attaching Ubuntu Pro token...\n"
 for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
   printf "Attaching token to lxd/${i}\n"
+  # install necessary kernel and firefox with CVE to trigger livepatch
+  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo apt update && sudo apt install -y --install-recommends linux-generic-hwe-20.04 && sudo reboot"
+  machine_id=$(juju show-unit -m "$MODEL_NAME" "lxd/${i}" --format=yaml | yq -r ".lxd/${i}.machine")
+  printf "Waiting for %s...\n" "lxd/${i}"
+  while true; do
+    machine_state=$(juju show-machine -m "$MODEL_NAME" "$machine_id" --format=yaml | yq -r ".machines.${machine_id}.juju-status.current")
+    if [[ "$machine_state" == "started" ]]; then
+      printf " done.\n"
+      break
+    else
+      sleep 1
+      printf "."
+    fi
+  done
+
   juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
 done
 
 # Get the HAProxy IP
+
+wait_for_application "haproxy"
 
 HAPROXY_IP=$(juju show-unit -m "$MODEL_NAME" "haproxy/0"  | yq '."haproxy/0".public-address')
 printf "Modifying /etc/hosts requires elevated privileges.\n"
@@ -166,6 +235,8 @@ while true; do
     sleep 5
   fi
 done
+
+wait_for_model
 
 # Get the JWT
 # We do this in a loop to avoid transient 503s
@@ -189,9 +260,9 @@ done
 rest_api_request() {
   local method=$1
   local url=$2
-  local body=$3
+  local body=${3:-}
 
-  if [[ -n "$body" ]]; then
+  if [ -n "$body" ]; then
     response=$(curl -skX "${method}" "${url}" \
       -H "Authorization: Bearer ${JWT}" \
       -H "Content-Type: application/json" \
@@ -259,7 +330,7 @@ printf "Waiting for the Landscape Clients to register\n"
 
 sleep 10
 
-juju wait-for application landscape-client --query='forEach(units, unit => unit.workload-status == "active")'
+wait_for_application "landscape-client"
 
 # Manually execute the script on the Landscape Client instances
 

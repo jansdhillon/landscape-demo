@@ -13,13 +13,14 @@ cd landscape-demo
 chmod +x run.sh
 ```
 
-In this demo we will use the Juju, LXD, and yq snaps. Install
+In this demo we will use the Juju, LXD, Multipass, and yq snaps. Install
 them if you have not already:
 
 ```bash
 sudo snap install yq
 sudo snap install lxd
 sudo snap install juju --classic
+sudo snap install multipass
 ```
 
 LXD has additional initialization steps that must be followed before proceeding. See [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
