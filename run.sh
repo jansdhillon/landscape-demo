@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eEuxo pipefail
+set -euxo pipefail
 
 read_var() {
   local var=$1
@@ -15,6 +15,9 @@ read_var() {
       if [[ -n $PRO_TOKEN ]]; then
         printf "Using 'PRO_TOKEN' environment variable...\n" >&2
         res=$PRO_TOKEN
+      elif [[ -n $1 ]]; then
+        printf "Using first arg as 'PRO_TOKEN'...\n" >&2
+        res=$1
       else
         printf "Visit https://ubuntu.com/pro/dashboard to get it, then\n" >&2
       fi
@@ -28,15 +31,14 @@ read_var() {
   echo -ne "${res}"
 }
 
-LANDSCAPE_FQDN=$(read_var "LANDSCAPE_FQDN")
 MODEL_NAME=$(read_var "MODEL_NAME")
 REGISTRATION_KEY=$(read_var "REGISTRATION_KEY")
-# fka "series"
 PPA=$(read_var "PPA")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
-# Landsacpe Client units
-NUM_LS_CLIENT_UNITS=$(read_var "NUM_LS_CLIENT_UNITS")
 SERVER_BASE=$(read_var "SERVER_BASE")
+NUM_LS_CLIENT_UNITS=1
+ARCH="amd64"
+LXD_VIRTUALMACHINES=("noble" "jammy" "focal")
 # Postgres units
 NUM_DB_UNITS=$(read_var "NUM_DB_UNITS")
 ADMIN_EMAIL=$(read_var "ADMIN_EMAIL")
@@ -45,6 +47,21 @@ ADMIN_NAME=$(read_var "ADMIN_NAME")
 PRO_TOKEN=$(read_var "PRO_TOKEN")
 MIN_INSTALL=$(read_var "MIN_INSTALL")
 CRON_INTERVAL=$(read_var "CRON_INTERVAL")
+
+# Extract values from variables.txt
+HOSTNAME=$(grep '^HOSTNAME=' variables.txt | cut -d'=' -f2 | tr -d '[:space:]')
+DOMAIN=$(grep '^DOMAIN=' variables.txt | cut -d'=' -f2 | tr -d '[:space:]')
+
+# Construct Landscape FQDN based on available values
+if [ -n "$HOSTNAME" ] && [ -n "$DOMAIN" ]; then
+  LANDSCAPE_FQDN="${HOSTNAME}.${DOMAIN}"
+elif [ -n "$HOSTNAME" ]; then
+  LANDSCAPE_FQDN="${HOSTNAME}"
+elif [ -n "$DOMAIN" ]; then
+  LANDSCAPE_FQDN="${DOMAIN}"
+else
+  LANDSCAPE_FQDN="landscape.example.com"
+fi
 
 BOLD="\e[1m"
 ORANGE="\e[33m"
@@ -83,6 +100,20 @@ cleanup() {
 
 trap cleanup SIGINT
 trap cleanup ERR
+
+declare -A LXD_VIRTUALMACHINE_FINGERPRINTS
+LXD_VIRTUALMACHINE_FINGERPRINTS=(
+  ["focal"]="fb944b6797cf25fd4c7b8035c7e8fa0082d845032336746d94a0fb4db22bd563"
+  ["jammy"]=""
+  ["noble"]=""
+)
+
+get_fingerprint() {
+  local RELEASE=$1
+  local TYPE=$2
+  lxc image list ubuntu: arch=$ARCH release="$RELEASE" type="$TYPE" --format yaml | \
+    yq e ".[] | .fingerprint" - | tail -1
+}
 
 juju add-model "${MODEL_NAME}"
 
@@ -128,12 +159,57 @@ juju deploy -m "$MODEL_NAME" ch:rabbitmq-server \
   --channel 3.9/stable \
   --config consumer-timeout=259200000
 
-# For Landscape Client to use in the future
-juju deploy -m "$MODEL_NAME" \
-  --base "ubuntu@20.04" \
-  --constraints virt-type="virtual-machine" \
-  -n "${NUM_LS_CLIENT_UNITS}" \
-  lxd 
+
+get_lxd_ip() {
+  local name="$1"
+  lxc info "$name" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1
+}
+
+LANDSCAPE_ACCOUNT_NAME="standalone"
+HTTP_PROXY=""
+HTTPS_PROXY=""
+SCRIPT_USERS="ALL"
+TAGS=""
+ACCESS_GROUP="global"
+
+CLIENT_CLOUD_INIT=$(cat <<EOF
+#cloud-config
+packages:
+  - ansible
+  - redis
+  - phpmyadmin
+  - npm
+  - ubuntu-pro-client
+  - landscape-client
+runcmd:
+  - systemctl stop unattended-upgrades
+  - systemctl disable unattended-upgrades
+  - apt-get remove -y unattended-upgrades
+  - pro attach $PRO_TOKEN
+  - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
+  - pro enable livepatch
+EOF
+)
+
+for SERIES in "${LXD_VIRTUALMACHINES[@]}"; do
+  INSTANCE_NAME="$MODEL_NAME-vm-$SERIES-$(shuf -i 100-999 -n 1)"
+  if [[ -n "${LXD_VIRTUALMACHINE_FINGERPRINTS[$SERIES]}" ]]; then
+    FINGERPRINT=${LXD_VIRTUALMACHINE_FINGERPRINTS[$SERIES]}
+  else
+    FINGERPRINT=$(get_fingerprint "$SERIES" "virtual-machine")
+    echo "Retrieved fingerprint for $SERIES VM: $FINGERPRINT"
+  fi
+  if [ -n "$FINGERPRINT" ]; then
+    echo "$SERIES VM image fingerprint: $FINGERPRINT"
+    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --vm --config=user.user-data="$CLIENT_CLOUD_INIT" 2>&1 | grep 'is:' | awk '{print $4}'
+    IP=$(get_lxd_ip "$INSTANCE_NAME")
+    juju add-machine -m "$MODEL_NAME" ssh:ubuntu@"$IP" --public-key ~/.ssh/id_ed25519.pub
+  else
+    lxc launch ubuntu:"$SERIES" "$INSTANCE_NAME" --vm --config=user.user-data="$CLIENT_CLOUD_INIT"
+    IP=$(get_lxd_ip "$INSTANCE_NAME")
+    juju add-machine -m "$MODEL_NAME" ssh:ubuntu@"$IP" --public-key ~/.ssh/id_ed25519.pub
+  fi
+done
 
 # Next, setup the relations
 
@@ -168,7 +244,7 @@ wait_for_application() {
 }
 
 wait_for_model() {
-  echo -e "Waiting for the model to settle...\nUse $(bold_orange_text 'juju status --watch 2s') in another terminal for a live view."
+  echo -e "Waiting for the model to settle...\nUse $(bold_orange_text "juju status -m ${MODEL_NAME} --watch 2s") in another terminal for a live view."
   while true; do
     if [[ $(application_is_active "landscape-server") == true && \
           $(application_is_active "postgresql") == true && \
@@ -191,27 +267,6 @@ wait_for_model() {
 }
 
 wait_for_model
-
-printf "Attaching Ubuntu Pro token...\n"
-for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
-  printf "Attaching token to lxd/${i}\n"
-  # install necessary kernel and firefox with CVE to trigger livepatch
-  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo apt update && sudo apt install -y --install-recommends firefox linux-generic-hwe-20.04 && sudo reboot"
-  machine_id=$(juju show-unit -m "$MODEL_NAME" "lxd/${i}" --format=yaml | yq -r ".lxd/${i}.machine")
-  printf "Waiting for %s...\n" "lxd/${i}"
-  while true; do
-    machine_state=$(juju show-machine -m "$MODEL_NAME" "$machine_id" --format=yaml | yq -r ".machines.${machine_id}.juju-status.current")
-    if [[ "$machine_state" == "started" ]]; then
-      printf " done.\n"
-      break
-    else
-      sleep 1
-      printf "."
-    fi
-  done
-
-  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo pro attach ${PRO_TOKEN}"
-done
 
 # Get the HAProxy IP
 
@@ -324,26 +379,13 @@ juju deploy -m "$MODEL_NAME" ch:landscape-client --config account-name='standalo
   --config script-users="ALL" \
   --config include-manager-plugins="ScriptExecution"
 
-juju integrate -m "$MODEL_NAME" lxd landscape-client
-
 printf "Waiting for the Landscape Clients to register\n"
 
 sleep 10
 
-wait_for_application "landscape-client"
-
 # Manually execute the script on the Landscape Client instances
 
-QUERY=""
-
-for i in $(seq 1 $NUM_LS_CLIENT_UNITS); do
-  QUERY+="id:$i"
-  if [[ $i -lt $NUM_LS_CLIENT_UNITS ]]; then
-    QUERY+="+OR+"
-  fi
-done
-
-EXECUTE_SCRIPT_URL="https://${HAPROXY_IP}/api/?action=ExecuteScript&version=2011-08-01&query=${QUERY}&script_id=1&username=root&time_limit=300"
+EXECUTE_SCRIPT_URL="https://${HAPROXY_IP}/api/?action=ExecuteScript&version=2011-08-01&query=id:1+OR+id:2+OR+id:3&script_id=1&username=root&time_limit=300"
 
 rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
 

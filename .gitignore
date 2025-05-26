@@ -1,1 +1,5 @@
 variables.txt
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+cloud-init.yaml
