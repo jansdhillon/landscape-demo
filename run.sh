@@ -31,6 +31,7 @@ read_var() {
   echo -ne "${res}"
 }
 
+WORKSPACE_NAME=$(read_var "WORKSPACE_NAME")
 MODEL_NAME=$(read_var "MODEL_NAME")
 REGISTRATION_KEY=$(read_var "REGISTRATION_KEY")
 PPA=$(read_var "PPA")
@@ -95,6 +96,9 @@ cleanup() {
   fi
 
   juju destroy-model --no-prompt "${MODEL_NAME}" --no-wait --force
+  tofu destroy -auto-approve
+  tofu workspace select default
+  tofu workspace delete "$WORKSPACE_NAME"
   exit
 }
 
@@ -116,6 +120,10 @@ get_fingerprint() {
 }
 
 juju add-model "${MODEL_NAME}"
+
+tofu workspace new "$WORKSPACE_NAME"
+
+tofu apply -auto-approve
 
 printf "Provisioning machines...\n"
 
@@ -190,26 +198,6 @@ runcmd:
   - pro enable livepatch
 EOF
 )
-
-for SERIES in "${LXD_VIRTUALMACHINES[@]}"; do
-  INSTANCE_NAME="$MODEL_NAME-vm-$SERIES-$(shuf -i 100-999 -n 1)"
-  if [[ -n "${LXD_VIRTUALMACHINE_FINGERPRINTS[$SERIES]}" ]]; then
-    FINGERPRINT=${LXD_VIRTUALMACHINE_FINGERPRINTS[$SERIES]}
-  else
-    FINGERPRINT=$(get_fingerprint "$SERIES" "virtual-machine")
-    echo "Retrieved fingerprint for $SERIES VM: $FINGERPRINT"
-  fi
-  if [ -n "$FINGERPRINT" ]; then
-    echo "$SERIES VM image fingerprint: $FINGERPRINT"
-    lxc launch ubuntu:"$FINGERPRINT" "$INSTANCE_NAME" --vm --config=user.user-data="$CLIENT_CLOUD_INIT" 2>&1 | grep 'is:' | awk '{print $4}'
-    IP=$(get_lxd_ip "$INSTANCE_NAME")
-    juju add-machine -m "$MODEL_NAME" ssh:ubuntu@"$IP" --public-key ~/.ssh/id_ed25519.pub
-  else
-    lxc launch ubuntu:"$SERIES" "$INSTANCE_NAME" --vm --config=user.user-data="$CLIENT_CLOUD_INIT"
-    IP=$(get_lxd_ip "$INSTANCE_NAME")
-    juju add-machine -m "$MODEL_NAME" ssh:ubuntu@"$IP" --public-key ~/.ssh/id_ed25519.pub
-  fi
-done
 
 # Next, setup the relations
 

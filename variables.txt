@@ -1,6 +1,6 @@
 PRO_TOKEN=
 LANDSCAPE_FQDN=landscape.example.com
-MODEL_NAME=landscape
+MODEL_NAME=landscape-server-model
 REGISTRATION_KEY=key
 PPA=ppa:landscape/self-hosted-beta
 NUM_DB_UNITS=2
@@ -24,3 +24,4 @@ CERTBOT=
 SSL_CERTIFICATE_PATH=
 SSL_CERTIFICATE_KEY_PATH=
 SSL_CERTIFICATE_CHAIN_PATH=
+WORKSPACE_NAME=landscape
