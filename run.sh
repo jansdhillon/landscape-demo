@@ -31,15 +31,11 @@ read_var() {
   echo -ne "${res}"
 }
 
-WORKSPACE_NAME=$(read_var "WORKSPACE_NAME")
 MODEL_NAME=$(read_var "MODEL_NAME")
 REGISTRATION_KEY=$(read_var "REGISTRATION_KEY")
 PPA=$(read_var "PPA")
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 SERVER_BASE=$(read_var "SERVER_BASE")
-NUM_LS_CLIENT_UNITS=1
-ARCH="amd64"
-LXD_VIRTUALMACHINES=("noble" "jammy" "focal")
 # Postgres units
 NUM_DB_UNITS=$(read_var "NUM_DB_UNITS")
 ADMIN_EMAIL=$(read_var "ADMIN_EMAIL")
@@ -47,7 +43,7 @@ ADMIN_PASSWORD=$(read_var "ADMIN_PASSWORD")
 ADMIN_NAME=$(read_var "ADMIN_NAME")
 PRO_TOKEN=$(read_var "PRO_TOKEN")
 MIN_INSTALL=$(read_var "MIN_INSTALL")
-CRON_INTERVAL=$(read_var "CRON_INTERVAL")
+ACCESS_GROUP=$(read_var "ACCESS_GROUP")
 
 # Extract values from variables.txt
 HOSTNAME=$(grep '^HOSTNAME=' variables.txt | cut -d'=' -f2 | tr -d '[:space:]')
@@ -96,45 +92,21 @@ cleanup() {
   fi
 
   juju destroy-model --no-prompt "${MODEL_NAME}" --no-wait --force
-  TF_VAR_PRO_TOKEN=$PRO_TOKEN tofu destroy -auto-approve
-  tofu workspace select default
-  tofu workspace delete "$WORKSPACE_NAME"
+
+  if [ -n "${WORKSPACE_NAME:-}" ]; then
+    tofu destroy -auto-approve
+    tofu workspace select default
+    tofu workspace delete "$WORKSPACE_NAME"
+  fi
   exit
 }
 
 trap cleanup SIGINT
-trap cleanup ERR
-
-declare -A LXD_VIRTUALMACHINE_FINGERPRINTS
-LXD_VIRTUALMACHINE_FINGERPRINTS=(
-  ["focal"]="fb944b6797cf25fd4c7b8035c7e8fa0082d845032336746d94a0fb4db22bd563"
-  ["jammy"]=""
-  ["noble"]=""
-)
-
-get_fingerprint() {
-  local RELEASE=$1
-  local TYPE=$2
-  lxc image list ubuntu: arch=$ARCH release="$RELEASE" type="$TYPE" --format yaml | \
-    yq e ".[] | .fingerprint" - | tail -1
-}
+# trap cleanup ERR
 
 juju add-model "${MODEL_NAME}"
 
-if ! tofu workspace list | grep -q "^${WORKSPACE_NAME}$"; then
-  tofu workspace new "$WORKSPACE_NAME"
-fi
-
-LANDSCAPE_ACCOUNT_NAME="standalone"
-HTTP_PROXY=""
-HTTPS_PROXY=""
-SCRIPT_USERS="ALL"
-TAGS=""
-ACCESS_GROUP="global"
-
-TF_VAR_PRO_TOKEN=$PRO_TOKEN tofu apply -auto-approve
-
-printf "Provisioning machines...\n"
+printf "Setting up Landscape Server...\n"
 
 # Add the Landscape Server unit and the other apps we need to run Landscape
 # based on https://github.com/canonical/landscape-bundles/blob/scalable-stable/bundle.yaml
@@ -176,12 +148,10 @@ juju deploy -m "$MODEL_NAME" ch:rabbitmq-server \
   --channel 3.9/stable \
   --config consumer-timeout=259200000
 
-
 get_lxd_ip() {
   local name="$1"
   lxc info "$name" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1
 }
-
 
 # Next, setup the relations
 
@@ -218,19 +188,19 @@ wait_for_application() {
 wait_for_model() {
   echo -e "Waiting for the model to settle...\nUse $(bold_orange_text "juju status -m ${MODEL_NAME} --watch 2s") in another terminal for a live view."
   while true; do
-    if [[ $(application_is_active "landscape-server") == true && \
-          $(application_is_active "postgresql") == true && \
-          $(application_is_active "haproxy") == true && \
-          $(application_is_active "rabbitmq-server") == true ]]; then
-        sleep 5 # it will often go righ tback into maitenance
+    if [[ $(application_is_active "landscape-server") == true &&
+    $(application_is_active "postgresql") == true &&
+    $(application_is_active "haproxy") == true &&
+    $(application_is_active "rabbitmq-server") == true ]]; then
+      sleep 5 # it will often go righ tback into maitenance
 
-        if [[ $(application_is_active "landscape-server") == true && \
-              $(application_is_active "postgresql") == true && \
-              $(application_is_active "haproxy") == true && \
-              $(application_is_active "rabbitmq-server") == true ]]; then
-            printf " done.\n"
-            break
-        fi
+      if [[ $(application_is_active "landscape-server") == true &&
+      $(application_is_active "postgresql") == true &&
+      $(application_is_active "haproxy") == true &&
+      $(application_is_active "rabbitmq-server") == true ]]; then
+        printf " done.\n"
+        break
+      fi
     else
       sleep 1
       printf "."
@@ -240,21 +210,20 @@ wait_for_model() {
 
 wait_for_model
 
-# Get the HAProxy IP
-
 wait_for_application "haproxy"
 
-HAPROXY_IP=$(juju show-unit -m "$MODEL_NAME" "haproxy/0"  | yq '."haproxy/0".public-address')
+# Get the HAProxy IP
+
+HAPROXY_IP=$(juju show-unit -m "$MODEL_NAME" "haproxy/0" | yq '."haproxy/0".public-address')
 printf "Modifying /etc/hosts requires elevated privileges.\n"
 printf "%s %s\n" "$HAPROXY_IP" "$LANDSCAPE_FQDN" | sudo tee -a /etc/hosts >/dev/null
 
+B64_CERT=""
 while true; do
   # Get the self-signed cert
-  B64_CERT=$(
-    echo | openssl s_client -connect "$HAPROXY_IP:443" 2>/dev/null | openssl x509 2>/dev/null | base64
-  )
+  B64_CERT=$(echo | openssl s_client -connect "${HAPROXY_IP:-}:443" 2>/dev/null | openssl x509 2>/dev/null | base64 | tr -d '\n')
 
-  if [ "${B64_CERT}" != "null" ] && [ -n "${B64_CERT}" ]; then
+  if [ "${B64_CERT:-}" != "null" ] && [ -n "${B64_CERT:-}" ]; then
     break
   else
     printf "Failed to get certificate.\n"
@@ -274,11 +243,11 @@ while true; do
 
   JWT=$(printf "%s" $login_response | yq -r '.token')
 
-  if [ "${JWT}" != "null" ] && [ -n "${JWT}" ]; then
+  if [ "${JWT:-}" != "null" ] && [ -n "${JWT:-}" ]; then
     printf 'Login successful.\n'
     break
   else
-    printf "Login failed. Response: %s\n" "$login_response"
+    printf "Login failed. Response: %s\n" "${login_response:-}"
     printf 'Trying again... (CTRL+C to abort)\n'
     sleep 5
   fi
@@ -289,7 +258,8 @@ rest_api_request() {
   local url=$2
   local body=${3:-}
 
-  if [ -n "$body" ]; then
+  response=""
+  if [ -n "${body:-}" ]; then
     response=$(curl -skX "${method}" "${url}" \
       -H "Authorization: Bearer ${JWT}" \
       -H "Content-Type: application/json" \
@@ -299,7 +269,8 @@ rest_api_request() {
       -H "Authorization: Bearer ${JWT}")
   fi
 
-  printf "Response: %s\n" "$response" | yq
+  printf "Response:\n"
+  printf '%s\n' "$response" | yq
 }
 
 # enable auto registration
@@ -310,9 +281,9 @@ rest_api_request "PATCH" "${SET_PREFERENCES_URL}" '{"auto_register_new_computers
 
 # Create a script
 
-EXAMPLE_CODE=$(base64 <example.sh)
+EXAMPLE_CODE=$(base64 -w 0 example.sh)
 
-CREATE_SCRIPT_URL="https://${HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
+CREATE_SCRIPT_URL="https://${HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=${ACCESS_GROUP}"
 
 rest_api_request "GET" "${CREATE_SCRIPT_URL}"
 
@@ -327,10 +298,10 @@ BODY=$(
   "script_id": 1,
   "tags": [],
   "time_limit": 300,
-  "title": "Cron",
+  "title": "Welcome to Landscape",
   "trigger": {
-    "trigger_type": "recurring",
-    "interval": "${CRON_INTERVAL}",
+    "trigger_type": "event",
+    "event_type": "post_enrollment",
     "start_after": "${NOW}"
   },
   "username": "root"
@@ -340,25 +311,25 @@ EOF
 
 rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${BODY}"
 
-# Deploy Landscape Client
+# Provison Landscape Client instances
 
-juju deploy -m "$MODEL_NAME" ch:landscape-client --config account-name='standalone' \
-  --config ping-url="http://${HAPROXY_IP}/ping" \
-  --config url="https://${HAPROXY_IP}/message-system" \
-  --config ssl-public-key="base64:${B64_CERT}" \
-  --config ppa="${PPA}" \
-  --config registration-key="${REGISTRATION_KEY}" \
-  --config script-users="ALL" \
-  --config include-manager-plugins="ScriptExecution"
+export TF_VAR_PRO_TOKEN=$PRO_TOKEN
+export TF_VAR_LANDSCAPE_ACCOUNT_NAME="standalone"
+export TF_VAR_HTTP_PROXY=""
+export TF_VAR_HTTPS_PROXY=""
+export TF_VAR_SCRIPT_USERS="ALL"
+export TF_VAR_TAGS=""
+export TF_VAR_ACCESS_GROUP=$ACCESS_GROUP
+export TF_VAR_HAPROXY_IP=$HAPROXY_IP
+export TF_VAR_B64_CERT=$B64_CERT
+export TF_VAR_REGISTRATION_KEY=$REGISTRATION_KEY
 
-printf "Waiting for the Landscape Clients to register\n"
+WORKSPACE_NAME=$(read_var "WORKSPACE_NAME")
 
-sleep 10
+if ! tofu workspace list | grep -q "^${WORKSPACE_NAME}$"; then
+  tofu workspace new "$WORKSPACE_NAME"
+fi
 
-# Manually execute the script on the Landscape Client instances
-
-EXECUTE_SCRIPT_URL="https://${HAPROXY_IP}/api/?action=ExecuteScript&version=2011-08-01&query=id:1+OR+id:2+OR+id:3&script_id=1&username=root&time_limit=300"
-
-rest_api_request "GET" "${EXECUTE_SCRIPT_URL}"
+tofu apply -auto-approve
 
 echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_FQDN}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}\n"

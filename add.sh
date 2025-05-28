@@ -68,7 +68,7 @@ runcmd:
   - systemctl disable unattended-upgrades
   - apt-get remove -y unattended-upgrades
   - pro attach $PRO_TOKEN
-  - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
+  - landscape-client.config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
   - pro enable livepatch
 EOF
 )

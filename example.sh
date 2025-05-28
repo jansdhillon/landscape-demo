@@ -1,2 +1,2 @@
 #!/bin/bash
-echo "Hello world!" | tee hello.txt
+echo "Welcome to Landscape!" | tee landscape.txt
