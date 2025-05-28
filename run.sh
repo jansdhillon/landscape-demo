@@ -96,7 +96,7 @@ cleanup() {
   fi
 
   juju destroy-model --no-prompt "${MODEL_NAME}" --no-wait --force
-  tofu destroy -auto-approve
+  TF_VAR_PRO_TOKEN=$PRO_TOKEN tofu destroy -auto-approve
   tofu workspace select default
   tofu workspace delete "$WORKSPACE_NAME"
   exit
@@ -121,9 +121,18 @@ get_fingerprint() {
 
 juju add-model "${MODEL_NAME}"
 
-tofu workspace new "$WORKSPACE_NAME"
+if ! tofu workspace list | grep -q "^${WORKSPACE_NAME}$"; then
+  tofu workspace new "$WORKSPACE_NAME"
+fi
 
-tofu apply -auto-approve
+LANDSCAPE_ACCOUNT_NAME="standalone"
+HTTP_PROXY=""
+HTTPS_PROXY=""
+SCRIPT_USERS="ALL"
+TAGS=""
+ACCESS_GROUP="global"
+
+TF_VAR_PRO_TOKEN=$PRO_TOKEN tofu apply -auto-approve
 
 printf "Provisioning machines...\n"
 
@@ -173,31 +182,6 @@ get_lxd_ip() {
   lxc info "$name" | grep -E 'inet:.*global' | awk '{print $2}' | cut -d/ -f1
 }
 
-LANDSCAPE_ACCOUNT_NAME="standalone"
-HTTP_PROXY=""
-HTTPS_PROXY=""
-SCRIPT_USERS="ALL"
-TAGS=""
-ACCESS_GROUP="global"
-
-CLIENT_CLOUD_INIT=$(cat <<EOF
-#cloud-config
-packages:
-  - ansible
-  - redis
-  - phpmyadmin
-  - npm
-  - ubuntu-pro-client
-  - landscape-client
-runcmd:
-  - systemctl stop unattended-upgrades
-  - systemctl disable unattended-upgrades
-  - apt-get remove -y unattended-upgrades
-  - pro attach $PRO_TOKEN
-  - landscape-config --silent --account-name="$LANDSCAPE_ACCOUNT_NAME" --computer-title="\$(hostname --long)" --url "https://$LANDSCAPE_FQDN/message-system" --ping-url "http://$LANDSCAPE_FQDN/ping" --tags="$TAGS" --script-users="$SCRIPT_USERS" --http-proxy="$HTTP_PROXY" --https-proxy="$HTTPS_PROXY" --access-group="$ACCESS_GROUP" --registration-key="$REGISTRATION_KEY"
-  - pro enable livepatch
-EOF
-)
 
 # Next, setup the relations
 

@@ -2,16 +2,15 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.opentofu.org/juju/juju" {
-  version     = "0.11.0"
-  constraints = "~> 0.11.0"
+  version = "0.19.0"
   hashes = [
-    "h1:c21HGp8dgqEPCChMz5DVO4O5k3Z/oW0Zge2cf9TEkR0=",
-    "zh:55c465ac487bb840f14a409abadb5a8009a418ba11db795fb67a35d0cfae2cb0",
+    "h1:sWo4pFb0CYEqLFX2OF/ObAB8vZFZUgL/lceamTLyHsc=",
+    "zh:1d5c0b2671052bbc4600dae6b07bd5d0ca0ca492e2b8c408e3358518cca419dd",
+    "zh:26b8f4e409d22ab21ed4a9d192a8d40f3887bf0ac1865b427102327ccec30502",
+    "zh:3e52068e40067ab8f68ee12a56e733fe73180050c0e9644da87ded6a1eab0d1a",
+    "zh:577ac4ca9e6bb6d79c209d85c3ea5f4271349443200acdd6852ff8748a13e99a",
     "zh:753ad16d007180a77a147bd377de2fb334f409123f6fee36d4c50c7fe8b76a29",
-    "zh:92d2c807b8aac3f3a2c7095adcceae21b7e5af392a1a5e6e5ec5abead53a7f9b",
-    "zh:ce50db29e1cd4b57565a0c87777b313ef455e47557c1e005c8aeb65a11312e45",
-    "zh:d19f0b3778e28f89f7f051a079d343a5a7254e799f38fa0e890a155c1f038b33",
-    "zh:d1da4caf727a1d3f9ce662baf03a621bc712a491a5fef6ce60e0f7b0bf9617f0",
+    "zh:d62a0e40e9010712c993c39ade6d051d33d6f3e584bfefc2f7041abefcadbcef",
   ]
 }
 
