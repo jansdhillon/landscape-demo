@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eEuxo pipefail
+set -eEuo pipefail
 
 read_var() {
   local var=$1
