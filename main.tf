@@ -33,11 +33,11 @@ variable "SCRIPT_USERS" {
 }
 variable "HTTP_PROXY" { 
   type = string 
-  default = "d"
+  default = ""
 }
 variable "HTTPS_PROXY" { 
   type = string 
-  default = "d"
+  default = ""
 }
 variable "ACCESS_GROUP" { 
   type = string 
@@ -50,12 +50,12 @@ variable "REGISTRATION_KEY" {
 
 variable "HAPROXY_IP" { 
   type = string
-  default = "d"
+  default = ""
 }
 
 variable "B64_CERT" { 
   type = string
-  default = "d"
+  default = ""
 }
 
 locals {
@@ -74,7 +74,8 @@ runcmd:
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
   - snap install landscape-client --edge
-  - landscape-client.config --silent --account-name="${var.LANDSCAPE_ACCOUNT_NAME}" --computer-title="$(hostname --long)" --url "https://${var.HAPROXY_IP}/message-system" --ping-url "http://${var.HAPROXY_IP}/ping" --script-users="${var.SCRIPT_USERS}" --http-proxy="${var.HTTP_PROXY}" --https-proxy="${var.HTTPS_PROXY}" --access-group="${var.ACCESS_GROUP}" --registration-key="${var.REGISTRATION_KEY}" --ssl-public-key="base64:${var.B64_CERT}"
+  - |
+    landscape-client.config --silent --account-name="${var.LANDSCAPE_ACCOUNT_NAME}" --computer-title="$(hostname --long)" --url "https://${var.HAPROXY_IP}/message-system" --ping-url "http://${var.HAPROXY_IP}/ping" --script-users="${var.SCRIPT_USERS}" --http-proxy="${var.HTTP_PROXY}" --https-proxy="${var.HTTPS_PROXY}" --access-group="${var.ACCESS_GROUP}" --registration-key="${var.REGISTRATION_KEY}" --ssl-public-key="base64:${var.B64_CERT}"
 EOF
 }
 
