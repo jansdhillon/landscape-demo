@@ -196,7 +196,7 @@ printf "Attaching Ubuntu Pro token...\n"
 for i in $(seq 0 $((NUM_LS_CLIENT_UNITS - 1))); do
   printf "Attaching token to lxd/${i}\n"
   # install necessary kernel and firefox with CVE to trigger livepatch
-  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo apt update && sudo apt install -y --install-recommends firefox linux-generic-hwe-20.04 && sudo reboot"
+  juju ssh -m "$MODEL_NAME" "lxd/${i}" "sudo apt update && sudo apt-get install -y linux-generic-hwe-20.04 && sudo reboot"
   machine_id=$(juju show-unit -m "$MODEL_NAME" "lxd/${i}" --format=yaml | yq -r ".lxd/${i}.machine")
   printf "Waiting for %s...\n" "lxd/${i}"
   while true; do
@@ -327,8 +327,6 @@ juju deploy -m "$MODEL_NAME" ch:landscape-client --config account-name='standalo
 juju integrate -m "$MODEL_NAME" lxd landscape-client
 
 printf "Waiting for the Landscape Clients to register\n"
-
-sleep 10
 
 wait_for_application "landscape-client"
 
