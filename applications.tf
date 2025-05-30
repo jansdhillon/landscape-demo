@@ -23,6 +23,8 @@ resource "juju_application" "landscape-server" {
     admin_email      = var.admin_email
     admin_password   = var.admin_password
   }
+
+  depends_on = [ juju_model.landscape ]
 }
 
 resource "juju_application" "haproxy" {
@@ -48,7 +50,9 @@ resource "juju_application" "haproxy" {
 
   }
 
+  depends_on = [ juju_model.landscape ]
 
+  
 }
 
 resource "juju_application" "postgresql" {
@@ -74,6 +78,8 @@ resource "juju_application" "postgresql" {
     experimental_max_connections = 500
   }
 
+  depends_on = [ juju_model.landscape ]
+
 
 }
 
@@ -95,5 +101,6 @@ resource "juju_application" "rabbitmq_server" {
     consumer-timeout = 259200000
   }
 
+  depends_on = [ juju_model.landscape ]
 
 }
