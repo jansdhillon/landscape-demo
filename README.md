@@ -10,10 +10,9 @@ Clone this repository and make `run.sh` executable:
 ```bash
 git clone git@github.com:jansdhillon/landscape-demo.git
 cd landscape-demo
-chmod +x run.sh
 ```
 
-In this demo we will use the Juju, LXD, Multipass, and yq snaps. Install
+In this demo we will use the Juju, LXD, Multipass, OpenTofu, and yq snaps. Install
 them if you have not already:
 
 ```bash
@@ -21,6 +20,7 @@ sudo snap install yq
 sudo snap install lxd
 sudo snap install juju --classic
 sudo snap install multipass
+sudo snap install opentofu
 ```
 
 LXD has additional initialization steps that must be followed before proceeding. See [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
@@ -36,22 +36,33 @@ juju bootstrap lxd landscape-controller
 
 You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [variables.txt](./variables.txt) for `PRO_TOKEN`. Alternatively, set it as an environment variable:
 
+
+To run Landscape, starting with Landscape Server and other applications it depends on, followed by some Landscape Client instances that are managed by Landscape Server, we can use [OpenTofu](https://opentofu.org) and the [Juju Provider for Terraform](https://registry.terraform.io/providers/juju/juju/latest/docs).
+
+First, preview the infrastructure to be deployed:
+
 ```bash
-PRO_TOKEN=... # your token here
+tofu plan
 ```
 
-[./run.sh](run.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are managed by Landscape Server.
+And then create it:
+
+```bash
+tofu apply -auto-approve -var create_model=true
+```
+
+This may take some time. You can use `juju status --watch 2s --relations --storage` to watch the lifecycle of the applications unfold.
 
 ## Script Execution
 
 [./example.sh](example.sh) was added to Landscape, along with a script profile which makes it execute on the Landscape Client instances on a set interval.
 
-Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it was already (or set to be) manually executed on the Landscape Client instance.
+Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it was executed upon the Landscape Client instance being registered.
 
 After the script has finished running, we can verify the script ran by SSH'ing into the Landscape Client unit:
 
 ```bash
-juju ssh landscape-client/0 "sudo cat /root/hello.txt"
+multipass shell "sudo cat /root/hello.txt"
 # Hello world!
 ```
 
@@ -60,10 +71,7 @@ juju ssh landscape-client/0 "sudo cat /root/hello.txt"
 We can easily clean up our resources with Juju and the following:
 
 ```bash
-# Delete any line with "landscape.example.com" from /etc/hosts
-sudo sed -i '/landscape\.example\.com/d' /etc/hosts
-# Destroy the "landscape" model, matching "MODEL_NAME" in variables.txt
-juju destroy-model --no-prompt landscape --no-wait --force
+# Destroy the "landscape" model, matching "var.model_name" in variables.tf
 # Destroy clients
 tofu destroy -auto-approve
 # switch back to default worksapce
