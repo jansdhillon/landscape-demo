@@ -2,10 +2,10 @@
 
 Spin up a preconfigured, local Landscape demo. The demo will use `landscape.example.com`, and your system's `/etc/hosts` file will get modified so that you can access the demo at that address.
 
-## Install and configure Landscape Server with Juju
+## Install and configure Landscape Server with Juju and OpenTofu
 
 
-Clone this repository and make `run.sh` executable:
+Clone this repository and change into the directory:
 
 ```bash
 git clone git@github.com:jansdhillon/landscape-demo.git
@@ -62,11 +62,11 @@ This may take some time. You can use `juju status --watch 2s --relations --stora
 
 ## Script Execution
 
-[./example.sh](example.sh) was added to Landscape, along with a script profile which makes it execute on the Landscape Client instances on a set interval.
+[./example.sh](example.sh) was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon being registered.
 
-Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it was executed upon the Landscape Client instance being registered.
+Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it ran on the Landscape Client instances.
 
-After the script has finished running, we can verify the script ran by SSH'ing into the Landscape Client unit:
+After the script has finished running, we can also verify this using the following:
 
 ```bash
 lxc exec vulnerable -- bash -c "sudo cat /root/hello.txt"
