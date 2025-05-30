@@ -20,7 +20,7 @@ sudo snap install yq
 sudo snap install lxd
 sudo snap install juju --classic
 sudo snap install multipass
-sudo snap install opentofu
+sudo snap install opentofu --classic
 ```
 
 LXD has additional initialization steps that must be followed before proceeding. See [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
@@ -39,13 +39,20 @@ You need an Ubuntu Pro token to use Landscape, which you can get for free [here]
 
 To run Landscape, starting with Landscape Server and other applications it depends on, followed by some Landscape Client instances that are managed by Landscape Server, we can use [OpenTofu](https://opentofu.org) and the [Juju Provider for Terraform](https://registry.terraform.io/providers/juju/juju/latest/docs).
 
-First, preview the infrastructure to be deployed:
+First, let's create a new workspace and initialize our working directory with OpenTofu:
+
+```bash
+tofu init
+tofu workspace new landscape
+```
+
+Then, preview the infrastructure to be deployed:
 
 ```bash
 tofu plan
 ```
 
-And then create it:
+And finally, create it:
 
 ```bash
 tofu apply -auto-approve -var create_model=true
@@ -62,17 +69,15 @@ Additionally, in the [Activities tab](https://landscape.example.com/new_dashboar
 After the script has finished running, we can verify the script ran by SSH'ing into the Landscape Client unit:
 
 ```bash
-multipass shell "sudo cat /root/hello.txt"
+lxc exec vulnerable -- bash -c "sudo cat /root/hello.txt"
 # Hello world!
 ```
 
 ## Tearing Down and Cleaning Up
 
-We can easily clean up our resources with Juju and the following:
+We can easily clean up our resources with OpenTofu:
 
 ```bash
-# Destroy the "landscape" model, matching "var.model_name" in variables.tf
-# Destroy clients
 tofu destroy -auto-approve
 # switch back to default worksapce
 tofu workspace select default

@@ -17,11 +17,9 @@ ubuntu_pro:
 runcmd:
   # on Jammy, snap "core22" assumes unsupported features: snapd2.55.5
   - snap refresh snapd
-  - echo "hello"
   - pro enable livepatch || ua enable livepatch
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
-  - echo "hello2"
   - echo | openssl s_client -connect "${var.haproxy_ip}:443" | openssl x509 | sudo tee /var/snap/landscape-client/common/etc/server.pem
   - snap install landscape-client --edge
   - |
