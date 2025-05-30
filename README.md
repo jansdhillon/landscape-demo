@@ -64,4 +64,9 @@ We can easily clean up our resources with Juju and the following:
 sudo sed -i '/landscape\.example\.com/d' /etc/hosts
 # Destroy the "landscape" model, matching "MODEL_NAME" in variables.txt
 juju destroy-model --no-prompt landscape --no-wait --force
+# Destroy clients
+tofu destroy -auto-approve
+# switch back to default worksapce
+tofu workspace select default
+tofu workspace delete landscape
 ```

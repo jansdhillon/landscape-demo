@@ -330,6 +330,13 @@ if ! tofu workspace list | grep -q "^${WORKSPACE_NAME}$"; then
   tofu workspace new "$WORKSPACE_NAME"
 fi
 
-tofu apply -auto-approve
+tofu apply -auto-approve \
+  -var pro_token="$PRO_TOKEN" \
+  -var landscape_account_name="standalone" \
+  -var script_users="all" \
+  -var access_group="$ACCESS_GROUP" \
+  -var haproxy_ip="$HAPROXY_IP" \
+  -var b64_cert="$B64_CERT" \
+  -var registration_key="$B64_CERT"
 
 echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_FQDN}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}\n"
