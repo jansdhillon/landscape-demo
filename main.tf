@@ -1,6 +1,7 @@
 module "ls_server" {
   source = "./server"
   model_name = var.model_name
+  path_to_ssh_key = var.path_to_ssh_key
 }
 
 # Wait for Landscape Server model to stabilize

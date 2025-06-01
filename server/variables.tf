@@ -5,6 +5,18 @@ variable "model_name" {
   type        = string
 }
 
+
+variable "path_to_ssh_key" {
+  description = "The path to the SSH key to use for the model"
+  type        = string
+}
+
+variable "credential_name" {
+  description = "The name of the Juju credential to use for the model"
+  type        = string
+  default     = null
+}
+
 # Landscape Server
 
 variable "min_install" {
@@ -92,7 +104,7 @@ variable "haproxy_base" {
 
 variable "postgresql_units" {
   type    = number
-  default = 2
+  default = 1
 }
 
 variable "postgresql_revision" {

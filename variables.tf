@@ -8,3 +8,8 @@ variable "pro_token" {
   description = "Ubuntu Pro token"
   type = string
 }
+
+variable "path_to_ssh_key" {
+  description = "Path to your local SSH public key to use for the Juju model"
+  type = string
+}
