@@ -13,14 +13,14 @@ runcmd:
   - pro enable livepatch || ua enable livepatch
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
-  - echo | openssl s_client -connect "${var.haproxy_ip}:443" | openssl x509 | sudo tee /var/snap/landscape-client/common/etc/server.pem
+  - echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /var/snap/landscape-client/common/etc/server.pem
   - snap install landscape-client --edge
   - |
     landscape-client.config --silent \
       --account-name="${var.landscape_account_name}" \
       --computer-title="$(hostname --long)" \
-      --url "https://${var.haproxy_ip}/message-system" \
-      --ping-url "http://${var.haproxy_ip}/ping" \
+      --url "https://${var.landscape_fqdn}/message-system" \
+      --ping-url "http://${var.landscape_fqdn}/ping" \
       --script-users="${var.script_users}" \
       --access-group="${var.access_group}" \
       --registration-key="${var.registration_key}" \

@@ -6,6 +6,7 @@ variable "script_users" {
 variable "access_group" {
   type    = string
   default = "global"
+  description = "The access group Clients will be under"
 }
 
 variable "pro_token" {
@@ -13,15 +14,19 @@ variable "pro_token" {
   description = "Ubuntu Pro token"
 }
 
-variable "haproxy_ip" {
+variable "landscape_fqdn" {
   type = string
+  description = "Fully-qualified domain name of Landscape Server"
 }
 
 variable "landscape_account_name" {
   type = string
+  description = "Account name of Landscape Server, ex. standalone"
+  default = "standalone"
 }
 
 variable "registration_key" {
   type = string
+  description = "Registration key for Landscape Server"
 }
 

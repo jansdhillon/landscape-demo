@@ -27,6 +27,8 @@ resource "juju_integration" "landscape_server_rabbitmq_server" {
       juju_application.rabbitmq_server.charm.revision,
     ]
   }
+
+  depends_on = [ juju_application.landscape_server, juju_application.rabbitmq_server ]
 }
 
 
@@ -61,6 +63,8 @@ resource "juju_integration" "landscape_server_haproxy" {
       juju_application.haproxy.config.ssl_cert
     ]
   }
+
+  depends_on = [ juju_application.landscape_server, juju_application.haproxy ]
 }
 
 
@@ -74,7 +78,7 @@ resource "juju_integration" "landscape_server_postgresql" {
 
   application {
     name     = juju_application.postgresql.name
-    endpoint = "db_admin"
+    endpoint = "db-admin"
   }
 
   lifecycle {
@@ -95,5 +99,7 @@ resource "juju_integration" "landscape_server_postgresql" {
       juju_application.postgresql.charm.revision,
     ]
   }
+
+  depends_on = [ juju_application.landscape_server, juju_application.postgresql ]
 }
 

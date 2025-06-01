@@ -1,27 +1,8 @@
 # Juju model
 
 variable "model_name" {
-  description = "The name of the Juju model to deploy Landscape to"
+  description = "The name of the Juju model to deploy Landscape Server to"
   type        = string
-  default     = "landscape"
-}
-
-variable "create_model" {
-  description = "Model creation convenience flag"
-  type        = bool
-  default     = false
-}
-
-variable "credential_name" {
-  description = "The name of the Juju credential to use for the model"
-  type        = string
-  default     = null
-}
-
-variable "path_to_ssh_key" {
-  description = "The path to the SSH key to use for the model"
-  type        = string
-  default     = "/home/jan.dhillon@canonical.com/.ssh/id_ed25519.pub"
 }
 
 # Landscape Server
@@ -86,17 +67,6 @@ variable "registration_key" {
 }
 
 # HAProxy
-
-variable "haproxy_ip" {
-  type    = string
-  default = ""
-}
-
-variable "b64_cert" {
-  type    = string
-  default = ""
-}
-
 
 variable "haproxy_units" {
   type    = number

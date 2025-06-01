@@ -1,5 +1,5 @@
 output "haproxy_ip" {
-  description = "The IP address of the first HAProxy unit."
+  description = "IPv4 address of the HAProxy unit"
   value       = data.external.get_haproxy_ip.result.ip_address
 }
 

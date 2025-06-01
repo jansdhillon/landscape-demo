@@ -55,7 +55,7 @@ tofu plan
 And finally, create it:
 
 ```bash
-tofu apply -auto-approve -var create_model=true
+tofu apply -auto-approve
 ```
 
 This may take some time. You can use `juju status -m landscape --watch 2s --relations --storage` to watch the lifecycle of the applications unfold.
