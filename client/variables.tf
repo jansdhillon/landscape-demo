@@ -11,7 +11,6 @@ variable "access_group" {
 variable "pro_token" {
   type        = string
   description = "Ubuntu Pro token"
-  default     = "x"
 }
 
 variable "haproxy_ip" {

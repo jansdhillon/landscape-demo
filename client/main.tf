@@ -24,7 +24,7 @@ resource "lxd_instance" "inst" {
     "user.user-data" = local.ls-client-cloud-init
   }
 
-  depends_on = [terraform_data.juju_wait_for_ls_server_pg]
+  depends_on = [module.landscape-server.juju_wait_for_model]
 }
 
 resource "multipass_instance" "inst2" {
@@ -33,5 +33,5 @@ resource "multipass_instance" "inst2" {
   image          = "core24"
   cloudinit_file = local_file.cloud_init_user_data.filename
 
-  depends_on = [terraform_data.juju_wait_for_ls_server_pg]
+  depends_on = [module.landscape-server.juju_wait_for_model]
 }

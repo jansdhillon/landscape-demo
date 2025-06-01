@@ -8,14 +8,22 @@ resource "juju_ssh_key" "model_ssh_key" {
   payload = trimspace(file(var.path_to_ssh_key))
 }
 
-resource "terraform_data" "juju_wait_for_ls_server_pg" {
+resource "terraform_data" "juju_wait_for_model" {
   depends_on = [juju_model.landscape]
   provisioner "local-exec" {
     command = <<-EOT
       juju wait-for model $MODEL --timeout 3600s --query='forEach(units, unit => (unit.workload-status == "active" || unit.workload-status == "blocked"))'
     EOT
     environment = {
-      MODEL = module.model_name
+      MODEL = juju_model.landscape.name
     }
   }
 }
+
+data "external" "get_haproxy_ip" {
+  program = ["bash", "${path.module}/get_haproxy_ip.sh", var.model_name]
+
+  depends_on = [juju_application.haproxy]
+}
+
+

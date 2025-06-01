@@ -1,10 +1,6 @@
-output "landscape-server-postgresql" {
-  value       = juju_integration.landscape-server-postgresql
-}
-
 output "haproxy_ip" {
   description = "The IP address of the first HAProxy unit."
-  value       = juju_application.haproxy.units.private_address
+  value       = data.external.get_haproxy_ip.result.ip_address
 }
 
 output "model_name" {
