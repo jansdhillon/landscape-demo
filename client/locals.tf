@@ -13,8 +13,6 @@ runcmd:
   - pro enable livepatch || ua enable livepatch
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
-  - echo "Token: ${var.pro_token}"
-  - echo "FQDN: ${var.landscape_fqdn}"
   - echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /var/snap/landscape-client/common/etc/server.pem
   - snap install landscape-client --edge
   - |

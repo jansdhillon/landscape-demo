@@ -6,6 +6,7 @@ resource "juju_model" "landscape" {
 resource "juju_ssh_key" "model_ssh_key" {
   model   = var.model_name
   payload = trimspace(file(var.path_to_ssh_key))
+  depends_on = [ juju_model.landscape ]
 }
 
 
