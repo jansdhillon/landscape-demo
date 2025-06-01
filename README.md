@@ -58,7 +58,7 @@ And finally, create it:
 tofu apply -auto-approve -var create_model=true
 ```
 
-This may take some time. You can use `juju status --watch 2s --relations --storage` to watch the lifecycle of the applications unfold.
+This may take some time. You can use `juju status -m landscape --watch 2s --relations --storage` to watch the lifecycle of the applications unfold.
 
 ## Script Execution
 

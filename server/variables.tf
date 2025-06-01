@@ -1,9 +1,9 @@
-# Config
+# Juju model
 
-variable "pro_token" {
+variable "model_name" {
+  description = "The name of the Juju model to deploy Landscape to"
   type        = string
-  description = "Ubuntu Pro token"
-  default     = "x"
+  default     = "landscape"
 }
 
 variable "create_model" {
@@ -12,10 +12,16 @@ variable "create_model" {
   default     = false
 }
 
-variable "model_name" {
-  description = "Juju model name for deployment"
+variable "credential_name" {
+  description = "The name of the Juju credential to use for the model"
   type        = string
-  default     = "landscape"
+  default     = null
+}
+
+variable "path_to_ssh_key" {
+  description = "The path to the SSH key to use for the model"
+  type        = string
+  default     = "/home/jan.dhillon@canonical.com/.ssh/id_ed25519.pub"
 }
 
 # Landscape Server
@@ -74,15 +80,6 @@ variable "landscape_fqdn" {
   default = "landscape.example.com"
 }
 
-variable "script_users" {
-  type    = string
-  default = "ALL"
-}
-
-variable "access_group" {
-  type    = string
-  default = "global"
-}
 variable "registration_key" {
   type    = string
   default = "key"

@@ -3,6 +3,7 @@ terraform {
   required_providers {
     juju = {
       source  = "juju/juju"
+      version = ">=0.18.0"
     }
     lxd = {
       source = "terraform-lxd/lxd"

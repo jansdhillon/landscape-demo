@@ -1,9 +1,4 @@
-module "landscape" {
-  source = "github.com/jansdhillon/landscape-demo//?ref=main"
-}
-
-
-resource "juju_application" "landscape-server" {
+resource "juju_application" "landscape_server" {
   name        = "landscape-server"
   model       = var.model_name
   units       = var.landscape_server_units
