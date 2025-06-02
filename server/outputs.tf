@@ -9,7 +9,7 @@ output "model_name" {
 }
 
 output "landscape_account_name" {
-  value = var.landscape_account_name
+  value = "standalone"
 }
 
 output "registration_key" {

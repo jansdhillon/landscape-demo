@@ -1,15 +1,9 @@
 locals {
   ls-client-cloud-init = <<-EOF
 #cloud-config
-# focal requires `ubuntu_advantage`
-ubuntu_advantage:
-  token: ${var.pro_token}
-# jammy onwards ignores deprecated key `ubuntu_advantage` and uses `ubuntu_pro`
-ubuntu_pro:
-  token: ${var.pro_token}
 runcmd:
-  # on Jammy, snap "core22" assumes unsupported features: snapd2.55.5
   - snap refresh snapd
+  - pro attach ${var.pro_token}
   - pro enable livepatch || ua enable livepatch
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades

@@ -22,7 +22,7 @@ variable "credential_name" {
 variable "min_install" {
   description = "Install recommended packages like landscape-hashids but takes longer to install"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "admin_name" {
@@ -61,14 +61,8 @@ variable "landscape_server_units" {
   default     = 1
 }
 
-variable "landscape_account_name" {
-  type    = string
-  default = "standalone"
-}
-
 variable "landscape_fqdn" {
   type    = string
-  default = "landscape.example.com"
 }
 
 variable "registration_key" {
@@ -102,7 +96,7 @@ variable "haproxy_base" {
 
 variable "postgresql_units" {
   type    = number
-  default = 1
+  default = 2
 }
 
 variable "postgresql_revision" {

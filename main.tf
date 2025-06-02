@@ -60,8 +60,8 @@ resource "terraform_data" "landscape_configure" {
 
   provisioner "local-exec" {
     command = <<-EOT
-    HAPROXY_IP="${self.triggers_replace.haproxy_ip}"
-    ADMIN_EMAIL="${self.triggers_replace.admin_email}"
+    HAPROXY_IP='${self.triggers_replace.haproxy_ip}'
+    ADMIN_EMAIL='${self.triggers_replace.admin_email}'
     ADMIN_PASSWORD='${self.triggers_replace.admin_password}'
     bash ${path.module}/rest_api_requests.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
     EOT
@@ -77,7 +77,7 @@ module "ls_client" {
   pro_token              = var.pro_token
   lxd_vms                = 1
   ubuntu_core_devices    = 1
-  lxd_series             = "jammy"
+  lxd_series             = "focal"
 
   depends_on = [terraform_data.landscape_configure]
 }
