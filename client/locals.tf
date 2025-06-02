@@ -3,20 +3,17 @@ locals {
 #cloud-config
 runcmd:
   - snap refresh snapd
-  - pro attach ${var.pro_token}
-  - pro enable livepatch || ua enable livepatch
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
   - mkdir -p /var/snap/landscape-client/common/etc/
+  - pro attach ${var.pro_token}
   - |
     while true; do
       echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /tmp/server.pem
       if [ -s /tmp/server.pem ]; then
         sudo cp /tmp/server.pem /var/snap/landscape-client/common/etc/server.pem
-        echo "Certificate saved successfully."
         break
       else
-        echo "Waiting for certificate..."
         sleep 5
       fi
     done

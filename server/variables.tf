@@ -41,7 +41,6 @@ variable "admin_password" {
   type        = string
 }
 
-
 variable "landscape_ppa" {
   description = "PPA to use for the Landscape Server charm"
   type        = string
@@ -96,7 +95,7 @@ variable "haproxy_base" {
 
 variable "postgresql_units" {
   type    = number
-  default = 2
+  default = 1
 }
 
 variable "postgresql_revision" {
