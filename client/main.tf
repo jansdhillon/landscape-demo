@@ -20,6 +20,12 @@ resource "lxd_instance" "inst" {
     "user.user-data" = local.ls-client-cloud-init
   }
   count = var.lxd_vms
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      lxc exec vulnerable --verbose -- cloud-init status --wait
+    EOT
+  }
 }
 
 resource "multipass_instance" "inst2" {
@@ -27,5 +33,11 @@ resource "multipass_instance" "inst2" {
   cpus           = 1
   image          = "core24"
   cloudinit_file = local_file.cloud_init_user_data.filename
-  count = var.ubuntu_core_devices
+  count          = var.ubuntu_core_devices
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      multipass exec noble-core --verbose -- cloud-init status --wait
+    EOT
+  }
 }

@@ -7,16 +7,7 @@ runcmd:
   - systemctl disable unattended-upgrades
   - mkdir -p /var/snap/landscape-client/common/etc/
   - pro attach ${var.pro_token}
-  - |
-    while true; do
-      echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /tmp/server.pem
-      if [ -s /tmp/server.pem ]; then
-        sudo cp /tmp/server.pem /var/snap/landscape-client/common/etc/server.pem
-        break
-      else
-        sleep 5
-      fi
-    done
+  - echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /var/snap/landscape-client/common/etc/server.pem
   - snap install landscape-client --edge
   - landscape-client.config --silent --account-name="${var.landscape_account_name}" --computer-title="$(hostname --long)" --url "https://${var.landscape_fqdn}/message-system" --ping-url "http://${var.landscape_fqdn}/ping" --script-users="${var.script_users}" --registration-key="${var.registration_key}" --ssl-public-key="/var/snap/landscape-client/common/etc/server.pem"
 EOF

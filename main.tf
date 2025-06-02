@@ -85,5 +85,3 @@ module "ls_client" {
   depends_on = [terraform_data.landscape_configure]
 }
 
-
-
