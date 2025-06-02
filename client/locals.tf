@@ -27,8 +27,7 @@ runcmd:
       fi
     done
   - snap install landscape-client --edge
-  - |
-    landscape-client.config --silent \
+  - landscape-client.config --silent \
       --account-name="${var.landscape_account_name}" \
       --computer-title="$(hostname --long)" \
       --url "https://${var.landscape_fqdn}/message-system" \
