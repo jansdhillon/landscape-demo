@@ -49,9 +49,9 @@ rest_api_request "PATCH" "${SET_PREFERENCES_URL}" '{"auto_register_new_computers
 
 # Create a script
 
-EXAMPLE_CODE=$(base64 -w 0 example.sh)
+EXAMPLE_CODE=$(base64 -w 0 welcome.sh)
 
-CREATE_SCRIPT_URL="https://${HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Test+Script&script_type=V2&access_group=global"
+CREATE_SCRIPT_URL="https://${HAPROXY_IP}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Welcome+Script&script_type=V2&access_group=global"
 
 rest_api_request "GET" "${CREATE_SCRIPT_URL}"
 
