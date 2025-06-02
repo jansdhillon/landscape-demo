@@ -3,12 +3,6 @@ variable "script_users" {
   default = "ALL"
 }
 
-variable "access_group" {
-  type    = string
-  default = "global"
-  description = "The access group Clients will be under"
-}
-
 variable "pro_token" {
   type        = string
   description = "Ubuntu Pro token"

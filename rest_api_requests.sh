@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euxo pipefail
+
 HAPROXY_IP="$1"
 ADMIN_EMAIL="$2"
 ADMIN_PASSWORD="$3"
@@ -12,11 +14,10 @@ while true; do
   JWT=$(printf "%s" $login_response | yq -r '.token')
 
   if [ "${JWT:-}" != "null" ] && [ -n "${JWT:-}" ]; then
-    printf 'Login successful.\n'>&2
+    printf 'Login successful.\n' >&2
     break
   else
     printf "Login failed. Response: %s\n" "${login_response:-}" >&2
-    printf 'Trying again... (CTRL+C to abort)\n' >&2
     sleep 5
   fi
 done
@@ -28,13 +29,9 @@ rest_api_request() {
 
   response=""
   if [ -n "${body:-}" ]; then
-    response=$(curl -skX "${method}" "${url}" \
-      -H "Authorization: Bearer ${JWT}" \
-      -H "Content-Type: application/json" \
-      -d "$body")
+    response=$(curl -skX "${method}" "${url}" -H "Authorization: Bearer ${JWT}" -H "Content-Type: application/json" -d "$body")
   else
-    response=$(curl -skX "${method}" "${url}" \
-      -H "Authorization: Bearer ${JWT}")
+    response=$(curl -skX "${method}" "${url}" -H "Authorization: Bearer ${JWT}")
   fi
 
   printf "Response:\n" >&2

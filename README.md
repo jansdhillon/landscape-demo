@@ -32,9 +32,11 @@ Then, create a local LXD cloud with Juju, which will allow us to easily orchestr
 juju bootstrap lxd landscape-controller
 ```
 
-## Create the Ubuntu instances for Landscape
+## Setting up
 
-You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [variables.txt](./variables.txt) for `PRO_TOKEN`. Alternatively, set it as an environment variable:
+Fill in the values in [terraform.tfvars.example](./terraform.tfvars.example) and rename the file to remove the `.example` extension.
+
+You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [terraform.tfvars](./terraform.tfvars) for `pro_token`.
 
 
 To run Landscape, starting with Landscape Server and other applications it depends on, followed by some Landscape Client instances that are managed by Landscape Server, we can use [OpenTofu](https://opentofu.org) and the [Juju Provider for Terraform](https://registry.terraform.io/providers/juju/juju/latest/docs).
@@ -82,4 +84,7 @@ tofu destroy -auto-approve
 # switch back to default worksapce
 tofu workspace select default
 tofu workspace delete landscape
+# double check that the Juju model was deleted
+# replace 'landscape' with another model name if needed
+juju destroy-model --no-prompt landscape --no-wait --force
 ```

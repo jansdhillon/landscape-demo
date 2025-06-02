@@ -14,7 +14,18 @@ runcmd:
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
   - mkdir -p /var/snap/landscape-client/common/etc/
-  - echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /var/snap/landscape-client/common/etc/server.pem
+  - |
+    while true; do
+      echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /tmp/server.pem
+      if [ -s /tmp/server.pem ]; then
+        sudo cp /tmp/server.pem /var/snap/landscape-client/common/etc/server.pem
+        echo "Certificate saved successfully."
+        break
+      else
+        echo "Waiting for certificate..."
+        sleep 5
+      fi
+    done
   - snap install landscape-client --edge
   - |
     landscape-client.config --silent \
@@ -23,7 +34,6 @@ runcmd:
       --url "https://${var.landscape_fqdn}/message-system" \
       --ping-url "http://${var.landscape_fqdn}/ping" \
       --script-users="${var.script_users}" \
-      --access-group="${var.access_group}" \
       --registration-key="${var.registration_key}" \
       --ssl-public-key="/var/snap/landscape-client/common/etc/server.pem"
 EOF

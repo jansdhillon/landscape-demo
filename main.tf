@@ -49,25 +49,24 @@ resource "terraform_data" "add_landscape_fqdn_to_etc_hosts" {
 }
 
 # Make REST API requests to Landscape for setup
-resource "null_resource" "landscape_configure" {
+resource "terraform_data" "landscape_configure" {
   depends_on = [terraform_data.juju_wait_for_ls_server]
 
-  triggers = {
-    haproxy_ip   = module.ls_server.haproxy_ip
-    admin_email  = var.admin_email
-    admin_pass   = var.admin_password
+  triggers_replace = {
+    haproxy_ip     = module.ls_server.haproxy_ip
+    admin_email    = var.admin_email
+    admin_password = var.admin_password
   }
 
   provisioner "local-exec" {
     command = <<-EOT
-      bash ${path.module}/rest_api_requests.sh \
-        "${self.triggers.haproxy_ip}" \
-        "${self.triggers.admin_email}" \
-        "${self.triggers.admin_pass}"
+    HAPROXY_IP="${self.triggers_replace.haproxy_ip}"
+    ADMIN_EMAIL="${self.triggers_replace.admin_email}"
+    ADMIN_PASSWORD='${self.triggers_replace.admin_password}'
+    bash ${path.module}/rest_api_requests.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
     EOT
   }
 }
-
 
 
 module "ls_client" {
@@ -80,7 +79,7 @@ module "ls_client" {
   ubuntu_core_devices    = 1
   lxd_series             = "jammy"
 
-  depends_on = [null_resource.landscape_configure]
+  depends_on = [terraform_data.landscape_configure]
 }
 
 
