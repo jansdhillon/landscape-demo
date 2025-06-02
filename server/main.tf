@@ -15,5 +15,3 @@ data "external" "get_haproxy_ip" {
 
   depends_on = [juju_application.haproxy]
 }
-
-

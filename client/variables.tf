@@ -30,3 +30,17 @@ variable "registration_key" {
   description = "Registration key for Landscape Server"
 }
 
+variable "ubuntu_core_devices" {
+  type = number
+  description = "The number of Ubuntu Core instances to create with Multipass"
+}
+
+variable "lxd_vms" {
+  type = number
+  description = "The number of LXD VMs to create"
+}
+
+variable "lxd_series" {
+  type = string
+  description = "Series of the LXD VM(s)"
+}

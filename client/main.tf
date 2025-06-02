@@ -6,7 +6,7 @@ resource "local_file" "cloud_init_user_data" {
 
 data "lxd_image" "has_cves" {
   type         = "virtual-machine"
-  fingerprint  = "fb944b6797cf25fd4c7b8035c7e8fa0082d845032336746d94a0fb4db22bd563"
+  fingerprint  = local.series_to_fingerprint[var.lxd_series]
   architecture = "x86_64"
 
 }
@@ -19,6 +19,7 @@ resource "lxd_instance" "inst" {
   config = {
     "user.user-data" = local.ls-client-cloud-init
   }
+  count = var.lxd_vms
 }
 
 resource "multipass_instance" "inst2" {
@@ -26,4 +27,5 @@ resource "multipass_instance" "inst2" {
   cpus           = 1
   image          = "core24"
   cloudinit_file = local_file.cloud_init_user_data.filename
+  count = var.ubuntu_core_devices
 }

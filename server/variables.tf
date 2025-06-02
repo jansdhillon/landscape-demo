@@ -34,13 +34,11 @@ variable "admin_name" {
 variable "admin_email" {
   description = "Email of the default admin"
   type        = string
-  default     = "admin@example.com"
 }
 
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
-  default     = "Super_secure!p@$$w0rd!"
 }
 
 

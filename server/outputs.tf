@@ -4,14 +4,19 @@ output "haproxy_ip" {
 }
 
 output "model_name" {
-    description = "Name of the Juju model"
-    value = juju_model.landscape.name
+  description = "Name of the Juju model"
+  value       = juju_model.landscape.name
 }
 
 output "landscape_account_name" {
-    value = var.landscape_account_name
+  value = var.landscape_account_name
 }
 
 output "registration_key" {
-    value = var.registration_key
+  value = var.registration_key
+}
+
+output "landscape_fqdn" {
+  value = var.landscape_fqdn
+
 }
