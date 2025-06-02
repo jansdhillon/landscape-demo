@@ -1,10 +1,13 @@
 module "ls_server" {
-  source          = "./server"
-  model_name      = var.model_name
-  path_to_ssh_key = var.path_to_ssh_key
-  landscape_fqdn  = var.landscape_fqdn
-  admin_email     = var.admin_email
-  admin_password  = var.admin_password
+  source           = "./server"
+  model_name       = var.model_name
+  path_to_ssh_key  = var.path_to_ssh_key
+  landscape_fqdn   = var.landscape_fqdn
+  admin_email      = var.admin_email
+  admin_password   = var.admin_password
+  min_install      = var.min_install
+  landscape_ppa    = var.landscape_ppa
+  registration_key = var.registration_key
 }
 
 # Wait for Landscape Server model to stabilize

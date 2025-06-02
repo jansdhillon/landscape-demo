@@ -22,7 +22,6 @@ variable "credential_name" {
 variable "min_install" {
   description = "Install recommended packages like landscape-hashids but takes longer to install"
   type        = bool
-  default     = false
 }
 
 variable "admin_name" {
@@ -44,7 +43,6 @@ variable "admin_password" {
 variable "landscape_ppa" {
   description = "PPA to use for the Landscape Server charm"
   type        = string
-  default     = "ppa:landscape/self-hosted-beta"
 }
 
 variable "landscape_server_channel" {
@@ -66,7 +64,6 @@ variable "landscape_fqdn" {
 
 variable "registration_key" {
   type    = string
-  default = "key"
 }
 
 # HAProxy

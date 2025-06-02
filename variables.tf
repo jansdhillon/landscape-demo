@@ -34,3 +34,17 @@ variable "admin_password" {
   description = "Password of the default admin"
   type        = string
 }
+
+variable "min_install" {
+  description = "Install recommended packages like landscape-hashids but takes longer to install"
+  type        = bool
+}
+
+variable "landscape_ppa" {
+  description = "PPA to use for the Landscape Server charm"
+  type        = string
+}
+
+variable "registration_key" {
+  type    = string
+}
