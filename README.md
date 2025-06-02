@@ -2,18 +2,17 @@
 
 Spin up a preconfigured, local Landscape demo. The demo will use `landscape.example.com`, and your system's `/etc/hosts` file will get modified so that you can access the demo at that address.
 
-## Install and configure Landscape Server with Juju
+## Install and configure Landscape Server with Juju and OpenTofu
 
 
-Clone this repository and make `run.sh` executable:
+Clone this repository and change into the directory:
 
 ```bash
 git clone git@github.com:jansdhillon/landscape-demo.git
 cd landscape-demo
-chmod +x run.sh
 ```
 
-In this demo we will use the Juju, LXD, Multipass, and yq snaps. Install
+In this demo we will use the Juju, LXD, Multipass, OpenTofu, and yq snaps. Install
 them if you have not already:
 
 ```bash
@@ -21,6 +20,7 @@ sudo snap install yq
 sudo snap install lxd
 sudo snap install juju --classic
 sudo snap install multipass
+sudo snap install opentofu --classic
 ```
 
 LXD has additional initialization steps that must be followed before proceeding. See [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
@@ -32,36 +32,66 @@ Then, create a local LXD cloud with Juju, which will allow us to easily orchestr
 juju bootstrap lxd landscape-controller
 ```
 
-## Create the Ubuntu instances for Landscape
+## Setting up
 
-You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [variables.txt](./variables.txt) for `PRO_TOKEN`. Alternatively, set it as an environment variable:
+Fill in the values in [terraform.tfvars.example](./terraform.tfvars.example) and rename the file to remove the `.example` extension.
+
+You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [terraform.tfvars](./terraform.tfvars) for `pro_token`.
+
+
+To run Landscape, starting with Landscape Server and other applications it depends on, followed by some Landscape Client instances that are managed by Landscape Server, we can use [OpenTofu](https://opentofu.org) and the [Juju Provider for Terraform](https://registry.terraform.io/providers/juju/juju/latest/docs).
+
+First, let's create a new workspace and initialize our working directory with OpenTofu:
 
 ```bash
-PRO_TOKEN=... # your token here
+tofu init
+tofu workspace new landscape
 ```
 
-[./run.sh](run.sh) will create Ubuntu instances to run Landscape, starting with Landscape Server and other applications it depends on, followed by Landscape Client instances that are managed by Landscape Server.
+Then, preview the infrastructure to be deployed:
+
+```bash
+tofu plan
+```
+
+And finally, create it:
+
+```bash
+tofu apply -auto-approve
+```
+
+This may take some time. You can use `juju status -m landscape --watch 2s --relations --storage` to watch the lifecycle of the applications unfold.
 
 ## Script Execution
 
-[./example.sh](example.sh) was added to Landscape, along with a script profile which makes it execute on the Landscape Client instances on a set interval.
+[./example.sh](example.sh) was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon being registered.
 
-Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it was already (or set to be) manually executed on the Landscape Client instance.
+Additionally, in the [Activities tab](https://landscape.example.com/new_dashboard/activities), you can see that it ran on the Landscape Client instances.
 
-After the script has finished running, we can verify the script ran by SSH'ing into the Landscape Client unit:
+After the script has finished running, we can also verify this using the following:
 
 ```bash
-juju ssh landscape-client/0 "sudo cat /root/hello.txt"
+lxc exec vulnerable -- bash -c "sudo cat /root/hello.txt"
 # Hello world!
 ```
 
 ## Tearing Down and Cleaning Up
 
-We can easily clean up our resources with Juju and the following:
+We can easily clean up our resources with OpenTofu:
 
 ```bash
-# Delete any line with "landscape.example.com" from /etc/hosts
-sudo sed -i '/landscape\.example\.com/d' /etc/hosts
-# Destroy the "landscape" model, matching "MODEL_NAME" in variables.txt
+tofu destroy -auto-approve
+# switch back to default worksapce
+tofu workspace select default
+tofu workspace delete landscape
+# double check that the Juju model was deleted
+# replace 'landscape' with another model name if needed
 juju destroy-model --no-prompt landscape --no-wait --force
 ```
+
+## TODO
+
+- Finish adding custom domain/certbot stuff
+- Get client registration working consistently (not sure why it's not already)
+- Add repository mirroring
+- Make LS client module more customizable
