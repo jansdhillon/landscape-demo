@@ -48,3 +48,7 @@ variable "landscape_ppa" {
 variable "registration_key" {
   type    = string
 }
+
+variable "landscape_server_base" {
+  type = string
+}

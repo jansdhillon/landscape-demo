@@ -4,10 +4,12 @@ resource "juju_application" "landscape_server" {
   units       = var.landscape_server_units
   constraints = "arch=amd64 mem=4096M"
 
+
   charm {
-    name    = "landscape-server"
-    channel = var.landscape_server_channel
-    base    = var.landscape_server_base
+    name     = "landscape-server"
+    channel  = var.landscape_server_channel
+    base     = var.landscape_server_base
+    revision = var.landscape_server_revision
 
   }
 
@@ -19,7 +21,7 @@ resource "juju_application" "landscape_server" {
     admin_password   = var.admin_password
   }
 
-  depends_on = [ juju_model.landscape ]
+  depends_on = [juju_model.landscape]
 }
 
 resource "juju_application" "haproxy" {
@@ -45,9 +47,9 @@ resource "juju_application" "haproxy" {
 
   }
 
-  depends_on = [ juju_model.landscape ]
+  depends_on = [juju_model.landscape]
 
-  
+
 }
 
 resource "juju_application" "postgresql" {
@@ -73,7 +75,7 @@ resource "juju_application" "postgresql" {
     experimental_max_connections = 500
   }
 
-  depends_on = [ juju_model.landscape ]
+  depends_on = [juju_model.landscape]
 
 
 }
@@ -96,6 +98,6 @@ resource "juju_application" "rabbitmq_server" {
     consumer-timeout = 259200000
   }
 
-  depends_on = [ juju_model.landscape ]
+  depends_on = [juju_model.landscape]
 
 }

@@ -1,34 +1,35 @@
-module "ls_server" {
-  source           = "./server"
-  model_name       = var.model_name
-  path_to_ssh_key  = var.path_to_ssh_key
-  landscape_fqdn   = var.landscape_fqdn
-  admin_email      = var.admin_email
-  admin_password   = var.admin_password
-  min_install      = var.min_install
-  landscape_ppa    = var.landscape_ppa
-  registration_key = var.registration_key
+module "landscape_server" {
+  source                = "./server"
+  model_name            = var.model_name
+  path_to_ssh_key       = var.path_to_ssh_key
+  landscape_fqdn        = var.landscape_fqdn
+  admin_email           = var.admin_email
+  admin_password        = var.admin_password
+  min_install           = var.min_install
+  landscape_ppa         = var.landscape_ppa
+  registration_key      = var.registration_key
+  landscape_server_base = var.landscape_server_base
 }
 
 # Wait for Landscape Server model to stabilize
-resource "terraform_data" "juju_wait_for_ls_server" {
-  depends_on = [module.ls_server.model_name]
+resource "terraform_data" "juju_wait_for_landscape_server" {
+  depends_on = [module.landscape_server.model_name]
   provisioner "local-exec" {
     command = <<-EOT
       juju wait-for model $MODEL --timeout 3600s --query='forEach(units, unit => (unit.workload-status == "active" || unit.workload-status == "blocked"))'
     EOT
     environment = {
-      MODEL = module.ls_server.model_name
+      MODEL = module.landscape_server.model_name
     }
   }
 }
 
 # Handle add/cleanup FQDN to /etc/hosts
 resource "terraform_data" "add_landscape_fqdn_to_etc_hosts" {
-  depends_on = [terraform_data.juju_wait_for_ls_server]
+  depends_on = [terraform_data.juju_wait_for_landscape_server]
 
   triggers_replace = {
-    fqdn_line = "${module.ls_server.haproxy_ip} ${module.ls_server.landscape_fqdn}"
+    fqdn_line = "${module.landscape_server.haproxy_ip} ${module.landscape_server.landscape_fqdn}"
   }
 
   provisioner "local-exec" {
@@ -52,11 +53,11 @@ resource "terraform_data" "add_landscape_fqdn_to_etc_hosts" {
 }
 
 # Make REST API requests to Landscape for setup
-resource "terraform_data" "landscape_configure" {
-  depends_on = [terraform_data.juju_wait_for_ls_server]
+resource "terraform_data" "setup_landscape" {
+  depends_on = [terraform_data.juju_wait_for_landscape_server]
 
   triggers_replace = {
-    haproxy_ip     = module.ls_server.haproxy_ip
+    haproxy_ip     = module.landscape_server.haproxy_ip
     admin_email    = var.admin_email
     admin_password = var.admin_password
   }
@@ -72,16 +73,13 @@ resource "terraform_data" "landscape_configure" {
 }
 
 
-module "ls_client" {
+module "landscape_client" {
   source                 = "./client"
-  landscape_fqdn         = module.ls_server.haproxy_ip
-  landscape_account_name = module.ls_server.landscape_account_name
-  registration_key       = module.ls_server.registration_key
+  landscape_fqdn         = module.landscape_server.haproxy_ip
+  landscape_account_name = module.landscape_server.landscape_account_name
+  registration_key       = module.landscape_server.registration_key
   pro_token              = var.pro_token
-  lxd_vms                = 1
-  ubuntu_core_devices    = 1
-  lxd_series             = "focal"
 
-  depends_on = [terraform_data.landscape_configure]
+  depends_on = [terraform_data.setup_landscape]
 }
 

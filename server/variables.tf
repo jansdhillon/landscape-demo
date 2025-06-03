@@ -11,12 +11,6 @@ variable "path_to_ssh_key" {
   type        = string
 }
 
-variable "credential_name" {
-  description = "The name of the Juju credential to use for the model"
-  type        = string
-  default     = null
-}
-
 # Landscape Server
 
 variable "min_install" {
@@ -46,7 +40,6 @@ variable "landscape_ppa" {
 }
 
 variable "landscape_server_channel" {
-  description = "Landscape Server charm units number"
   type        = string
   default     = "latest/stable"
 }
@@ -54,7 +47,6 @@ variable "landscape_server_channel" {
 
 variable "landscape_server_base" {
   type = string
-  default = "ubuntu@24.04"
 }
 
 variable "landscape_server_units" {
@@ -69,6 +61,11 @@ variable "landscape_fqdn" {
 
 variable "registration_key" {
   type    = string
+}
+
+variable "landscape_server_revision" {
+  type = number
+  default = 134
 }
 
 # HAProxy
@@ -136,4 +133,3 @@ variable "rabbitmq_server_base" {
   type    = string
   default = "ubuntu@22.04"
 }
-
