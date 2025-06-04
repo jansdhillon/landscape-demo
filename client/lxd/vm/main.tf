@@ -12,7 +12,8 @@ data "lxd_image" "has_cves" {
 }
 
 resource "lxd_instance" "inst" {
-  name  = var.lxd_vm_name
+  count = var.lxd_vm_count
+  name  =  "${var.lxd_vm_name}-${count.index}"
   image = data.lxd_image.has_cves.fingerprint
   type  = "virtual-machine"
 
@@ -22,11 +23,8 @@ resource "lxd_instance" "inst" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      lxc exec "$INSTANCE_NAME" --verbose -- cloud-init status --wait
+      lxc exec "${self.name}" --verbose -- cloud-init status --wait
     EOT
-    environment = {
-      INSTANCE_NAME = var.lxd_vm_name
-    }
   }
 }
 

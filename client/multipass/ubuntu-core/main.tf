@@ -4,8 +4,8 @@ resource "local_file" "cloud_init_user_data" {
 }
 
 resource "multipass_instance" "inst2" {
-  name           = var.device_name
-  cpus           = 1
+  count          = var.ubuntu_core_count
+  name           = "${var.device_name}-${count.index}"
   image          = var.ubuntu_core_series
   cloudinit_file = local_file.cloud_init_user_data.filename
 }

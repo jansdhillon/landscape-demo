@@ -92,6 +92,4 @@ juju destroy-model --no-prompt landscape --no-wait --force
 ## TODO
 
 - Finish adding custom domain/certbot stuff
-- Get client registration working consistently (not sure why it's not already)
 - Add repository mirroring
-- Make LS client module more customizable

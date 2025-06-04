@@ -11,8 +11,7 @@ variable "landscape_fqdn" {
 
 variable "landscape_account_name" {
   type        = string
-  description = "Account name of Landscape Server, ex. standalone"
-  default     = "standalone"
+  description = "Account name of Landscape Server"
 }
 
 variable "registration_key" {
@@ -26,4 +25,8 @@ variable "ubuntu_core_series" {
 
 variable "device_name" {
   type = string
+}
+
+variable "ubuntu_core_count" {
+  type = number
 }

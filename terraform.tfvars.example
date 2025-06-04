@@ -1,10 +1,24 @@
+# Ubuntu Pro
 pro_token = "<token>"
-model_name = "landscape"
-path_to_ssh_key = "/home/ubuntu/.ssh/id_ed25519.pub"
-landscape_fqdn = "landscape.example.com"
-admin_email = "admin@example.com"
-admin_password = "<password>"
-min_install = true # skip hashids but faster install
-landscape_ppa = "ppa:landscape/self-hosted-beta"
-registration_key = "key"
-landscape_server_base = "ubuntu@22.04"
+
+# Juju Model
+model_name      = "landscape"
+path_to_ssh_key = "/home/username/.ssh/id_ed25519.pub"
+
+# Landscape Server
+landscape_fqdn        = "landscape.example.com"
+admin_email           = "jan@example.com"
+admin_password        = "pwd"
+min_install           = true # skip hashids but faster install
+landscape_ppa         = "ppa:landscape/self-hosted-beta"
+registration_key      = "key"
+landscape_server_base = "ubuntu@24.04"
+
+# Landscape Client
+
+ubuntu_core_count = 1
+ubuntu_core_series = "core24"
+device_name = "micro"
+lxd_vm_count = 1
+lxd_series = "jammy"
+lxd_vm_name = "vulnerable"

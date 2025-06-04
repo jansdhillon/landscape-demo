@@ -79,6 +79,13 @@ module "landscape_client" {
   landscape_account_name = module.landscape_server.landscape_account_name
   registration_key       = module.landscape_server.registration_key
   pro_token              = var.pro_token
+  ubuntu_core_series     = var.ubuntu_core_series
+  ubuntu_core_count      = var.ubuntu_core_count
+  device_name            = var.device_name
+  lxd_series             = var.lxd_series
+  lxd_vm_name            = var.lxd_vm_name
+  lxd_vm_count           = var.lxd_vm_count
+
 
   depends_on = [terraform_data.setup_landscape]
 }

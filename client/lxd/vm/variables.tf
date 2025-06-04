@@ -23,13 +23,16 @@ variable "registration_key" {
   description = "Registration key for Landscape Server"
 }
 
-# TODO: figure out how to create multiple (ie create name programatically)
 variable "lxd_vm_name" {
   type = string
-  description = "The name of the LXD VM"
+  description = "The name of the LXD VM(s)"
 }
 
 variable "lxd_series" {
   type = string
   description = "Series of the LXD VM(s)"
+}
+
+variable "lxd_vm_count" {
+  type = number
 }
