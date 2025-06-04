@@ -8,4 +8,8 @@ resource "multipass_instance" "inst2" {
   name           = "${var.device_name}-${count.index}"
   image          = var.ubuntu_core_series
   cloudinit_file = local_file.cloud_init_user_data.filename
+
+  # Ideally we would wait for the cloud init to finish but 
+  # it will timeout, and there's no way to configure it.
+  # The cloud-init will still finish.
 }
