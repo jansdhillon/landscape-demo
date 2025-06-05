@@ -26,7 +26,3 @@ variable "ubuntu_core_series" {
 variable "device_name" {
   type = string
 }
-
-variable "ubuntu_core_count" {
-  type = number
-}

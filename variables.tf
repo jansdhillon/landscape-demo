@@ -55,11 +55,6 @@ variable "landscape_server_base" {
 
 # Landscape Client Machines
 
-variable "ubuntu_core_count" {
-  type        = number
-  description = "Number of Ubuntu Core device(s)"
-}
-
 variable "ubuntu_core_series" {
   type        = string
   description = "Series of Ubuntu Core"

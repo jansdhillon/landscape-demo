@@ -80,7 +80,6 @@ module "landscape_client" {
   registration_key       = module.landscape_server.registration_key
   pro_token              = var.pro_token
   ubuntu_core_series     = var.ubuntu_core_series
-  ubuntu_core_count      = var.ubuntu_core_count
   device_name            = var.device_name
   lxd_series             = var.lxd_series
   lxd_vm_name            = var.lxd_vm_name

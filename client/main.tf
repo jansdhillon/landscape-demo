@@ -16,7 +16,6 @@ module "ubuntu-core-device" {
   landscape_fqdn     = var.landscape_fqdn
   ubuntu_core_series = var.ubuntu_core_series
   device_name        = var.device_name
-  ubuntu_core_count  = var.ubuntu_core_count
   landscape_account_name = var.landscape_account_name
 }
 

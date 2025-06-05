@@ -16,7 +16,6 @@ landscape_server_base = "ubuntu@24.04"
 
 # Landscape Client
 
-ubuntu_core_count = 1
 ubuntu_core_series = "core24"
 device_name = "micro"
 lxd_vm_count = 1
