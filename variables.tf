@@ -62,7 +62,8 @@ variable "ubuntu_core_series" {
 }
 
 variable "device_name" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "lxd_vm_count" {
@@ -79,4 +80,19 @@ variable "lxd_series" {
 variable "lxd_vm_name" {
   type        = string
   description = "The name of the LXD VM(s)"
+}
+
+variable "apt_line" {
+  type    = string
+  default = ""
+}
+
+variable "gpg_key_path" {
+  type    = string
+  default = "./key.asc"
+}
+
+variable "script_path" {
+  type    = string
+  default = "./welcome.sh"
 }

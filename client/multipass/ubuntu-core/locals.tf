@@ -8,4 +8,5 @@ runcmd:
   - echo | openssl s_client -connect "${var.landscape_fqdn}:443" | openssl x509 | sudo tee /var/snap/landscape-client/common/etc/server.pem
   - snap install landscape-client && snap run landscape-client.config --silent --account-name="${var.landscape_account_name}" --computer-title="$(hostname --long)" --url "https://${var.landscape_fqdn}/message-system" --ping-url "http://${var.landscape_fqdn}/ping" --registration-key="${var.registration_key}" --ssl-public-key="/var/snap/landscape-client/common/etc/server.pem"
 EOF
+
 }

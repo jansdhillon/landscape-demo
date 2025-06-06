@@ -57,9 +57,13 @@ resource "terraform_data" "setup_landscape" {
   depends_on = [terraform_data.juju_wait_for_landscape_server]
 
   triggers_replace = {
-    haproxy_ip     = module.landscape_server.haproxy_ip
-    admin_email    = var.admin_email
-    admin_password = var.admin_password
+    haproxy_ip      = module.landscape_server.haproxy_ip
+    admin_email     = var.admin_email
+    admin_password  = var.admin_password
+    script_path     = var.script_path
+    gpg_key_path    = var.gpg_key_path
+    apt_source_line = var.apt_line != "" ? var.apt_line : local.apt_line
+    series          = var.lxd_series
   }
 
   provisioner "local-exec" {
@@ -67,7 +71,11 @@ resource "terraform_data" "setup_landscape" {
     HAPROXY_IP='${self.triggers_replace.haproxy_ip}'
     ADMIN_EMAIL='${self.triggers_replace.admin_email}'
     ADMIN_PASSWORD='${self.triggers_replace.admin_password}'
-    bash ${path.module}/rest_api_requests.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+    SCRIPT_PATH='${self.triggers_replace.script_path}'
+    GPG_KEY_PATH='${self.triggers_replace.gpg_key_path}'
+    APT_SOURCE_LINE='${self.triggers_replace.apt_source_line}'
+    SERIES='${self.triggers_replace.series}'
+    bash ${path.module}/rest_api_requests.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" "$SCRIPT_PATH" "$GPG_KEY_PATH" "$APT_LINE" "$SERIES"
     EOT
   }
 }
