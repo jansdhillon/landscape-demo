@@ -16,14 +16,33 @@ variable "path_to_ssh_key" {
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
+  sensitive = true
 }
 
 # Landscape Server
 
-variable "landscape_fqdn" {
-  description = "Domain name for Landscape"
-  type        = string
+variable "domain" {
+  type = string
+  default = "example.com"
 }
+
+variable "hostname" {
+  type = string
+  default = "landscape"
+}
+
+variable "path_to_ssl_cert" {
+  type = string
+  default = null
+  sensitive = true
+}
+
+variable "path_to_ssl_key" {
+  type = string
+  default = null
+  sensitive = true
+}
+
 
 variable "admin_email" {
   description = "Email of the default admin"
@@ -33,6 +52,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
+  sensitive = true
 }
 
 variable "min_install" {
@@ -63,6 +83,11 @@ variable "ubuntu_core_series" {
 
 variable "device_name" {
   type = string
+}
+
+variable "include_ubuntu_core" {
+  description = "Register an Ubuntu Core device"
+  type = bool
 }
 
 variable "lxd_vm_count" {

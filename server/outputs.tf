@@ -16,7 +16,11 @@ output "registration_key" {
   value = var.registration_key
 }
 
-output "landscape_fqdn" {
-  value = var.landscape_fqdn
+output "landscape_root_url" {
+  value = "${var.hostname}.${var.domain}"
 
+}
+
+output "self_signed_server" {
+  value = local.self_signed
 }
