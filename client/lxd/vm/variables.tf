@@ -8,7 +8,7 @@ variable "pro_token" {
   description = "Ubuntu Pro token"
 }
 
-variable "landscape_fqdn" {
+variable "landscape_root_url" {
   type = string
   description = "Fully-qualified domain name of Landscape Server"
 }
@@ -35,4 +35,9 @@ variable "lxd_series" {
 
 variable "lxd_vm_count" {
   type = number
+}
+
+variable "self_signed_server" {
+  type = bool
+  description = "If the server is using a self-signed certificate"
 }

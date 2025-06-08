@@ -32,6 +32,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
+  sensitive   = true
 }
 
 variable "landscape_ppa" {
@@ -40,8 +41,8 @@ variable "landscape_ppa" {
 }
 
 variable "landscape_server_channel" {
-  type        = string
-  default     = "latest/stable"
+  type    = string
+  default = "latest/stable"
 }
 
 
@@ -55,16 +56,32 @@ variable "landscape_server_units" {
   default     = 1
 }
 
-variable "landscape_fqdn" {
-  type    = string
+variable "domain" {
+  type = string
+}
+
+variable "hostname" {
+  type = string
+}
+
+variable "path_to_ssl_cert" {
+  type = string
+  default = null
+  sensitive = true
+}
+
+variable "path_to_ssl_key" {
+  type = string
+  default = null
+  sensitive = true
 }
 
 variable "registration_key" {
-  type    = string
+  type = string
 }
 
 variable "landscape_server_revision" {
-  type = number
+  type    = number
   default = 134
 }
 

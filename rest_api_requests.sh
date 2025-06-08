@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 HAPROXY_IP="$1"
 ADMIN_EMAIL="$2"
 ADMIN_PASSWORD="$3"
