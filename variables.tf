@@ -16,31 +16,31 @@ variable "path_to_ssh_key" {
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
-  sensitive = true
+  #sensitive   = true
 }
 
 # Landscape Server
 
 variable "domain" {
-  type = string
+  type    = string
   default = "example.com"
 }
 
 variable "hostname" {
-  type = string
+  type    = string
   default = "landscape"
 }
 
 variable "path_to_ssl_cert" {
-  type = string
-  default = null
-  sensitive = true
+  type      = string
+  default   = null
+  #sensitive = true
 }
 
 variable "path_to_ssl_key" {
-  type = string
-  default = null
-  sensitive = true
+  type      = string
+  default   = null
+  #sensitive = true
 }
 
 
@@ -52,7 +52,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
-  sensitive = true
+  #sensitive   = true
 }
 
 variable "min_install" {
@@ -88,7 +88,7 @@ variable "device_name" {
 
 variable "include_ubuntu_core" {
   description = "Register an Ubuntu Core device"
-  type = bool
+  type        = bool
 }
 
 variable "lxd_vm_count" {
@@ -107,17 +107,6 @@ variable "lxd_vm_name" {
   description = "The name of the LXD VM(s)"
 }
 
-variable "apt_line" {
-  type    = string
-  default = ""
-}
-
-variable "gpg_key_path" {
-  type    = string
-  default = "./key.asc"
-}
-
-variable "script_path" {
-  type    = string
-  default = "./welcome.sh"
+variable "gpg_private_key_path" {
+  type = string
 }

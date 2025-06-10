@@ -18,7 +18,7 @@ runcmd:
   - systemctl stop unattended-upgrades
   - systemctl disable unattended-upgrades
   - echo | openssl s_client -connect "${var.landscape_root_url}:443" | openssl x509 | sudo tee /etc/landscape/server.pem
-  - landscape-config --silent --account-name="${var.landscape_account_name}" --computer-title="$(hostname --long)" --url "https://${var.landscape_root_url}/message-system" --ping-url "http://${var.landscape_root_url}/ping" --script-users="${var.script_users}" --registration-key="${var.registration_key}" --ssl-public-key="/etc/landscape/server.pem"
+  - landscape-config --silent --account-name="${var.landscape_account_name}" --computer-title="$(hostname --long)" --url "https://${var.landscape_root_url}/message-system" --ping-url "http://${var.landscape_root_url}/ping" --script-users="${var.script_users}" --registration-key="${var.registration_key}" --ssl-public-key="/etc/landscape/server.pem" --tags="${var.lxd_series}"
   
 EOF
 

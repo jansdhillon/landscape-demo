@@ -5,10 +5,8 @@ NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 LANDSCAPE_ROOT_URL="$1"
 ADMIN_EMAIL="$2"
 ADMIN_PASSWORD="$3"
-SCRIPT_PATH="$4"
-GPG_KEY_PATH="$5"
-APT_LINE="$6"
-SERIES="$7"
+GPG_PRIVATE_KEY_PATH="$4"
+SERIES="$5"
 
 while true; do
   login_response=$(curl -skX POST "https://${LANDSCAPE_ROOT_URL}/api/v2/login" \
@@ -66,7 +64,7 @@ rest_api_request "GET" "${CREATE_SCRIPT_URL}"
 
 CREATE_SCRIPT_PROFILE_URL="https://${LANDSCAPE_ROOT_URL}/api/v2/script-profiles"
 
-body=$(
+BODY=$(
   cat <<EOF
 {
   "all_computers": true,
@@ -84,27 +82,48 @@ body=$(
 EOF
 )
 
-rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${body}"
+rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${BODY}"
 
 # Import GPG key into Landscape
 
+PRIVATE_KEY_NAME=$(basename "$GPG_PRIVATE_KEY_PATH" .asc | tr -d '\n')
 
-KEY_NAME=$(basename "$GPG_KEY_PATH" .asc | tr -d '\n')
+export GPG_PRIVATE_KEY_PATH
 
-GPG_KEY_CONTENT=$(cat "$GPG_KEY_PATH")
+GPG_PRIVATE_KEY_CONTENT=$(yq -r 'load_str(env(GPG_PRIVATE_KEY_PATH)) | @uri' /dev/null)
 
-IMPORT_GPG_KEY_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=ImportGPGKey&version=2011-08-01&name=${KEY_NAME}&material=${GPG_KEY_CONTENT}"
+IMPORT_GPG_KEY_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=ImportGPGKey&version=2011-08-01&name=${PRIVATE_KEY_NAME}&material=${GPG_PRIVATE_KEY_CONTENT}"
 
 rest_api_request "POST" "${IMPORT_GPG_KEY_URL}"
 
-# Create APT Source with it
+# Create distribution
 
-url_part=$(echo "$APT_LINE" | awk '{print $2}')
+CREATE_DISTRIBUTION_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=CreateDistribution&version=2011-08-01&name=ubuntu&access_group=global"
 
-SOURCE_NAME="$(echo "$url_part" | awk -F'/' '{print $4}')-${SERIES}"
+rest_api_request "POST" "${CREATE_DISTRIBUTION_URL}"
 
-CREATE_APT_SOURCE_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=CreateAPTSource&version=2011-08-01&name=${SOURCE_NAME}&apt_line=${APT_LINE}&gpg_key=${KEY_NAME}"
+# Add series
 
-rest_api_request "POST" "${CREATE_APT_SOURCE_URL}"
+CREATE_SERIES_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=CreateSeries&version=2011-08-01&name=${SERIES}&distribution=ubuntu&pockets.1=release&pockets.2=updates&components.1=main&components.2=universe&components.3=multiverse&components.4=restricted&architectures.1=amd64&gpg_key=${PRIVATE_KEY_NAME}&mirror_uri=http://archive.ubuntu.com/ubuntu"
+
+rest_api_request "POST" "${CREATE_SERIES_URL}"
+
+# Create repo profile for it
+
+CREATE_REPOSITORY_PROFILE_URL="https://${LANDSCAPE_ROOT_URL}/api/v2/repositoryprofiles"
+
+BODY=$(
+  cat <<EOF
+{
+    "all_computers": false,
+    "apt_sources": [],
+    "pockets": [1, 2],
+    "title": "apply-ubuntu-${SERIES}-mirror",
+    "tags": ["${SERIES}"]
+}
+EOF
+)
+
+rest_api_request "POST" "${CREATE_REPOSITORY_PROFILE_URL}" "${BODY}"
 
 echo '{"status": "done"}'

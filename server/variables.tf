@@ -32,7 +32,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
-  sensitive   = true
+  #sensitive   = true
 }
 
 variable "landscape_ppa" {
@@ -67,13 +67,13 @@ variable "hostname" {
 variable "path_to_ssl_cert" {
   type = string
   default = null
-  sensitive = true
+  #sensitive = true
 }
 
 variable "path_to_ssl_key" {
   type = string
   default = null
-  sensitive = true
+  #sensitive = true
 }
 
 variable "registration_key" {
