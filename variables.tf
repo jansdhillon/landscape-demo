@@ -9,6 +9,7 @@ variable "model_name" {
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"
   type        = string
+  sensitive   = true
 }
 
 # Ubuntu Pro
@@ -16,7 +17,7 @@ variable "path_to_ssh_key" {
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
-  #sensitive   = true
+  sensitive   = true
 }
 
 # Landscape Server
@@ -34,13 +35,13 @@ variable "hostname" {
 variable "path_to_ssl_cert" {
   type      = string
   default   = null
-  #sensitive = true
+  sensitive = true
 }
 
 variable "path_to_ssl_key" {
   type      = string
   default   = null
-  #sensitive = true
+  sensitive = true
 }
 
 
@@ -52,7 +53,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
-  #sensitive   = true
+  sensitive   = true
 }
 
 variable "min_install" {
@@ -109,4 +110,5 @@ variable "lxd_vm_name" {
 
 variable "gpg_private_key_path" {
   type = string
+  sensitive   = true
 }

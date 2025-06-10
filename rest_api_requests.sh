@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 
 LANDSCAPE_ROOT_URL="$1"
