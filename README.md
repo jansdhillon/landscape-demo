@@ -88,8 +88,3 @@ tofu workspace delete landscape
 # replace 'landscape' with another model name if needed
 juju destroy-model --no-prompt landscape --no-wait --force
 ```
-
-## TODO
-
-- Finish adding custom domain/certbot stuff
-- Add repository mirroring

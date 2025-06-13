@@ -60,9 +60,11 @@ resource "terraform_data" "setup_landscape" {
   depends_on = [terraform_data.juju_wait_for_landscape_server]
 
   triggers_replace = {
-    haproxy_ip     = module.landscape_server.haproxy_ip
-    admin_email    = var.admin_email
-    admin_password = var.admin_password
+    haproxy_ip           = module.landscape_server.haproxy_ip
+    admin_email          = var.admin_email
+    admin_password       = var.admin_password
+    gpg_private_key_path = var.gpg_private_key_path
+    series               = var.lxd_series
   }
 
   provisioner "local-exec" {
@@ -70,7 +72,9 @@ resource "terraform_data" "setup_landscape" {
     HAPROXY_IP='${self.triggers_replace.haproxy_ip}'
     ADMIN_EMAIL='${self.triggers_replace.admin_email}'
     ADMIN_PASSWORD='${self.triggers_replace.admin_password}'
-    bash ${path.module}/rest_api_requests.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD"
+    GPG_PRIVATE_KEY_PATH='${self.triggers_replace.gpg_private_key_path}'
+    SERIES='${self.triggers_replace.series}'
+    bash ${path.module}/rest_api_requests.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" "$GPG_PRIVATE_KEY_PATH" "$SERIES"
     EOT
   }
 }

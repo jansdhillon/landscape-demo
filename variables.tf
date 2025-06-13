@@ -9,6 +9,7 @@ variable "model_name" {
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"
   type        = string
+  sensitive   = true
 }
 
 # Ubuntu Pro
@@ -16,30 +17,30 @@ variable "path_to_ssh_key" {
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 # Landscape Server
 
 variable "domain" {
-  type = string
+  type    = string
   default = "example.com"
 }
 
 variable "hostname" {
-  type = string
+  type    = string
   default = "landscape"
 }
 
 variable "path_to_ssl_cert" {
-  type = string
-  default = null
+  type      = string
+  default   = null
   sensitive = true
 }
 
 variable "path_to_ssl_key" {
-  type = string
-  default = null
+  type      = string
+  default   = null
   sensitive = true
 }
 
@@ -52,7 +53,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
-  sensitive = true
+  sensitive   = true
 }
 
 variable "min_install" {
@@ -82,12 +83,13 @@ variable "ubuntu_core_series" {
 }
 
 variable "device_name" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "include_ubuntu_core" {
   description = "Register an Ubuntu Core device"
-  type = bool
+  type        = bool
 }
 
 variable "lxd_vm_count" {
@@ -104,4 +106,9 @@ variable "lxd_series" {
 variable "lxd_vm_name" {
   type        = string
   description = "The name of the LXD VM(s)"
+}
+
+variable "gpg_private_key_path" {
+  type = string
+  sensitive   = true
 }

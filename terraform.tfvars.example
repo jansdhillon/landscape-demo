@@ -17,6 +17,9 @@ landscape_ppa         = "ppa:landscape/self-hosted-beta"
 registration_key      = "key"
 landscape_server_base = "ubuntu@24.04"
 
+# GPG Key
+gpg_private_key_path = "./private.asc"
+
 # Landscape Client
 
 ubuntu_core_series = "core24"
