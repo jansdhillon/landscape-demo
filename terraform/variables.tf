@@ -23,6 +23,7 @@ variable "hostname" {
   default = "landscape"
 }
 
+<<<<<<< HEAD:variables.tf
 variable "path_to_ssl_cert" {
   type        = string
   default     = ""
@@ -33,6 +34,18 @@ variable "path_to_ssl_key" {
   type        = string
   default     = ""
   description = "Path to your SSL key, if using your own domain"
+=======
+variable "b64_ssl_cert" {
+  type = string
+  default = null
+  sensitive = true
+}
+
+variable "b64_ssl_key" {
+  type = string
+  default = null
+  sensitive = true
+>>>>>>> 991e9f4 (probably not worth it.):terraform/variables.tf
 }
 
 variable "b64_ssl_cert" {
