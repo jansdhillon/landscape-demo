@@ -14,9 +14,3 @@ data "external" "get_haproxy_ip" {
 
   depends_on = [juju_application.haproxy]
 }
-
-data "external" "read_ssl_key_and_cert" {
-  program = ["bash", "${path.module}/encode_ssl_key_and_cert.sh", var.path_to_ssl_key, var.path_to_ssl_cert]
-
-  count = local.self_signed ? 0 : 1
-}

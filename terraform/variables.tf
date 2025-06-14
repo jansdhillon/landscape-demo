@@ -32,15 +32,15 @@ variable "hostname" {
   default = "landscape"
 }
 
-variable "path_to_ssl_cert" {
-  type      = string
-  default   = null
+variable "b64_ssl_cert" {
+  type = string
+  default = null
   sensitive = true
 }
 
-variable "path_to_ssl_key" {
-  type      = string
-  default   = null
+variable "b64_ssl_key" {
+  type = string
+  default = null
   sensitive = true
 }
 

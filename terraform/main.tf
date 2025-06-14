@@ -10,8 +10,8 @@ module "landscape_server" {
   landscape_server_base = var.landscape_server_base
   domain                = var.domain
   hostname              = var.hostname
-  path_to_ssl_cert      = var.path_to_ssl_cert
-  path_to_ssl_key       = var.path_to_ssl_key
+  b64_ssl_cert          = var.b64_ssl_cert
+  b64_ssl_key           = var.b64_ssl_key
 }
 
 # Wait for Landscape Server model to stabilize

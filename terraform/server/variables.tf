@@ -64,13 +64,13 @@ variable "hostname" {
   type = string
 }
 
-variable "path_to_ssl_cert" {
+variable "b64_ssl_cert" {
   type = string
   default = null
   sensitive = true
 }
 
-variable "path_to_ssl_key" {
+variable "b64_ssl_key" {
   type = string
   default = null
   sensitive = true
