@@ -45,22 +45,31 @@ func main() {
 		log.Fatalf("Terraform variables file does not exist: %s", tfVarsFilePath)
 	}
 
-	ls, err := (&landscape.LandscapeServer{}).New(ctx, modulePath, tfVarsFilePath, "/etc/letsencrypt/live/landscape.jandhillon.com/cert.pem", "/etc/letsencrypt/live/landscape.jandhillon.com/privkey.pem", execPath, log.New(os.Stdout, "", log.LstdFlags))
+	logger := log.New(os.Stdout, "", log.LstdFlags)
+
+	landscapeServer, err := (&landscape.LandscapeServer{}).New(ctx, modulePath, tfVarsFilePath, "/etc/letsencrypt/live/landscape.jandhillon.com/cert.pem", "/etc/letsencrypt/live/landscape.jandhillon.com/privkey.pem", execPath, logger)
 
 	if err != nil {
 		log.Fatalf("Error creating the Landscape Server module: %s", err)
 	}
 
-	initErr := ls.Init()
+	landscapeServer.Init()
 
-	if initErr != nil {
-		log.Fatalf("Error running Init: %s", initErr)
+	landscapeServer.Plan()
+
+	landscapeServer.Apply()
+
+	landscapeClient, err := (&landscape.LandscapeClient{}).New(ctx, modulePath, tfVarsFilePath, execPath, logger, true)
+	if err != nil {
+		log.Fatalf("Error creating the Landscape Client module: %s", err)
 	}
 
-	planErr := ls.Plan()
+	landscapeClient.Init()
 
-	if planErr != nil {
-		log.Fatalf("Error running Plan: %s", planErr)
-	}
+	landscapeClient.Plan()
+
+	landscapeClient.Apply()
+
+	log.Default().Println("Done!")
 
 }
