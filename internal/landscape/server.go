@@ -11,8 +11,9 @@ import (
 )
 
 type LandscapeServer struct {
-	ctx               context.Context
-	modulePath        string
+	ctx        context.Context
+	modulePath string
+	// TODO: #7 Don't pass in entire TFVars file (just use unmarshalled vars)
 	tfVarsFilePath    string
 	b64SSLCert        string
 	b64SSLKey         string

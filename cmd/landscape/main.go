@@ -4,81 +4,29 @@ import (
 	"context"
 	"log"
 	"os"
-	"path/filepath"
+	"os/signal"
+	"syscall"
 
-	"github.com/hashicorp/go-version"
-	"github.com/hashicorp/hc-install/product"
-	"github.com/hashicorp/hc-install/releases"
-	"github.com/jansdhillon/landscape-demo/internal/landscape"
+	"github.com/urfave/cli/v3"
 )
 
 const (
-	// TODO: Use BurntSushi/toml for general config options
 	TerraformVersion = "1.12.0"
-	TfVarsFileName   = "terraform.tfvars"
+	TfVarsFileName   = "terraform.tfvars.json"
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	installer := &releases.ExactVersion{
-		Product: product.Terraform,
-		Version: version.Must(version.NewVersion(TerraformVersion)),
+	app := &cli.Command{
+		Name: "landscape",
+		Commands: []*cli.Command{
+			serverCmd,
+		},
 	}
 
-	execPath, err := installer.Install(ctx)
-	if err != nil {
-		log.Fatalf("Error installing Terraform: %s", err)
+	if err := app.Run(ctx, os.Args); err != nil {
+		log.Fatal(err)
 	}
-
-	baseWorkingDir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting current working directory: %s", err)
-	}
-
-	terraformDir := filepath.Join(baseWorkingDir, "terraform")
-
-	modulePath := filepath.Join(terraformDir, "server")
-
-	tfVarsFilePath := filepath.Join(baseWorkingDir, TfVarsFileName)
-
-	if _, err := os.Stat(tfVarsFilePath); os.IsNotExist(err) {
-		log.Fatalf("Terraform variables file does not exist: %s", tfVarsFilePath)
-	}
-
-	logger := log.New(os.Stdout, "", log.LstdFlags)
-
-	landscapeServer, err := (&landscape.LandscapeServer{}).New(ctx, modulePath, tfVarsFilePath, "/etc/letsencrypt/live/landscape.jandhillon.com/cert.pem", "/etc/letsencrypt/live/landscape.jandhillon.com/privkey.pem", execPath, logger)
-
-	if err != nil {
-		log.Fatalf("Error creating the Landscape Server module: %s", err)
-	}
-
-	landscapeServer.Init()
-
-	landscapeServer.Plan()
-
-	landscapeServer.Apply()
-
-	// Extract needed outputs (HAProxy IP, self-signed)
-
-	// Add HAProxy root_url to /etc/hosts
-
-	// Recreate setup_landscape.sh in Go
-
-	modulePath = filepath.Join(terraformDir, "client")
-
-	landscapeClient, err := (&landscape.LandscapeClient{}).New(ctx, modulePath, tfVarsFilePath, execPath, logger, true)
-	if err != nil {
-		log.Fatalf("Error creating the Landscape Client module: %s", err)
-	}
-
-	landscapeClient.Init()
-
-	landscapeClient.Plan()
-
-	landscapeClient.Apply()
-
-	log.Default().Println("Done!")
-
 }
