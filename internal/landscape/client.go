@@ -37,27 +37,27 @@ func (ls *LandscapeClient) New(ctx context.Context, modulePath string, tfVarsFil
 }
 
 func (ls *LandscapeClient) Init() error {
-	ls.logger.Printf("Attempting to initialize Terraform module at: %s", ls.modulePath)
+	ls.logger.Printf("Attempting to initialize Landscape Client module at: %s", ls.modulePath)
 	err := ls.tf.Init(ls.ctx, tfexec.Upgrade(true))
 	if err != nil {
-		return fmt.Errorf("failed to run 'terraform init' for module at %s: %w", ls.modulePath, err)
+		return fmt.Errorf("failed to run 'terraform init' for Landscape Client %s: %w", ls.modulePath, err)
 	}
-	ls.logger.Printf("Terraform module at %s initialized successfully.", ls.modulePath)
+	ls.logger.Printf("Landscape Client module at %s initialized successfully.", ls.modulePath)
 	return nil
 }
 
 func (ls *LandscapeClient) Plan() error {
-	ls.logger.Printf("Running terraform plan...")
+	ls.logger.Printf("Running terraform plan for Landscape Client...")
 	_, err := ls.tf.Plan(ls.ctx, tfexec.VarFile(ls.tfVarsFilePath))
 	if err != nil {
 		return fmt.Errorf("failed to run 'terraform plan': %w", err)
 	}
-	ls.logger.Printf("Terraform plan completed successfully.")
+	ls.logger.Printf("Plan for Landscape Client completed successfully.")
 	return nil
 }
 
 func (ls *LandscapeClient) Apply() error {
-	ls.logger.Printf("Running terraform apply...")
+	ls.logger.Printf("Running terraform apply for Landscape Client...")
 	err := ls.tf.Apply(ls.ctx, tfexec.VarFile(ls.tfVarsFilePath))
 	if err != nil {
 		return fmt.Errorf("failed to run 'terraform apply': %w", err)
@@ -67,7 +67,7 @@ func (ls *LandscapeClient) Apply() error {
 }
 
 func (ls *LandscapeClient) Destroy() error {
-	ls.logger.Printf("Running terraform destroy...")
+	ls.logger.Printf("Running terraform destroy for Landscape Client...")
 	err := ls.tf.Destroy(ls.ctx, tfexec.VarFile(ls.tfVarsFilePath))
 	if err != nil {
 		return fmt.Errorf("failed to run 'terraform destroy': %w", err)

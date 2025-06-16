@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	// TODO: Use BurntSushi/toml for general config options
 	TerraformVersion = "1.12.0"
 	TfVarsFileName   = "terraform.tfvars"
 )
@@ -58,6 +59,14 @@ func main() {
 	landscapeServer.Plan()
 
 	landscapeServer.Apply()
+
+	// Extract needed outputs (HAProxy IP, self-signed)
+
+	// Add HAProxy root_url to /etc/hosts
+
+	// Recreate setup_landscape.sh in Go
+
+	modulePath = filepath.Join(terraformDir, "client")
 
 	landscapeClient, err := (&landscape.LandscapeClient{}).New(ctx, modulePath, tfVarsFilePath, execPath, logger, true)
 	if err != nil {
