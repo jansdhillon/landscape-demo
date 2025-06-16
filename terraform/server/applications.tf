@@ -43,8 +43,8 @@ resource "juju_application" "haproxy" {
     default_timeouts            = "queue 60000, connect 5000, client 120000, server 120000"
     global_default_bind_options = "no-tlsv10"
     services                    = ""
-    ssl_cert                    = local.self_signed ? "SELFSIGNED" : local.b64_ssl_cert
-    ssl_key                     = local.self_signed ? "" : local.b64_ssl_key
+    ssl_cert                    = local.self_signed ? "SELFSIGNED" : var.b64_ssl_cert
+    ssl_key                     = local.self_signed ? "" : var.b64_ssl_key
 
   }
 

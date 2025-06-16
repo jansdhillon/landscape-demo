@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,11 +9,12 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
 	"github.com/hashicorp/hc-install/releases"
-	"github.com/hashicorp/terraform-exec/tfexec"
+	"github.com/jansdhillon/landscape-demo/internal/landscape"
 )
 
 const (
 	TerraformVersion = "1.12.0"
+	TfVarsFileName   = "terraform.tfvars"
 )
 
 func main() {
@@ -38,52 +37,30 @@ func main() {
 
 	terraformDir := filepath.Join(baseWorkingDir, "terraform")
 
-	tf, err := tfexec.NewTerraform(terraformDir, execPath)
-	if err != nil {
-		log.Fatalf("Error creating Terraform instance: %s", err)
+	modulePath := filepath.Join(terraformDir, "server")
+
+	tfVarsFilePath := filepath.Join(baseWorkingDir, TfVarsFileName)
+
+	if _, err := os.Stat(tfVarsFilePath); os.IsNotExist(err) {
+		log.Fatalf("Terraform variables file does not exist: %s", tfVarsFilePath)
 	}
 
-	tf.SetLogger(log.New(os.Stdout, "", log.LstdFlags))
-
-	err = tf.Init(ctx, tfexec.Upgrade(true))
-	if err != nil {
-		log.Fatalf("Error running Init: %s", err)
-	}
-
-	fmt.Println("Deploying Terraform modules...")
-
-	planfile := filepath.Join(terraformDir, "planfile")
-
-	changed, err := tf.Plan(ctx, tfexec.Out(planfile))
+	ls, err := (&landscape.LandscapeServer{}).New(ctx, modulePath, tfVarsFilePath, "/etc/letsencrypt/live/landscape.jandhillon.com/cert.pem", "/etc/letsencrypt/live/landscape.jandhillon.com/privkey.pem", execPath, log.New(os.Stdout, "", log.LstdFlags))
 
 	if err != nil {
-		log.Fatalf("Error running Plan: %s", err)
+		log.Fatalf("Error creating the Landscape Server module: %s", err)
 	}
 
-	log.Printf("Changed: %t", changed)
+	initErr := ls.Init()
 
-	plan, err := tf.ShowPlanFile(ctx, planfile)
-	if err != nil {
-		log.Fatalf("Error reading planfile: %s", err)
+	if initErr != nil {
+		log.Fatalf("Error running Init: %s", initErr)
 	}
 
-	log.Printf("Plan has %d resource changes", len(plan.ResourceChanges))
+	planErr := ls.Plan()
 
-	planJSON, err := json.MarshalIndent(plan, "", "  ")
-	if err != nil {
-		log.Fatalf("Error marshaling plan to JSON: %s", err)
+	if planErr != nil {
+		log.Fatalf("Error running Plan: %s", planErr)
 	}
-	log.Printf("Plan JSON: %s", string(planJSON))
-
-	planDir := filepath.Dir(planfile)
-	jsonFile := filepath.Join(planDir, "plan.json")
-	writeErr := os.WriteFile(jsonFile, planJSON, 0644)
-	if writeErr != nil {
-		log.Fatalf("Error writing plan JSON file: %s", writeErr)
-	}
-
-	// Deploy Landscape Server
-
-	// Get outputs (HAProxy IP, etc.)
 
 }
