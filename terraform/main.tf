@@ -14,50 +14,9 @@ module "landscape_server" {
   b64_ssl_key           = var.b64_ssl_key
 }
 
-# Wait for Landscape Server model to stabilize
-resource "terraform_data" "juju_wait_for_landscape_server" {
-  depends_on = [module.landscape_server.model_name]
-  provisioner "local-exec" {
-    command = <<-EOT
-      juju wait-for model $MODEL --timeout 3600s --query='forEach(units, unit => (unit.workload-status == "active" || unit.workload-status == "blocked"))'
-    EOT
-    environment = {
-      MODEL = module.landscape_server.model_name
-    }
-  }
-}
-
-# Handle add/cleanup root URL to /etc/hosts
-resource "terraform_data" "add_landscape_root_url_to_etc_hosts" {
-  depends_on = [terraform_data.juju_wait_for_landscape_server]
-
-  triggers_replace = {
-    root_url_line = "${module.landscape_server.haproxy_ip} ${module.landscape_server.landscape_root_url}"
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "Modifying /etc/hosts requires elevated privileges."
-      if ! grep -q "${self.triggers_replace.root_url_line}" /etc/hosts; then
-        echo "${self.triggers_replace.root_url_line}" | sudo tee -a /etc/hosts >/dev/null
-        echo "Added '${self.triggers_replace.root_url_line}' to /etc/hosts."
-      fi
-    EOT
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<-EOT
-      echo "Modifying /etc/hosts requires elevated privileges."
-      sudo sed -i "/^${self.triggers_replace.root_url_line}$/d" /etc/hosts
-      echo "Removed '${self.triggers_replace.root_url_line}' from /etc/hosts (if it existed)."
-    EOT
-  }
-}
-
 # Make REST API requests to Landscape for setup
 resource "terraform_data" "setup_landscape" {
-  depends_on = [terraform_data.juju_wait_for_landscape_server]
+  depends_on = [module.landscape_server]
 
   triggers_replace = {
     haproxy_ip           = module.landscape_server.haproxy_ip

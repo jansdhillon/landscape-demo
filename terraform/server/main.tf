@@ -14,3 +14,16 @@ data "external" "get_haproxy_ip" {
 
   depends_on = [juju_application.haproxy]
 }
+
+# Wait for Landscape Server model to stabilize
+resource "terraform_data" "juju_wait_for_landscape_server" {
+  depends_on = [juju_model.landscape]
+  provisioner "local-exec" {
+    command = <<-EOT
+      juju wait-for model $MODEL --timeout 3600s --query='forEach(units, unit => (unit.workload-status == "active" || unit.workload-status == "blocked"))'
+    EOT
+    environment = {
+      MODEL = juju_model.landscape.name
+    }
+  }
+}
