@@ -8,7 +8,7 @@ module "lxd-vm" {
   landscape_account_name = var.landscape_account_name
   lxd_vm_count           = var.lxd_vm_count
   self_signed_server     = var.self_signed_server
-
+  workspace_name         = var.workspace_name
 }
 
 module "ubuntu-core-device" {
@@ -21,5 +21,6 @@ module "ubuntu-core-device" {
   landscape_account_name = var.landscape_account_name
   count                  = var.include_ubuntu_core ? 1 : 0
   self_signed_server     = var.self_signed_server
+  workspace_name         = var.workspace_name
 }
 

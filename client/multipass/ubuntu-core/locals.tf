@@ -13,5 +13,4 @@ runcmd:
   %{endif}
 
 EOF
-
 }

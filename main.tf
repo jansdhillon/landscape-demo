@@ -52,5 +52,6 @@ module "landscape_client" {
   lxd_vm_name            = var.lxd_vm_name
   lxd_vm_count           = var.lxd_vm_count
   self_signed_server     = module.landscape_server.self_signed_server
+  workspace_name         = var.workspace_name
 }
 

@@ -43,7 +43,6 @@ cleanup() {
 }
 
 trap cleanup SIGINT
-trap cleanup ERR
 
 printf "Setting up Landscape...\n"
 PATH_TO_SSL_CERT=$(cat terraform.tfvars.json | yq '.path_to_ssl_cert')
