@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -x
 
 BOLD="\e[1m"
 ORANGE="\e[33m"
@@ -34,7 +34,7 @@ cleanup() {
   fi
 
   tofu destroy -auto-approve
-  
+
   exit
 }
 
@@ -44,7 +44,28 @@ printf "Setting up Landscape...\n"
 
 tofu init
 
-tofu apply -auto-approve -var-file terraform.tfvars
+PATH_TO_SSL_CERT=$(cat terraform.tfvars.json | yq '.path_to_ssl_cert')
+PATH_TO_SSL_KEY=$(cat terraform.tfvars.json | yq '.path_to_ssl_key')
+
+if [ -n "$PATH_TO_SSL_CERT" ] && [ "$PATH_TO_SSL_CERT" != "null" ] &&
+  [ -n "$PATH_TO_SSL_KEY" ] && [ "$PATH_TO_SSL_KEY" != "null" ]; then
+  printf "Using 'sudo' to read SSL cert/key...\n"
+  B64_SSL_CERT=$(sudo base64 "$PATH_TO_SSL_CERT" 2>/dev/null)
+  B64_SSL_KEY=$(sudo base64 "$PATH_TO_SSL_KEY" 2>/dev/null)
+
+  if [ -z "$B64_SSL_CERT" ] || [ -z "$B64_SSL_KEY" ]; then
+    printf "Failed to encode SSL cert/key\n"
+    exit 1
+  fi
+fi
+
+if [ -n "$B64_SSL_CERT" ] && [ -n "$B64_SSL_KEY" ]; then
+  tofu apply -auto-approve -var-file terraform.tfvars.json \
+    -var "b64_ssl_cert=${B64_SSL_CERT}" \
+    -var "b64_ssl_key=${B64_SSL_KEY}"
+else
+  tofu apply -auto-approve -var-file terraform.tfvars.json
+fi
 
 HAPROXY_IP=$(tofu output haproxy_ip | tr -d "\"")
 LANDSCAPE_ROOT_URL=$(tofu output landscape_root_url | tr -d "\"")

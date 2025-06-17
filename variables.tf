@@ -32,18 +32,27 @@ variable "hostname" {
   default = "landscape"
 }
 
+variable "path_to_ssl_cert" {
+  type = string
+  default = ""
+}
+
+variable "path_to_ssl_key" {
+  type = string
+  default = ""
+  sensitive = true
+}
+
 variable "b64_ssl_cert" {
   type = string
-  default = null
-  sensitive = true
+  default = ""
 }
 
 variable "b64_ssl_key" {
   type = string
-  default = null
   sensitive = true
+  default = ""
 }
-
 
 variable "admin_email" {
   description = "Email of the default admin"

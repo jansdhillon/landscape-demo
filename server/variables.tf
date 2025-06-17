@@ -66,13 +66,11 @@ variable "hostname" {
 
 variable "b64_ssl_cert" {
   type = string
-  default = null
   sensitive = true
 }
 
 variable "b64_ssl_key" {
   type = string
-  default = null
   sensitive = true
 }
 
