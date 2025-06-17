@@ -78,13 +78,13 @@ if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
     tofu apply -auto-approve -var-file terraform.tfvars.json \
         -var "b64_ssl_cert=${B64_SSL_CERT}" \
         -var "b64_ssl_key=${B64_SSL_KEY}" \
-        -exclude module.landscape_client
+        -target module.landscape_server
 else
     if ! tofu plan -var-file terraform.tfvars.json; then
         printf "Error running plan!\n"
         cleanup
     fi
-    tofu apply -auto-approve -var-file terraform.tfvars.json -exclude module.landscape_client
+    tofu apply -auto-approve -var-file terraform.tfvars.json -target module.landscape_server
 fi
 
 HAPROXY_IP=$(server/get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
@@ -106,6 +106,6 @@ fi
 # Sometimes cloud-init will report an error even if it works
 # so this is to avoid triggering cleanup in that case
 set +e
-tofu apply -auto-approve -var-file terraform.tfvars.json -exclude juju_model.landscape
+tofu apply -auto-approve -var-file terraform.tfvars.json
 
 echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_ROOT_URL}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}\n"
