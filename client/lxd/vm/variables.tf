@@ -36,11 +36,6 @@ variable "lxd_vm_count" {
   type = number
 }
 
-variable "self_signed_server" {
-  type = bool
-  description = "Whether Landscape Server is using a self-signed certificate or not."
-}
-
 variable "workspace_name" {
   type = string
 }

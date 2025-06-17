@@ -26,11 +26,6 @@ variable "device_name" {
   type = string
 }
 
-variable "self_signed_server" {
-  type = bool
-  description = "Whether Landscape Server is using a self-signed certificate or not."
-}
-
 variable "workspace_name" {
   type = string
 }

@@ -36,6 +36,10 @@ resource "terraform_data" "setup_landscape" {
     bash ${path.module}/setup_landscape.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" "$GPG_PRIVATE_KEY_PATH" "$SERIES"
     EOT
   }
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
 
 
@@ -51,7 +55,6 @@ module "landscape_client" {
   lxd_series             = var.lxd_series
   lxd_vm_name            = var.lxd_vm_name
   lxd_vm_count           = var.lxd_vm_count
-  self_signed_server     = module.landscape_server.self_signed_server
   workspace_name         = var.workspace_name
 }
 

@@ -1,6 +1,8 @@
 {
   "pro_token": "<token>",
   "path_to_ssh_key": "<path-to-your-ssh-key>",
+  "path_to_ssl_cert": "",
+  "path_to_ssl_key": "",
   "hostname": "landscape",
   "domain": "example.com",
   "admin_email": "admin@example.com",

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euxo pipefail
+set -euo pipefail
 
 BOLD="\e[1m"
 ORANGE="\e[33m"
@@ -103,8 +103,7 @@ fi
 # Deploy Landscape Client module
 
 # Sometimes cloud-init will report an error even if it works
-# so this is to avoid triggering cleanup in that case
-set +e
+set +e +o pipefail
 # Don't overwrite SSL vars
 if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
     tofu apply -auto-approve -var-file terraform.tfvars.json \
