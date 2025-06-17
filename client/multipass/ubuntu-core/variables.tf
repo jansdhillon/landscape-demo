@@ -18,11 +18,15 @@ variable "registration_key" {
   description = "Registration key for Landscape Server"
 }
 
+variable "ubuntu_core_count" {
+  type = number
+}
+
 variable "ubuntu_core_series" {
   type = string
 }
 
-variable "device_name" {
+variable "ubuntu_core_device_name" {
   type = string
 }
 

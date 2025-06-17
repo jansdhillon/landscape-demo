@@ -1,9 +1,7 @@
 variable "workspace_name" {
   description = "Name of the OpenTofu/Terraform workspace"
-  type = string
+  type        = string
 }
-
-# Juju Model
 
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"
@@ -11,15 +9,11 @@ variable "path_to_ssh_key" {
   sensitive   = true
 }
 
-# Ubuntu Pro
-
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
   sensitive   = true
 }
-
-# Landscape Server
 
 variable "domain" {
   type    = string
@@ -32,25 +26,25 @@ variable "hostname" {
 }
 
 variable "path_to_ssl_cert" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "path_to_ssl_key" {
-  type = string
-  default = ""
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "b64_ssl_cert" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "b64_ssl_key" {
-  type = string
+  type      = string
   sensitive = true
-  default = ""
+  default   = ""
 }
 
 variable "admin_email" {
@@ -82,7 +76,13 @@ variable "landscape_server_base" {
   type = string
 }
 
-# Landscape Client Machines
+variable "landscape_server_channel" {
+  type    = string
+}
+
+variable "landscape_server_revision" {
+  type    = number
+}
 
 variable "ubuntu_core_series" {
   type        = string
@@ -90,14 +90,15 @@ variable "ubuntu_core_series" {
   default     = "core24"
 }
 
-variable "device_name" {
+variable "ubuntu_core_device_name" {
   type    = string
-  default = ""
+  default = "micro"
 }
 
-variable "include_ubuntu_core" {
-  description = "Register an Ubuntu Core device"
-  type        = bool
+variable "ubuntu_core_count" {
+  description = "Number of Ubuntu Core devices"
+  type        = number
+  default     = 0
 }
 
 variable "lxd_vm_count" {
@@ -108,7 +109,7 @@ variable "lxd_vm_count" {
 variable "lxd_series" {
   type        = string
   default     = "jammy"
-  description = "Series of LXD"
+  description = "Series of LXD VM"
 }
 
 variable "lxd_vm_name" {
@@ -116,7 +117,27 @@ variable "lxd_vm_name" {
   description = "The name of the LXD VM(s)"
 }
 
-variable "gpg_private_key_path" {
-  type = string
+variable "path_to_gpg_private_key" {
+  type      = string
+}
+
+variable "gpg_private_key_content" {
+  type        = string
+  description = "URL-encoded GPG private key content"
+  default     = ""
   sensitive   = true
+}
+
+
+variable "landscape_server_units" {
+  description = "Landscape Server charm units number"
+  type        = number
+}
+
+variable "postgresql_units" {
+  type    = number
+}
+
+variable "rabbitmq_server_units" {
+  type    = number
 }
