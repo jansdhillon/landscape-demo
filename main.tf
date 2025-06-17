@@ -33,7 +33,7 @@ resource "terraform_data" "setup_landscape" {
     ADMIN_PASSWORD='${self.triggers_replace.admin_password}'
     GPG_PRIVATE_KEY_PATH='${self.triggers_replace.gpg_private_key_path}'
     SERIES='${self.triggers_replace.series}'
-    bash ${path.module}/rest_api_requests.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" "$GPG_PRIVATE_KEY_PATH" "$SERIES"
+    bash ${path.module}/setup_landscape.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" "$GPG_PRIVATE_KEY_PATH" "$SERIES"
     EOT
   }
 }
@@ -41,7 +41,8 @@ resource "terraform_data" "setup_landscape" {
 
 module "landscape_client" {
   source                 = "./client"
-  landscape_root_url     = module.landscape_server.self_signed_server ? module.landscape_server.haproxy_ip : module.landscape_server.landscape_root_url
+  # We don't use the root URL internally
+  landscape_root_url     = module.landscape_server.haproxy_ip
   landscape_account_name = module.landscape_server.landscape_account_name
   registration_key       = module.landscape_server.registration_key
   pro_token              = var.pro_token
@@ -51,7 +52,6 @@ module "landscape_client" {
   lxd_series             = var.lxd_series
   lxd_vm_name            = var.lxd_vm_name
   lxd_vm_count           = var.lxd_vm_count
-  self_signed_server     = module.landscape_server.self_signed_server
 
   depends_on = [terraform_data.setup_landscape]
 }

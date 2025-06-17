@@ -6,6 +6,7 @@ cloud-init.yaml
 terraform.log
 # For testing exporting bundle
 bundle*.yaml
+terraform.tfvars
 terraform.tfvars.json
 *.pem
 *.asc

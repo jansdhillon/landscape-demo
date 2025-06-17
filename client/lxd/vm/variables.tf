@@ -36,8 +36,3 @@ variable "lxd_series" {
 variable "lxd_vm_count" {
   type = number
 }
-
-variable "self_signed_server" {
-  type = bool
-  description = "If the server is using a self-signed certificate"
-}

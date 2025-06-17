@@ -20,8 +20,3 @@ output "landscape_root_url" {
   value = "${var.hostname}.${var.domain}"
 
 }
-
-output "self_signed_server" {
-  value = local.self_signed
-  sensitive = true
-}

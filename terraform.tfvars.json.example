@@ -6,8 +6,6 @@
   "domain": "example.com",
   "admin_email": "admin@example.com",
   "admin_password": "pwd",
-  "path_to_ssl_cert": "",
-  "path_to_ssl_key": "",
   "min_install": true,
   "landscape_ppa": "ppa:landscape/self-hosted-beta",
   "registration_key": "key",

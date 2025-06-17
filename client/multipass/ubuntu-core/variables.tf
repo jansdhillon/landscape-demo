@@ -26,8 +26,3 @@ variable "ubuntu_core_series" {
 variable "device_name" {
   type = string
 }
-
-variable "self_signed_server" {
-  type = bool
-  description = "If the server is using a self-signed certificate"
-}

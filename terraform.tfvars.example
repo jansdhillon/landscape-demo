@@ -1,0 +1,24 @@
+# Ubuntu Pro
+pro_token = "<token>"
+# Juju Model
+model_name = "landscape"
+path_to_ssh_key = "<path-to-your-ssh-key>"
+# Landscape Server
+hostname = "landscape"
+domain = "example.com"
+admin_email = "admin@example.com"
+admin_password = "pwd"
+
+min_install = true
+landscape_ppa = "ppa:landscape/self-hosted-beta"
+registration_key = "key"
+landscape_server_base = "ubuntu@24.04"
+# GPG Key
+gpg_private_key_path = "./private.asc"
+# Landscape Client
+ubuntu_core_series = "core24"
+include_ubuntu_core = false
+device_name = "micro"
+lxd_vm_count = 1
+lxd_series = "noble"
+lxd_vm_name = "vulnerable"
