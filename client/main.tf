@@ -7,6 +7,8 @@ module "lxd-vm" {
   landscape_root_url     = var.landscape_root_url
   landscape_account_name = var.landscape_account_name
   lxd_vm_count           = var.lxd_vm_count
+  self_signed_server     = var.self_signed_server
+
 }
 
 module "ubuntu-core-device" {
@@ -18,5 +20,6 @@ module "ubuntu-core-device" {
   device_name            = var.device_name
   landscape_account_name = var.landscape_account_name
   count                  = var.include_ubuntu_core ? 1 : 0
+  self_signed_server     = var.self_signed_server
 }
 

@@ -43,3 +43,8 @@ variable "lxd_vm_name" {
   type        = string
   description = "The name of the LXD VM"
 }
+
+variable "self_signed_server" {
+  type = bool
+  description = "Whether Landscape Server is using a self-signed certificate or not."
+}

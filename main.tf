@@ -51,7 +51,7 @@ module "landscape_client" {
   lxd_series             = var.lxd_series
   lxd_vm_name            = var.lxd_vm_name
   lxd_vm_count           = var.lxd_vm_count
+  self_signed_server     = module.landscape_server.self_signed_server
 
-  depends_on = [terraform_data.setup_landscape]
 }
 

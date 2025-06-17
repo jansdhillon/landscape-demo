@@ -83,8 +83,9 @@ We can easily clean up our resources with OpenTofu:
 tofu destroy -auto-approve
 # switch back to default worksapce
 tofu workspace select default
+# replace 'landscape' with another workspace name if needed
 tofu workspace delete landscape
 # double check that the Juju model was deleted
-# replace 'landscape' with another model name if needed
+# replace 'landscape' with another workspace name if needed
 juju destroy-model --no-prompt landscape --no-wait --force
 ```
