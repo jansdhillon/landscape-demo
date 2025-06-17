@@ -1,10 +1,9 @@
-# Juju Model
-
-variable "model_name" {
-  description = "The Juju model name for Landscape Server"
-  type        = string
-  default     = "landscape"
+variable "workspace_name" {
+  description = "Name of the OpenTofu/Terraform workspace"
+  type = string
 }
+
+# Juju Model
 
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"

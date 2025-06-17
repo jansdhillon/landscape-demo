@@ -19,6 +19,7 @@ resource "juju_application" "landscape_server" {
     admin_name       = var.admin_name
     admin_email      = var.admin_email
     admin_password   = var.admin_password
+    root_url         = local.root_url
   }
 
   depends_on = [juju_model.landscape]

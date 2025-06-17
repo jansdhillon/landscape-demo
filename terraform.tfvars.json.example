@@ -1,6 +1,5 @@
 {
   "pro_token": "<token>",
-  "model_name": "landscape",
   "path_to_ssh_key": "<path-to-your-ssh-key>",
   "hostname": "landscape",
   "domain": "example.com",

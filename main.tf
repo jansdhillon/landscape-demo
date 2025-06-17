@@ -1,6 +1,6 @@
 module "landscape_server" {
   source                = "./server"
-  model_name            = var.model_name
+  model_name            = var.workspace_name
   path_to_ssh_key       = var.path_to_ssh_key
   admin_email           = var.admin_email
   admin_password        = var.admin_password
@@ -41,8 +41,7 @@ resource "terraform_data" "setup_landscape" {
 
 module "landscape_client" {
   source                 = "./client"
-  # We don't use the root URL internally
-  landscape_root_url     = module.landscape_server.haproxy_ip
+  landscape_root_url     = module.landscape_server.self_signed_server ? module.landscape_server.haproxy_ip : module.landscape_server.landscape_root_url
   landscape_account_name = module.landscape_server.landscape_account_name
   registration_key       = module.landscape_server.registration_key
   pro_token              = var.pro_token

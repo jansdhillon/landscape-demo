@@ -1,14 +1,13 @@
 #!/bin/bash
-
-set -x
+set -euxo pipefail
 
 BOLD="\e[1m"
 ORANGE="\e[33m"
 RESET_TEXT="\e[0m"
 
 bold_orange_text() {
-  local text=$1
-  echo -e "${BOLD}${ORANGE}${text}${RESET_TEXT}"
+    local text=$1
+    echo -e "${BOLD}${ORANGE}${text}${RESET_TEXT}"
 }
 
 cat <<EOF
@@ -26,45 +25,69 @@ EOF
 bold_orange_text 'Welcome to Landscape!'
 
 cleanup() {
-  printf "Cleaning up and exiting...\n"
+    printf "Cleaning up and exiting...\n"
+    if [ -n "${HAPROXY_IP:-}" ]; then
+        printf "Using 'sudo' to remove all entries for IP ${HAPROXY_IP} from /etc/hosts...\n"
+        sudo sed -i "/${HAPROXY_IP}/d" /etc/hosts
+    fi
+    tofu destroy -auto-approve
+    if [ -n "${WORKSPACE_NAME:-}" ]; then
+        tofu workspace select default
+        tofu workspace delete "$WORKSPACE_NAME"
 
-  if [ -n "${HAPROXY_IP:-}" ]; then
-    printf "Using 'sudo' to remove all entries for IP ${HAPROXY_IP} from /etc/hosts...\n"
-    sudo sed -i "/${HAPROXY_IP}/d" /etc/hosts
-  fi
-
-  tofu destroy -auto-approve
-
-  exit
+        # Ideally we wouldn't have to do this manually
+        # but often it will get stuck 'destroying'
+        juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force
+    fi
+    exit
 }
 
 trap cleanup SIGINT
+trap cleanup ERR
 
 printf "Setting up Landscape...\n"
+PATH_TO_SSL_CERT=$(cat terraform.tfvars.json | yq '.path_to_ssl_cert')
+PATH_TO_SSL_KEY=$(cat terraform.tfvars.json | yq '.path_to_ssl_key')
+WORKSPACE_NAME=$(cat terraform.tfvars.json | yq '.workspace_name')
+tofu init
+
+printf "Workspace name: $WORKSPACE_NAME\n"
+if ! tofu workspace new "$WORKSPACE_NAME"; then
+    tofu workspace select "$WORKSPACE_NAME"
+fi
+if [ -n "$PATH_TO_SSL_CERT" ] && [ "$PATH_TO_SSL_CERT" != "null" ] &&
+   [ -n "$PATH_TO_SSL_KEY" ] && [ "$PATH_TO_SSL_KEY" != "null" ]; then
+    printf "Using 'sudo' to read SSL cert/key...\n"
+    B64_SSL_CERT=$(sudo base64 "$PATH_TO_SSL_CERT" 2>/dev/null)
+    B64_SSL_KEY=$(sudo base64 "$PATH_TO_SSL_KEY" 2>/dev/null)
+    if [ -z "$B64_SSL_CERT" ] || [ -z "$B64_SSL_KEY" ]; then
+        printf "Failed to encode SSL cert/key\n"
+        cleanup
+    fi
+fi
 
 tofu init
 
-PATH_TO_SSL_CERT=$(cat terraform.tfvars.json | yq '.path_to_ssl_cert')
-PATH_TO_SSL_KEY=$(cat terraform.tfvars.json | yq '.path_to_ssl_key')
-
-if [ -n "$PATH_TO_SSL_CERT" ] && [ "$PATH_TO_SSL_CERT" != "null" ] &&
-  [ -n "$PATH_TO_SSL_KEY" ] && [ "$PATH_TO_SSL_KEY" != "null" ]; then
-  printf "Using 'sudo' to read SSL cert/key...\n"
-  B64_SSL_CERT=$(sudo base64 "$PATH_TO_SSL_CERT" 2>/dev/null)
-  B64_SSL_KEY=$(sudo base64 "$PATH_TO_SSL_KEY" 2>/dev/null)
-
-  if [ -z "$B64_SSL_CERT" ] || [ -z "$B64_SSL_KEY" ]; then
-    printf "Failed to encode SSL cert/key\n"
-    exit 1
-  fi
-fi
+# Sometimes cloud-init will report an error even if it works
+# so this is to avoid triggering cleanup in that case
+set +e
 
 if [ -n "$B64_SSL_CERT" ] && [ -n "$B64_SSL_KEY" ]; then
-  tofu apply -auto-approve -var-file terraform.tfvars.json \
-    -var "b64_ssl_cert=${B64_SSL_CERT}" \
-    -var "b64_ssl_key=${B64_SSL_KEY}"
+    if ! tofu plan -var-file terraform.tfvars.json \
+        -var "b64_ssl_cert=${B64_SSL_CERT}" \
+        -var "b64_ssl_key=${B64_SSL_KEY}"; then
+        printf "Error running plan!\n"
+        cleanup
+    fi
+    tofu apply -auto-approve -var-file terraform.tfvars.json \
+        -var "b64_ssl_cert=${B64_SSL_CERT}" \
+        -var "b64_ssl_key=${B64_SSL_KEY}"
 else
-  tofu apply -auto-approve -var-file terraform.tfvars.json
+    if ! tofu plan -var-file terraform.tfvars.json; then
+        printf "Error running plan!\n"
+        cleanup
+    fi
+    tofu apply -auto-approve -var-file terraform.tfvars.json
 fi
 
 HAPROXY_IP=$(tofu output haproxy_ip | tr -d "\"")

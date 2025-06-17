@@ -17,7 +17,7 @@ output "registration_key" {
 }
 
 output "landscape_root_url" {
-  value = "${var.hostname}.${var.domain}"
+  value = local.root_url
 }
 
 output "admin_email" {
@@ -29,10 +29,6 @@ output "admin_password" {
   sensitive = true
 }
 
-output "debug_cert_length" {
-  value = length(var.b64_ssl_cert)
-}
-output "debug_key_length" {
-  value = length(var.b64_ssl_key)
-  sensitive = true
+output "self_signed_server" {
+  value = local.self_signed ? true : false
 }
