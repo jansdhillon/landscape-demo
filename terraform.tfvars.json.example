@@ -18,10 +18,10 @@
   "path_to_gpg_private_key": "./private.asc",
   "ubuntu_core_series": "core24",
   "ubuntu_core_count": 0,
-  "ubuntu_core_device_name": "micro",
+  "ubuntu_core_device_name": "core-client",
   "lxd_vm_count": 2,
   "lxd_series": "noble",
-  "lxd_vm_name": "vulnerable",
+  "lxd_vm_name": "client",
   "postgresql_units": 1,
   "rabbitmq_server_units": 1
 }
