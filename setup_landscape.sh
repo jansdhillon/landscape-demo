@@ -4,7 +4,7 @@ NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 LANDSCAPE_ROOT_URL="$1"
 ADMIN_EMAIL="$2"
 ADMIN_PASSWORD="$3"
-GPG_PRIVATE_KEY_PATH="$4"
+GPG_PRIVATE_KEY_CONTENT="$4"
 SERIES="$5"
 
 while true; do
@@ -85,11 +85,7 @@ rest_api_request "POST" "${CREATE_SCRIPT_PROFILE_URL}" "${BODY}"
 
 # Import GPG key into Landscape
 
-PRIVATE_KEY_NAME=$(basename "$GPG_PRIVATE_KEY_PATH" .asc | tr -d '\n')
-
-export GPG_PRIVATE_KEY_PATH
-
-GPG_PRIVATE_KEY_CONTENT=$(yq -r 'load_str(env(GPG_PRIVATE_KEY_PATH)) | @uri' /dev/null)
+PRIVATE_KEY_NAME="gpg-key"
 
 IMPORT_GPG_KEY_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=ImportGPGKey&version=2011-08-01&name=${PRIVATE_KEY_NAME}&material=${GPG_PRIVATE_KEY_CONTENT}"
 

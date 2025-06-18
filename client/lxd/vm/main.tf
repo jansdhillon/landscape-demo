@@ -13,7 +13,7 @@ data "lxd_image" "has_cves" {
 
 resource "lxd_instance" "lxd_vm" {
   count = var.lxd_vm_count
-  name  =  "${var.lxd_vm_name}-${count.index}"
+  name  = "${var.workspace_name}-${var.lxd_vm_name}-${count.index}"
   image = data.lxd_image.has_cves.fingerprint
   type  = "virtual-machine"
 

@@ -6,7 +6,6 @@ variable "pro_token" {
 
 variable "landscape_root_url" {
   type        = string
-  description = "Fully-qualified domain name of Landscape Server"
 }
 
 variable "landscape_account_name" {
@@ -19,15 +18,18 @@ variable "registration_key" {
   description = "Registration key for Landscape Server"
 }
 
+variable "ubuntu_core_count" {
+  type = number
+}
+
 variable "ubuntu_core_series" {
   type = string
 }
 
-variable "device_name" {
+variable "ubuntu_core_device_name" {
   type = string
 }
 
-variable "self_signed_server" {
-  type = bool
-  description = "If the server is using a self-signed certificate"
+variable "workspace_name" {
+  type = string
 }

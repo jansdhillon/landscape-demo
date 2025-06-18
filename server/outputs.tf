@@ -17,10 +17,9 @@ output "registration_key" {
 }
 
 output "landscape_root_url" {
-  value = "${var.hostname}.${var.domain}"
-
+  value = local.root_url
 }
 
 output "self_signed_server" {
-  value = local.self_signed
+  value = local.self_signed ? true : false
 }

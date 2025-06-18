@@ -10,7 +10,6 @@ variable "pro_token" {
 
 variable "landscape_root_url" {
   type = string
-  description = "Fully-qualified domain name of Landscape Server"
 }
 
 variable "landscape_account_name" {
@@ -37,7 +36,6 @@ variable "lxd_vm_count" {
   type = number
 }
 
-variable "self_signed_server" {
-  type = bool
-  description = "If the server is using a self-signed certificate"
+variable "workspace_name" {
+  type = string
 }

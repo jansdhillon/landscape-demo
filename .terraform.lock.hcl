@@ -91,24 +91,3 @@ provider "registry.opentofu.org/terraform-lxd/lxd" {
     "zh:e3d0b8494cf8a44374dca601ce49ac30c6b57570a3ab6df966e32c22c3ede807",
   ]
 }
-
-provider "registry.opentofu.org/vancluever/acme" {
-  version     = "2.32.0"
-  constraints = "~> 2.0"
-  hashes = [
-    "h1:BpJ2rvRBpWMhbPYV9cJJ07+kC7YbvOr1Py6hZ1vGiHY=",
-    "zh:0102f6124b14d8b42ac4a3863ee95fb99c7408e47d2796ccd153fd1b6a77a8bd",
-    "zh:01c295b07cdaa79e5aaaca80b17a27c98a511cd3aac5c9e2b0194a45e3aa96e8",
-    "zh:22f56952cabac9b17feac133f4d39efaa6cba45e918486192143ea4de74bf717",
-    "zh:58509a3b652a687ee11113c3d99ce11083a16d1127896d7fc34759aeaf0fe340",
-    "zh:84bfc6780f20709fb0ee6c411f81c3a0ecd027bf18283c4ad81178650a798589",
-    "zh:8bc03b9ac1d386dd1f08dbf0bfec63f35cc0032f60fe48e57bfc754e473a2a9e",
-    "zh:9b330d74d1bc718522a0ef317c90238f47e5178dfe80bce9fc724814d0c0fd86",
-    "zh:a90c8cace47adc4a39fe4474fe2fc7ac60e2fb0078191b79236e4bab21f1d1b9",
-    "zh:b101e56134a5d3703ad35fd67131e526181fd6895fc42a43947a25075ff1e6a9",
-    "zh:b7c4377957288a36bef4d7e14ce947a8a41cd6fd1e0740abdaf69768ba02781f",
-    "zh:d93064a7cf552f45a4422a3db27ad37b5adb226295cb412b374b988267fbe9ac",
-    "zh:dc517104eccd4643c9a62da1150ea4b688be2c4f3650c80aa26cb510a0c0d764",
-    "zh:e02c15f9a6d0d5cc8693c58a9195fc3580c7a659f177702bf9a619ee9878e504",
-  ]
-}
