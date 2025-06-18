@@ -14,7 +14,8 @@ Clone this repository, change into the directory, and make the scripts executabl
 ```bash
 git clone git@github.com:jansdhillon/landscape-demo.git
 cd landscape-demo
-chmod +x *.sh
+# Make the scripts executable
+find . -type f -name "*.sh" -exec chmod +x {} +
 ```
 
 Install the [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), [Multipass](https://github.com/canonical/multipass), [OpenTofu](https://github.com/opentofu/opentofu), and [yq](https://github.com/mikefarah/yq) snaps:
