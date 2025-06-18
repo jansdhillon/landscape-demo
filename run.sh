@@ -39,8 +39,6 @@ cleanup() {
     exit
 }
 
-trap cleanup SIGINT
-
 WORKSPACE_NAME="${1:-}"
 
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
@@ -63,6 +61,8 @@ if ! tofu workspace new "$WORKSPACE_NAME"; then
 fi
 
 printf "Workspace name: $WORKSPACE_NAME\n"
+
+trap cleanup SIGINT
 
 tofu init
 
