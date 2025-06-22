@@ -68,13 +68,15 @@ Finally, you can create the workspace for the infrastructure and start Landscape
 > Press `CTRL+C` while the script is running to cleanup and destroy
 > the infrastucture.
 
+> [!WARNING]
+> It's possible that Multipass will time out while provisioning Ubuntu Core devices to register with
+> Landscape. They should still register eventually, but the timeout is unfortunately not configurable.
+
 ## Trigger-based script execution
 
-[welcome.sh](./welcome.sh) was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon registering.
+A script was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon registering.
 
-Additionally, in the Activities tab, you can see that it ran on the Landscape Client instances.
-
-After the script has finished running, you can also verify this using the following:
+In the Activities tab, you can see that it ran on the Landscape Client instances. After the script has finished running, you can also verify this using the following:
 
 ```bash
 lxc exec landscape-client-0 -- bash -c "sudo cat /root/hello.txt"

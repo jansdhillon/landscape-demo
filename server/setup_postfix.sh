@@ -1,14 +1,13 @@
 #!/bin/bash
-set -x
+set -euo pipefail
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y postfix
 
 SMTP_HOST="$1"
 SMTP_PORT="$2"
 SMTP_USERNAME="$3"
 SMTP_PASSWORD="$4"
-SMTP_HOST="$5"
-FQDN="$6"
-DOMAIN="$7"
+FQDN="$5"
+DOMAIN="$6"
 
 sudo postconf -e myhostname="$FQDN"
 sudo postconf -e mydomain="$DOMAIN"

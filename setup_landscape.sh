@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 
 LANDSCAPE_ROOT_URL="$1"
@@ -64,16 +63,13 @@ rest_api_request "PATCH" "${SET_PREFERENCES_URL}" '{"auto_register_new_computers
 
 # Create a script
 
-SCRIPT_CODE=$(
-  cat <<EOF
+WELCOME_SCRIPT_CODE=$(base64 -w 0 <<EOF
 #!/bin/bash
 echo "Welcome to Landscape!" | tee landscape.txt
 EOF
 )
 
-EXAMPLE_CODE=$(base64 -w 0 "$SCRIPT_CODE")
-
-CREATE_SCRIPT_URL="https://${LANDSCAPE_ROOT_URL}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Welcome+Script&script_type=V2&access_group=global"
+CREATE_SCRIPT_URL="https://${LANDSCAPE_ROOT_URL}/api?action=CreateScript&version=2011-08-01&code=${WELCOME_SCRIPT_CODE}&title=Welcome+Script&script_type=V2&access_group=global"
 
 rest_api_request "GET" "${CREATE_SCRIPT_URL}"
 

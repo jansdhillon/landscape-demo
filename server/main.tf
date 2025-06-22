@@ -1,5 +1,14 @@
 resource "juju_model" "landscape" {
   name = var.model_name
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      juju switch $MODEL
+    EOT
+    environment = {
+      MODEL = juju_model.landscape.name
+    }
+  }
 }
 
 resource "juju_ssh_key" "model_ssh_key" {
@@ -49,10 +58,11 @@ resource "terraform_data" "setup_postfix" {
       SMTP_PASSWORD='${self.triggers_replace.smtp_password}'
       FQDN='${self.triggers_replace.fqdn}'
       DOMAIN='${self.triggers_replace.domain}'
+      MODEL='${var.model_name}'
 
-      juju scp "${path.module}/setup_postfix.sh" landscape-server/0:/tmp/setup_postfix.sh
-      juju exec --application landscape-server -- \
-        "/tmp/setup_postfix.sh \"$SMTP_HOST\" \"$SMTP_PORT\" \"$SMTP_USERNAME\" \"$SMTP_PASSWORD\" \"$FQDN\" \"$DOMAIN\""
+      juju scp -m "$MODEL" "${path.module}/setup_postfix.sh" landscape-server/leader:/tmp/setup_postfix.sh
+      juju exec -m "$MODEL" --application landscape-server -- \
+        "sudo chmod +x /tmp/setup_postfix.sh && /tmp/setup_postfix.sh \"$SMTP_HOST\" \"$SMTP_PORT\" \"$SMTP_USERNAME\" \"$SMTP_PASSWORD\" \"$FQDN\" \"$DOMAIN\""
     EOT
   }
 

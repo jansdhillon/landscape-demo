@@ -21,24 +21,6 @@ Welcome to Landscape!
 EOF
 echo -e "${RESET_TEXT}"
 
-cleanup() {
-    printf "Cleaning up and exiting...\n"
-    if [ -n "${HAPROXY_IP:-}" ]; then
-        printf "Using 'sudo' to remove all entries for IP ${HAPROXY_IP} from /etc/hosts...\n"
-        sudo sed -i "/${HAPROXY_IP}/d" /etc/hosts
-    fi
-    tofu destroy -auto-approve
-    if [ -n "${WORKSPACE_NAME:-}" ]; then
-        tofu workspace select default
-        tofu workspace delete "$WORKSPACE_NAME"
-
-        # Ideally we wouldn't have to do this manually
-        # but often it will get stuck 'destroying'
-        juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force
-    fi
-    exit
-}
-
 WORKSPACE_NAME="${1:-}"
 
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
@@ -61,6 +43,11 @@ if ! tofu workspace new "$WORKSPACE_NAME"; then
 fi
 
 printf "Workspace name: $WORKSPACE_NAME\n"
+
+cleanup() {
+    printf "Cleaning up workspace: $WORKSPACE_NAME\n"
+    ./destroy.sh "$WORKSPACE_NAME"
+}
 
 trap cleanup SIGINT
 
@@ -93,7 +80,7 @@ if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
     if ! tofu plan -var-file terraform.tfvars.json \
         -var "b64_ssl_cert=${B64_SSL_CERT}" \
         -var "b64_ssl_key=${B64_SSL_KEY}"; then
-        printf "Error running plan!\n"
+        printf 'Error running plan!\n'
         cleanup
     fi
     tofu apply -auto-approve -var-file terraform.tfvars.json \
@@ -104,7 +91,7 @@ if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
         -var "gpg_private_key_content=${GPG_PRIVATE_KEY_CONTENT}"
 else
     if ! tofu plan -var-file terraform.tfvars.json; then
-        printf "Error running plan!\n"
+        printf 'Error running plan!\n'
         cleanup
     fi
 
@@ -115,6 +102,7 @@ else
         -var "gpg_private_key_content=${GPG_PRIVATE_KEY_CONTENT}"
 fi
 
+# Could also get from output
 HAPROXY_IP=$(server/get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
 DOMAIN=$(cat terraform.tfvars.json | yq '.domain')
 HOSTNAME=$(cat terraform.tfvars.json | yq '.hostname')
