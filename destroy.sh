@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+source ./utils.sh
+
+check_for_tfvars
+
 WORKSPACE_NAME="${1:-}"
 
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
@@ -20,7 +24,7 @@ else
     HAPROXY_IP=""
 fi
 
-tofu destroy -auto-approve -var-file terraform.tfvars.json -var "workspace_name=${WORKSPACE_NAME}"
+tofu destroy -auto-approve -var-file terraform.tfvars -var "workspace_name=${WORKSPACE_NAME}"
 tofu workspace select default
 tofu workspace delete "$WORKSPACE_NAME"
 
@@ -38,13 +42,13 @@ if [ -n "${HAPROXY_IP:-}" ]; then
 fi
 
 # Unfortunately, the Multipass provider for Terraform does not allow us to configure the timeout
-# and it's common for it to timeout while provisioning, so it won't be destroyed with the rest. 
+# and it's common for it to timeout while provisioning, so it won't be destroyed with the rest.
 # To remedy this, we manually find and delete any core devices that were created.
 
-CORE_COUNT=$(cat terraform.tfvars.json | yq '.ubuntu_core_count')
+CORE_COUNT=$(get_tfvar '.ubuntu_core_count')
 
 if [ -n "${CORE_COUNT:-}" ] && [ "$CORE_COUNT" -gt 0 ]; then
-    core_name=$(cat terraform.tfvars.json | yq '.ubuntu_core_device_name')
+    core_name=$(get_tfvar '.ubuntu_core_device_name')
     core_devices=$(multipass list --format=json | yq -r '.list[].name')
 
     for i in $(seq 0 $((CORE_COUNT - 1))); do
@@ -55,5 +59,7 @@ if [ -n "${CORE_COUNT:-}" ] && [ "$CORE_COUNT" -gt 0 ]; then
         fi
     done
 fi
+
+echo -e "${BOLD}${ORANGE}Workspace '${WORKSPACE_NAME}' destroyed!${RESET_TEXT}\n"
 
 exit

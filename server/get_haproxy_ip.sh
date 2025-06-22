@@ -13,7 +13,7 @@ while true; do
     elapsed=$((current_time - start_time))
 
     if (( elapsed >= timeout )); then
-        printf "Timeout reached after %d seconds." "$timeout"
+        printf "Timeout reached after %d seconds." "$timeout" >&2
         break
     fi
     

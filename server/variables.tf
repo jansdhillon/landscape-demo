@@ -171,6 +171,6 @@ variable "smtp_username" {
 
 variable "smtp_password" {
   type = string
-  #sensitive = true
+  sensitive = true
   default = ""
 }

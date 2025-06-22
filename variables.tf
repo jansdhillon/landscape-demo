@@ -6,13 +6,13 @@ variable "workspace_name" {
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"
   type        = string
-  #sensitive   = true
+  sensitive   = true
 }
 
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
-  #sensitive   = true
+  sensitive   = true
 }
 
 variable "domain" {
@@ -26,16 +26,16 @@ variable "hostname" {
 }
 
 variable "path_to_ssl_cert" {
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
   description = "Path to your SSL cert, if using your own domain"
 }
 
 variable "path_to_ssl_key" {
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
   description = "Path to your SSL key, if using your own domain"
-  #sensitive = true
+  sensitive   = true
 }
 
 variable "b64_ssl_cert" {
@@ -44,20 +44,26 @@ variable "b64_ssl_cert" {
 }
 
 variable "b64_ssl_key" {
-  type = string
-  #sensitive = true
-  default = ""
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "admin_name" {
+  description = "First and last name of the admin"
+  type        = string
+  default     = "Landscape Admin"
 }
 
 variable "admin_email" {
-  description = "Email of the default admin"
+  description = "Email of the admin"
   type        = string
 }
 
 variable "admin_password" {
-  description = "Password of the default admin"
+  description = "Password of the admin"
   type        = string
-  #sensitive   = true
+  sensitive   = true
 }
 
 variable "min_install" {
@@ -136,7 +142,7 @@ variable "gpg_private_key_content" {
   type        = string
   description = "URL-encoded GPG private key content"
   default     = ""
-  #sensitive   = true
+  sensitive   = true
 }
 
 
@@ -171,8 +177,8 @@ variable "smtp_username" {
 }
 
 variable "smtp_password" {
-  type = string
-  #sensitive = true
-  default = ""
-  description = "Often your API key. Optional unless using SMTP."
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Often your API key. Optional unless using SMTP/custom domain."
 }

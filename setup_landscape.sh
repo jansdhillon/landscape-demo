@@ -7,19 +7,18 @@ ADMIN_PASSWORD="$3"
 GPG_PRIVATE_KEY_CONTENT="$4"
 SERIES="$5"
 
-timeout=600 # 10 minutes
+timeout=300 # 5 minutes
 start_time=$(date +%s)
 while true; do
   current_time=$(date +%s)
   elapsed=$((current_time - start_time))
 
   if (( elapsed >= timeout )); then
-      echo "Timeout reached after $timeout seconds."
+      printf "Timeout reached after %d seconds.\n" $timeout >&2
       break
   fi
 
   login_response=$(curl -skX POST "https://${LANDSCAPE_ROOT_URL}/api/v2/login" \
-    -H "Content-Type: application/json" \
     -d "{\"email\": \"${ADMIN_EMAIL}\", \"password\": \"${ADMIN_PASSWORD}\"}")
 
   JWT=$(printf "%s" $login_response | yq -r '.token')

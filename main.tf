@@ -20,6 +20,7 @@ module "landscape_server" {
   smtp_password            = var.smtp_password
   smtp_port                = var.smtp_port
   smtp_username            = var.smtp_username
+  admin_name               = var.admin_name
 }
 
 # Make REST API requests to Landscape for setup
