@@ -1,7 +1,9 @@
 #!/bin/bash
-set -euo pipefail
-
 source ./utils.sh
+
+trap 'echo "Cleaning up and exiting..."; exit' INT
+trap 'echo "Cleaning up and exiting..."; exit' QUIT  
+trap 'echo "Cleaning up and exiting..."; exit' TERM
 
 check_for_tfvars
 

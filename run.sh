@@ -49,7 +49,9 @@ cleanup() {
     ./destroy.sh "$WORKSPACE_NAME"
 }
 
-trap cleanup SIGINT
+trap cleanup INT
+trap cleanup QUIT
+trap cleanup TERM
 
 tofu init
 
