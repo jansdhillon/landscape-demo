@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -euxo pipefail
 
 BOLD="\e[1m"
 ORANGE="\e[33m"

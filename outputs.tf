@@ -4,5 +4,5 @@ output "haproxy_ip" {
 }
 
 output "landscape_root_url" {
-    value = module.landscape_server.landscape_root_url
+  value = module.landscape_server.landscape_root_url
 }

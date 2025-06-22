@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S")
 
 LANDSCAPE_ROOT_URL="$1"
@@ -7,7 +8,17 @@ ADMIN_PASSWORD="$3"
 GPG_PRIVATE_KEY_CONTENT="$4"
 SERIES="$5"
 
+timeout=600 # 10 minutes
+start_time=$(date +%s)
 while true; do
+  current_time=$(date +%s)
+  elapsed=$((current_time - start_time))
+
+  if (( elapsed >= timeout )); then
+      echo "Timeout reached after $timeout seconds."
+      break
+  fi
+
   login_response=$(curl -skX POST "https://${LANDSCAPE_ROOT_URL}/api/v2/login" \
     -H "Content-Type: application/json" \
     -d "{\"email\": \"${ADMIN_EMAIL}\", \"password\": \"${ADMIN_PASSWORD}\"}")
@@ -53,7 +64,14 @@ rest_api_request "PATCH" "${SET_PREFERENCES_URL}" '{"auto_register_new_computers
 
 # Create a script
 
-EXAMPLE_CODE=$(base64 -w 0 welcome.sh)
+SCRIPT_CODE=$(
+  cat <<EOF
+#!/bin/bash
+echo "Welcome to Landscape!" | tee landscape.txt
+EOF
+)
+
+EXAMPLE_CODE=$(base64 -w 0 "$SCRIPT_CODE")
 
 CREATE_SCRIPT_URL="https://${LANDSCAPE_ROOT_URL}/api?action=CreateScript&version=2011-08-01&code=${EXAMPLE_CODE}&title=Welcome+Script&script_type=V2&access_group=global"
 
@@ -97,11 +115,31 @@ CREATE_DISTRIBUTION_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=CreateDistrib
 
 rest_api_request "POST" "${CREATE_DISTRIBUTION_URL}"
 
-# Add series
+# Add series/pockets
 
-CREATE_SERIES_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=CreateSeries&version=2011-08-01&name=${SERIES}&distribution=ubuntu&pockets.1=release&pockets.2=updates&components.1=main&components.2=universe&components.3=multiverse&components.4=restricted&architectures.1=amd64&gpg_key=${PRIVATE_KEY_NAME}&mirror_uri=http://archive.ubuntu.com/ubuntu"
+POCKETS=("release" "updates" "security" "proposed" "backports")
+POCKETS_STR=""
+for i in "${!POCKETS[@]}"; do
+    POCKETS_STR="${POCKETS_STR}&pockets.$((i+1))=${POCKETS[i]}"
+done
+POCKETS_STR="${POCKETS_STR#&}"
+
+COMPONENTS=("main" "universe" "multiverse" "restricted")
+COMPONENTS_STR=""
+for i in "${!COMPONENTS[@]}"; do
+    COMPONENTS_STR="${COMPONENTS_STR}&components.$((i+1))=${COMPONENTS[i]}"
+done
+COMPONENTS_STR="${COMPONENTS_STR#&}"
+
+CREATE_SERIES_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=CreateSeries&version=2011-08-01&name=${SERIES}&distribution=ubuntu&${POCKETS_STR}&${COMPONENTS_STR}&architectures.1=amd64&gpg_key=${PRIVATE_KEY_NAME}&mirror_uri=http://archive.ubuntu.com/ubuntu"
 
 rest_api_request "POST" "${CREATE_SERIES_URL}"
+
+# Only one pocket can be synced at a time
+
+SYNC_BACKPORTS_POCKET_URL="https://${LANDSCAPE_ROOT_URL}/api/?action=SyncMirrorPocket&version=2011-08-01&name=backports&series=${SERIES}&distribution=ubuntu"
+
+rest_api_request "POST" "${SYNC_BACKPORTS_POCKET_URL}"
 
 # Create repo profile for it
 
@@ -112,7 +150,7 @@ BODY=$(
 {
     "all_computers": false,
     "apt_sources": [],
-    "pockets": [1, 2],
+    "pockets": [1, 2, 3, 4, 5],
     "title": "apply-ubuntu-${SERIES}-mirror",
     "tags": ["${SERIES}"]
 }

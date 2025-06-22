@@ -6,13 +6,13 @@ variable "workspace_name" {
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"
   type        = string
-  sensitive   = true
+  #sensitive   = true
 }
 
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
-  sensitive   = true
+  #sensitive   = true
 }
 
 variable "domain" {
@@ -31,9 +31,9 @@ variable "path_to_ssl_cert" {
 }
 
 variable "path_to_ssl_key" {
-  type      = string
-  default   = ""
-  sensitive = true
+  type    = string
+  default = ""
+  #sensitive = true
 }
 
 variable "b64_ssl_cert" {
@@ -42,9 +42,9 @@ variable "b64_ssl_cert" {
 }
 
 variable "b64_ssl_key" {
-  type      = string
-  sensitive = true
-  default   = ""
+  type = string
+  #sensitive = true
+  default = ""
 }
 
 variable "admin_email" {
@@ -55,7 +55,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the default admin"
   type        = string
-  sensitive   = true
+  #sensitive   = true
 }
 
 variable "min_install" {
@@ -77,11 +77,11 @@ variable "landscape_server_base" {
 }
 
 variable "landscape_server_channel" {
-  type    = string
+  type = string
 }
 
 variable "landscape_server_revision" {
-  type    = number
+  type = number
 }
 
 variable "ubuntu_core_series" {
@@ -118,14 +118,14 @@ variable "lxd_vm_name" {
 }
 
 variable "path_to_gpg_private_key" {
-  type      = string
+  type = string
 }
 
 variable "gpg_private_key_content" {
   type        = string
   description = "URL-encoded GPG private key content"
   default     = ""
-  sensitive   = true
+  #sensitive   = true
 }
 
 
@@ -135,9 +135,30 @@ variable "landscape_server_units" {
 }
 
 variable "postgresql_units" {
-  type    = number
+  type = number
 }
 
 variable "rabbitmq_server_units" {
+  type = number
+}
+
+variable "smtp_host" {
+  type    = string
+  default = "smtp.sendgrid.net"
+}
+
+variable "smtp_port" {
   type    = number
+  default = 587
+}
+
+variable "smtp_username" {
+  type    = string
+  default = "apikey"
+}
+
+variable "smtp_password" {
+  type = string
+  #sensitive = true
+  default = ""
 }

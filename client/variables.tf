@@ -17,31 +17,38 @@ variable "landscape_account_name" {
 variable "registration_key" {
   type        = string
   description = "Registration key for Landscape Server"
+  default     = ""
 }
 
 variable "ubuntu_core_count" {
-  type = number
+  type    = number
+  default = 0
 }
 
 variable "ubuntu_core_device_name" {
-  type = string
+  type    = string
+  default = "core-client"
 }
 
 variable "ubuntu_core_series" {
-  type = string
+  type    = string
+  default = "core24"
 }
 
 variable "lxd_vm_count" {
-  type = number
+  type    = number
+  default = 1
 }
 
 variable "lxd_series" {
-  type = string
+  type    = string
+  default = "jammy"
 }
 
 variable "lxd_vm_name" {
   type        = string
   description = "The name of the LXD VM"
+  default     = "client"
 }
 
 

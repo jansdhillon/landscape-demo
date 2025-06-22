@@ -16,6 +16,7 @@ variable "landscape_account_name" {
 variable "registration_key" {
   type        = string
   description = "Registration key for Landscape Server"
+  default = ""
 }
 
 variable "ubuntu_core_count" {
