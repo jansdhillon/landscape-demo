@@ -54,6 +54,45 @@ Then, remove the `.example` extension from `terraform.tfvars.example`. You shoul
 > [!WARNING]
 > You must rename `terraform.tfvars.example` and add your Ubuntu Pro token before proceeding.
 
+## Setting up a custom domain (SSL/SMTP)
+
+> [!NOTE]
+> This section is **optional** and requires a custom domain.
+
+### SSL (Custom domain)
+
+To use your own domain for the root URL, you must have the access to the SSL certificate and private key on your local filesystem. You can use `certbot` to do this:
+
+```sh
+sudo certbot certonly --manual --preferred-challenges dns -d "<your-domain.com>";
+```
+
+> [!NOTE]
+> If your custom domain already has a wildcard record (i.e., `*.your-domain.com`), you should use '<**landscape**.your-domain.com>' instead. If you are using a different hostname than `landscape`, use that.
+
+Then, get the paths of the certificate and private key using:
+
+```sh
+sudo certbot certificates -d "<your-domain.com>"
+```
+
+...and put them in `terraform.tfvars` for `path_to_ssl_cert` and `path_to_ssl_key`, respectively.
+
+### SMTP (Postfix/System Email)
+
+> [!NOTE]
+> A custom domain can be used **without** configuring SMTP.
+
+To perform actions like inviting new administrators to Landscape, we need to configure Postfix and SMTP relay for Landscape. You can use [SendGrid](https://sendgrid.com/), but there are several email service providers that can be configured to work with Postfix.
+
+If using SMTP, populate the following values in `terraform.tfvars`:
+
+- smtp_host
+- smtp_port
+- smtp_username
+- smtp_password
+
+
 ## Running the demo
 
 Finally, you can create the workspace for the infrastructure and start Landscape with [run.sh](./run.sh)
@@ -72,10 +111,8 @@ Finally, you can create the workspace for the infrastructure and start Landscape
 > Press `CTRL+C` while the script is running to cleanup and destroy
 > the infrastucture.
 
-> [!WARNING]
-> It's possible that Multipass will time out while provisioning Ubuntu Core devices to register with
-> Landscape. They should still register eventually, but the timeout is unfortunately not configurable.
-> However, [destroy.sh](./destroy.sh) does take this into account.
+> [!CAUTION]
+> If using Ubuntu Core, it's possible that Multipass will time out while provisioning Ubuntu Core devices to register with Landscape. They should still register eventually, but the timeout is unfortunately not configurable. However, [destroy.sh](./destroy.sh) does take this into account.
 
 ## Trigger-based script execution
 
