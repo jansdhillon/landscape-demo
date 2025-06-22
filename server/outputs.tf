@@ -29,6 +29,10 @@ output "admin_email" {
 }
 
 output "admin_password" {
-  value = var.admin_password
+  value     = var.admin_password
   sensitive = true
+}
+
+output "using_smtp" {
+  value = local.using_smtp ? true : false
 }

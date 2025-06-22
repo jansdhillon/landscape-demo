@@ -45,10 +45,10 @@ fi
 # and it's common for it to timeout while provisioning, so it won't be destroyed with the rest.
 # To remedy this, we manually find and delete any core devices that were created.
 
-CORE_COUNT=$(get_tfvar '.ubuntu_core_count')
+CORE_COUNT=$(get_tfvar 'ubuntu_core_count')
 
 if [ -n "${CORE_COUNT:-}" ] && [ "$CORE_COUNT" -gt 0 ]; then
-    core_name=$(get_tfvar '.ubuntu_core_device_name')
+    core_name=$(get_tfvar 'ubuntu_core_device_name')
     core_devices=$(multipass list --format=json | yq -r '.list[].name')
 
     for i in $(seq 0 $((CORE_COUNT - 1))); do

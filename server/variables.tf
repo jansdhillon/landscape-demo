@@ -57,29 +57,29 @@ variable "landscape_server_units" {
 }
 
 variable "domain" {
-  type = string
+  type    = string
   default = "landscape"
 }
 
 variable "hostname" {
-  type = string
+  type    = string
   default = "example.com"
 }
 
 variable "b64_ssl_cert" {
-  type = string
+  type      = string
   sensitive = true
-  default = ""
+  default   = ""
 }
 
 variable "b64_ssl_key" {
-  type = string
+  type      = string
   sensitive = true
-  default = ""
+  default   = ""
 }
 
 variable "registration_key" {
-  type = string
+  type    = string
   default = ""
 }
 
@@ -155,22 +155,22 @@ variable "rabbitmq_server_base" {
 }
 
 variable "smtp_host" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "smtp_port" {
-  type = number
+  type    = number
   default = 587
 }
 
 variable "smtp_username" {
-  type = string
+  type    = string
   default = ""
 }
 
 variable "smtp_password" {
-  type = string
+  type      = string
   sensitive = true
-  default = ""
+  default   = ""
 }

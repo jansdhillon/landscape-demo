@@ -22,8 +22,8 @@ resource "juju_application" "landscape_server" {
     min_install      = var.min_install
     # Bugged: https://warthogs.atlassian.net/browse/LNDENG-2729
     # root_url         = local.root_url
-    smtp_relay_host  = local.using_smtp ? var.smtp_host : null
-    system_email      = local.using_smtp ? local.system_email : null
+    smtp_relay_host = local.using_smtp ? var.smtp_host : null
+    system_email    = local.using_smtp ? local.system_email : null
   }
 
   depends_on = [juju_model.landscape]
