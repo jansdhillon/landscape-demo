@@ -5,7 +5,7 @@ variable "pro_token" {
 }
 
 variable "landscape_root_url" {
-  type        = string
+  type = string
 }
 
 variable "landscape_account_name" {
@@ -16,6 +16,7 @@ variable "landscape_account_name" {
 variable "registration_key" {
   type        = string
   description = "Registration key for Landscape Server"
+  default     = ""
 }
 
 variable "ubuntu_core_count" {

@@ -58,24 +58,29 @@ variable "landscape_server_units" {
 
 variable "domain" {
   type = string
+  default = "landscape"
 }
 
 variable "hostname" {
   type = string
+  default = "example.com"
 }
 
 variable "b64_ssl_cert" {
   type = string
   sensitive = true
+  default = ""
 }
 
 variable "b64_ssl_key" {
   type = string
   sensitive = true
+  default = ""
 }
 
 variable "registration_key" {
   type = string
+  default = ""
 }
 
 variable "landscape_server_revision" {
@@ -147,4 +152,25 @@ variable "rabbitmq_server_channel" {
 variable "rabbitmq_server_base" {
   type    = string
   default = "ubuntu@22.04"
+}
+
+variable "smtp_host" {
+  type = string
+  default = ""
+}
+
+variable "smtp_port" {
+  type = number
+  default = 587
+}
+
+variable "smtp_username" {
+  type = string
+  default = ""
+}
+
+variable "smtp_password" {
+  type = string
+  sensitive = true
+  default = ""
 }

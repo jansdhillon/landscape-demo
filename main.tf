@@ -1,21 +1,26 @@
 module "landscape_server" {
-  source                 = "./server"
-  model_name             = var.workspace_name
-  path_to_ssh_key        = var.path_to_ssh_key
-  admin_email            = var.admin_email
-  admin_password         = var.admin_password
-  min_install            = var.min_install
-  landscape_ppa          = var.landscape_ppa
-  registration_key       = var.registration_key
-  landscape_server_base  = var.landscape_server_base
-  domain                 = var.domain
-  hostname               = var.hostname
-  b64_ssl_cert           = var.b64_ssl_cert
-  b64_ssl_key            = var.b64_ssl_key
-  landscape_server_units = var.landscape_server_units
-  postgresql_units       = var.postgresql_units
-  rabbitmq_server_units  = var.rabbitmq_server_units
+  source                   = "./server"
+  model_name               = var.workspace_name
+  path_to_ssh_key          = var.path_to_ssh_key
+  admin_email              = var.admin_email
+  admin_password           = var.admin_password
+  min_install              = var.min_install
+  landscape_ppa            = var.landscape_ppa
+  registration_key         = var.registration_key
+  landscape_server_base    = var.landscape_server_base
+  domain                   = var.domain
+  hostname                 = var.hostname
+  b64_ssl_cert             = var.b64_ssl_cert
+  b64_ssl_key              = var.b64_ssl_key
+  landscape_server_units   = var.landscape_server_units
+  postgresql_units         = var.postgresql_units
+  rabbitmq_server_units    = var.rabbitmq_server_units
   landscape_server_channel = var.landscape_server_channel
+  smtp_host                = var.smtp_host
+  smtp_password            = var.smtp_password
+  smtp_port                = var.smtp_port
+  smtp_username            = var.smtp_username
+  admin_name               = var.admin_name
 }
 
 # Make REST API requests to Landscape for setup
@@ -42,6 +47,7 @@ resource "terraform_data" "setup_landscape" {
   }
 
   lifecycle {
+    # only run once
     ignore_changes = all
   }
 }

@@ -1,5 +1,5 @@
 variable "workspace_name" {
-  description = "Name of the OpenTofu/Terraform workspace"
+  description = "Name of the OpenTofu/Terraform workspace. It will also be used as the name of the Juju model."
   type        = string
 }
 
@@ -26,14 +26,16 @@ variable "hostname" {
 }
 
 variable "path_to_ssl_cert" {
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
+  description = "Path to your SSL cert, if using your own domain"
 }
 
 variable "path_to_ssl_key" {
-  type      = string
-  default   = ""
-  sensitive = true
+  type        = string
+  default     = ""
+  description = "Path to your SSL key, if using your own domain"
+  sensitive   = true
 }
 
 variable "b64_ssl_cert" {
@@ -47,13 +49,19 @@ variable "b64_ssl_key" {
   default   = ""
 }
 
+variable "admin_name" {
+  description = "First and last name of the admin"
+  type        = string
+  default     = "Landscape Admin"
+}
+
 variable "admin_email" {
-  description = "Email of the default admin"
+  description = "Email of the admin"
   type        = string
 }
 
 variable "admin_password" {
-  description = "Password of the default admin"
+  description = "Password of the admin"
   type        = string
   sensitive   = true
 }
@@ -61,27 +69,34 @@ variable "admin_password" {
 variable "min_install" {
   description = "Install recommended packages like landscape-hashids but takes longer to install"
   type        = bool
+  default     = true
 }
 
 variable "landscape_ppa" {
   description = "PPA to use for the Landscape Server charm"
   type        = string
+  default     = "ppa:landscape/self-hosted-beta"
 }
 
 variable "registration_key" {
-  type = string
+  type        = string
+  default     = ""
+  description = "Registration key for Landscape (optional)"
 }
 
 variable "landscape_server_base" {
-  type = string
+  type        = string
+  description = "Base for the Landscape Server unit(s)"
 }
 
 variable "landscape_server_channel" {
-  type    = string
+  type        = string
+  description = "Landscape Server charm channel"
 }
 
 variable "landscape_server_revision" {
-  type    = number
+  type        = number
+  description = "Landscape Server charm revision"
 }
 
 variable "ubuntu_core_series" {
@@ -92,7 +107,7 @@ variable "ubuntu_core_series" {
 
 variable "ubuntu_core_device_name" {
   type    = string
-  default = "micro"
+  default = "core-client"
 }
 
 variable "ubuntu_core_count" {
@@ -118,7 +133,9 @@ variable "lxd_vm_name" {
 }
 
 variable "path_to_gpg_private_key" {
-  type      = string
+  type        = string
+  description = "Path to a GPG key. Cannot have a password."
+
 }
 
 variable "gpg_private_key_content" {
@@ -135,9 +152,33 @@ variable "landscape_server_units" {
 }
 
 variable "postgresql_units" {
-  type    = number
+  type        = number
+  description = "Number of PostgreSQL units for the Juju model"
 }
 
 variable "rabbitmq_server_units" {
+  type        = number
+  description = "Number of RabbitMQ Server units for the Juju model"
+}
+
+variable "smtp_host" {
+  type    = string
+  default = "smtp.sendgrid.net"
+}
+
+variable "smtp_port" {
   type    = number
+  default = 587
+}
+
+variable "smtp_username" {
+  type    = string
+  default = "apikey"
+}
+
+variable "smtp_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Often your API key. Optional unless using SMTP/custom domain."
 }

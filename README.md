@@ -44,11 +44,15 @@ juju bootstrap lxd landscape-controller
 
 ## Setting up the workspace
 
-Fill in the values in [terraform.tfvars.json.example](./terraform.tfvars.json.example) and rename the file to remove the `.example` extension.
+You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [terraform.tfvars.example](./terraform.tfvars.example) for `pro_token`. 
 
-You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [terraform.tfvars.json](./terraform.tfvars.json) for `pro_token`. 
+> [!NOTE]
+> You can also set other configuration options in that file, such as the details of the Landscape Server deployment and the Landscape Client instances. The corresponding types and descriptions can also be found in [variables.tf](./variables.tf).
 
-You can also set other configuration options in that file, such as the name of the workspace. The corresponding types and descriptions are in [variables.tf](./variables.tf).
+Then, remove the `.example` extension from `terraform.tfvars.example`. You should now only have `terraform.tfvars`.
+
+> [!WARNING]
+> You must rename `terraform.tfvars.example` and add your Ubuntu Pro token before proceeding.
 
 ## Running the demo
 
@@ -68,13 +72,16 @@ Finally, you can create the workspace for the infrastructure and start Landscape
 > Press `CTRL+C` while the script is running to cleanup and destroy
 > the infrastucture.
 
+> [!WARNING]
+> It's possible that Multipass will time out while provisioning Ubuntu Core devices to register with
+> Landscape. They should still register eventually, but the timeout is unfortunately not configurable.
+> However, [destroy.sh](./destroy.sh) does take this into account.
+
 ## Trigger-based script execution
 
-[welcome.sh](./welcome.sh) was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon registering.
+A script was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon registering.
 
-Additionally, in the Activities tab, you can see that it ran on the Landscape Client instances.
-
-After the script has finished running, you can also verify this using the following:
+In the Activities tab, you can see that it ran on the Landscape Client instance(s). After the script has finished running, you can also verify it using the following:
 
 ```bash
 lxc exec landscape-client-0 -- bash -c "sudo cat /root/hello.txt"

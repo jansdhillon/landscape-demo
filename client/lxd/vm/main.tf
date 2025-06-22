@@ -7,6 +7,7 @@ resource "local_file" "cloud_init_user_data" {
 data "lxd_image" "has_cves" {
   type         = "virtual-machine"
   fingerprint  = local.series_to_fingerprint[var.lxd_series]
+  // TODO: make architecutre-agnostic
   architecture = "x86_64"
 
 }

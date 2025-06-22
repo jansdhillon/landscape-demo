@@ -1,9 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-BOLD="\e[1m"
-ORANGE="\e[33m"
-RESET_TEXT="\e[0m"
+source ./utils.sh
+
+check_for_tfvars
 
 echo -e "${BOLD}${ORANGE}"
 cat <<'EOF'
@@ -21,28 +21,10 @@ Welcome to Landscape!
 EOF
 echo -e "${RESET_TEXT}"
 
-cleanup() {
-    printf "Cleaning up and exiting...\n"
-    if [ -n "${HAPROXY_IP:-}" ]; then
-        printf "Using 'sudo' to remove all entries for IP ${HAPROXY_IP} from /etc/hosts...\n"
-        sudo sed -i "/${HAPROXY_IP}/d" /etc/hosts
-    fi
-    tofu destroy -auto-approve
-    if [ -n "${WORKSPACE_NAME:-}" ]; then
-        tofu workspace select default
-        tofu workspace delete "$WORKSPACE_NAME"
-
-        # Ideally we wouldn't have to do this manually
-        # but often it will get stuck 'destroying'
-        juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force
-    fi
-    exit
-}
-
 WORKSPACE_NAME="${1:-}"
 
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
-    WORKSPACE_NAME=$(cat terraform.tfvars.json | yq '.workspace_name')
+    WORKSPACE_NAME=$(get_tfvar "workspace_name")
 
     while [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; do
         read -r -p "Enter the name of the workspace: " WORKSPACE_NAME
@@ -62,15 +44,27 @@ fi
 
 printf "Workspace name: $WORKSPACE_NAME\n"
 
+cleanup() {
+    printf "Cleaning up workspace: $WORKSPACE_NAME\n"
+    ./destroy.sh "$WORKSPACE_NAME"
+}
+
 trap cleanup SIGINT
 
 tofu init
 
-PATH_TO_SSL_CERT=$(cat terraform.tfvars.json | yq '.path_to_ssl_cert')
-PATH_TO_SSL_KEY=$(cat terraform.tfvars.json | yq '.path_to_ssl_key')
-PATH_TO_GPG_PRIVATE_KEY=$(cat terraform.tfvars.json | yq '.path_to_gpg_private_key')
+PATH_TO_SSH_KEY=$(get_tfvar 'path_to_ssh_key')
+if [[ -z "$PATH_TO_SSH_KEY" ]]; then
+    PATH_TO_SSH_KEY=$(ls ~/.ssh/id_*.pub | head -1)
+fi
+PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
+PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
+PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
 
+# The reason this 'sudo' work is done outside the TF modules is because
+# calling 'sudo' with local-exec only works passwordless and will hang otherwise
 printf "Using 'sudo' to read GPG private key...\n"
+# Probably a less hacky way of doing this but this uses what we have (yq)
 sudo cp "$PATH_TO_GPG_PRIVATE_KEY" gpg_private_key
 sudo chown "$(whoami)" "gpg_private_key"
 # URL-encode it
@@ -90,37 +84,38 @@ fi
 
 # Deploy Landscape Server module (by excluding the Client module)
 if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
-    if ! tofu plan -var-file terraform.tfvars.json \
+    if ! tofu plan -var-file terraform.tfvars \
         -var "b64_ssl_cert=${B64_SSL_CERT}" \
         -var "b64_ssl_key=${B64_SSL_KEY}"; then
-        printf "Error running plan!\n"
+        printf 'Error running plan!\n'
         cleanup
     fi
-    tofu apply -auto-approve -var-file terraform.tfvars.json \
+    tofu apply -auto-approve -var-file terraform.tfvars \
         -exclude module.landscape_client \
         -var "workspace_name=${WORKSPACE_NAME}" \
         -var "b64_ssl_cert=${B64_SSL_CERT}" \
         -var "b64_ssl_key=${B64_SSL_KEY}" \
         -var "gpg_private_key_content=${GPG_PRIVATE_KEY_CONTENT}"
 else
-    if ! tofu plan -var-file terraform.tfvars.json; then
-        printf "Error running plan!\n"
+    if ! tofu plan -var-file terraform.tfvars; then
+        printf 'Error running plan!\n'
         cleanup
     fi
 
     tofu apply -auto-approve \
         -exclude module.landscape_client \
-        -var-file terraform.tfvars.json \
+        -var-file terraform.tfvars \
         -var "workspace_name=${WORKSPACE_NAME}" \
         -var "gpg_private_key_content=${GPG_PRIVATE_KEY_CONTENT}"
 fi
 
+# Could also get from output
 HAPROXY_IP=$(server/get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
-DOMAIN=$(cat terraform.tfvars.json | yq '.domain')
-HOSTNAME=$(cat terraform.tfvars.json | yq '.hostname')
+DOMAIN=$(get_tfvar 'domain')
+HOSTNAME=$(get_tfvar 'hostname')
 LANDSCAPE_ROOT_URL="${HOSTNAME}.${DOMAIN}"
-ADMIN_EMAIL=$(cat terraform.tfvars.json | yq '.admin_email')
-ADMIN_PASSWORD=$(cat terraform.tfvars.json | yq '.admin_password')
+ADMIN_EMAIL=$(get_tfvar 'admin_email')
+ADMIN_PASSWORD=$(get_tfvar 'admin_password')
 
 if [ -n "${HAPROXY_IP}" ] && [ -n "${LANDSCAPE_ROOT_URL}" ]; then
     printf "Using 'sudo' to modify /etc/hosts...\n"
@@ -136,15 +131,15 @@ set +e +o pipefail
 # Don't overwrite vars
 if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
     tofu apply -auto-approve \
-        -var-file terraform.tfvars.json \
+        -var-file terraform.tfvars \
         -var "workspace_name=${WORKSPACE_NAME}" \
         -var "b64_ssl_cert=${B64_SSL_CERT}" \
         -var "b64_ssl_key=${B64_SSL_KEY}"
 else
     tofu apply -auto-approve \
-        -var-file terraform.tfvars.json \
+        -var-file terraform.tfvars \
         -var "workspace_name=${WORKSPACE_NAME}"
-        
+
 fi
 
-echo -e "${BOLD}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_ROOT_URL}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}\n"
+echo -e "${BOLD}${ORANGE}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_ROOT_URL}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}\n"

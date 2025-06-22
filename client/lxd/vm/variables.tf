@@ -13,22 +13,23 @@ variable "landscape_root_url" {
 }
 
 variable "landscape_account_name" {
-  type = string
+  type        = string
   description = "Account name of Landscape Server, ex. standalone"
 }
 
 variable "registration_key" {
-  type = string
+  type        = string
   description = "Registration key for Landscape Server"
+  default     = ""
 }
 
 variable "lxd_vm_name" {
-  type = string
+  type        = string
   description = "The name of the LXD VM(s)"
 }
 
 variable "lxd_series" {
-  type = string
+  type        = string
   description = "Series of the LXD VM(s)"
 }
 

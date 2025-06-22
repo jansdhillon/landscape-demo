@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+source ./utils.sh
+
+check_for_tfvars
+
 WORKSPACE_NAME="${1:-}"
 
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
@@ -11,18 +15,51 @@ if ! tofu workspace select "$WORKSPACE_NAME"; then
     exit
 fi
 
+HAPROXY_JSON=$(server/get_haproxy_ip.sh "$WORKSPACE_NAME" 0 2>/dev/null || true)
+
+if echo "$HAPROXY_JSON" | yq -e -r '.ip_address' &>/dev/null; then
+    HAPROXY_IP=$(echo "$HAPROXY_JSON" | yq -r '.ip_address')
+else
+    echo "Failed to get HAProxy IP address." >&2
+    HAPROXY_IP=""
+fi
+
+tofu destroy -auto-approve -var-file terraform.tfvars -var "workspace_name=${WORKSPACE_NAME}"
+tofu workspace select default
+tofu workspace delete "$WORKSPACE_NAME"
+
 if ! juju switch "$WORKSPACE_NAME"; then
     exit
 fi
 
-HAPROXY_IP=$(server/get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
-
-tofu destroy -auto-approve -var-file terraform.tfvars.json -var "workspace_name=${WORKSPACE_NAME}"
-tofu workspace select default
-tofu workspace delete "$WORKSPACE_NAME"
+# Ideally we wouldn't have to do this but often it will get stuck 'destroying'...
 juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force
+juju switch controller
 
 if [ -n "${HAPROXY_IP:-}" ]; then
     printf "Using 'sudo' to remove all entries for IP ${HAPROXY_IP} from /etc/hosts...\n"
     sudo sed -i "/${HAPROXY_IP}/d" /etc/hosts
 fi
+
+# Unfortunately, the Multipass provider for Terraform does not allow us to configure the timeout
+# and it's common for it to timeout while provisioning, so it won't be destroyed with the rest.
+# To remedy this, we manually find and delete any core devices that were created.
+
+CORE_COUNT=$(get_tfvar '.ubuntu_core_count')
+
+if [ -n "${CORE_COUNT:-}" ] && [ "$CORE_COUNT" -gt 0 ]; then
+    core_name=$(get_tfvar '.ubuntu_core_device_name')
+    core_devices=$(multipass list --format=json | yq -r '.list[].name')
+
+    for i in $(seq 0 $((CORE_COUNT - 1))); do
+        name="$WORKSPACE_NAME-$core_name-$i"
+        if echo "$core_devices" | grep -qx "$name"; then
+            echo "Deleting $name..."
+            multipass delete "$name" --purge
+        fi
+    done
+fi
+
+echo -e "${BOLD}${ORANGE}Workspace '${WORKSPACE_NAME}' destroyed!${RESET_TEXT}\n"
+
+exit
