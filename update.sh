@@ -7,8 +7,8 @@ check_for_tfvars
 
 PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
 PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
-B64_SSL_CERT=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSH_CERT}")
-B64_SSL_KEY=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSH_KEY}")
+B64_SSL_CERT=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_CERT}")
+B64_SSL_KEY=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_KEY}")
 
 WORKSPACE_NAME="${1:-}"
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then

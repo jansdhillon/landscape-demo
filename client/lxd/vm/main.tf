@@ -1,5 +1,4 @@
-# Ensure the fingerprint is copied (unfrotuantely provider doesn't do this automatically)
-# https://github.com/terraform-lxd/terraform-provider-lxd/issues/599
+# Ensure the fingerprint is copied locally
 resource "terraform_data" "ensure_lxd_image" {
   triggers_replace = {
     lxd_series = var.lxd_series
@@ -8,7 +7,7 @@ resource "terraform_data" "ensure_lxd_image" {
   }
 
   provisioner "local-exec" {
-    command = <<-EOT
+    command = <<-EOT  
       echo "Ensuring LXD image is available locally..."
       
       FINGERPRINT="${local.series_to_fingerprint[var.lxd_series]}"
