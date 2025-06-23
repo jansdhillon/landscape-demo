@@ -60,7 +60,7 @@ gpg --list-secret-keys
 > [!IMPORTANT]
 > The GPG private key you use must not be password-protected. The following should not ask for your password:
 > ````sh
-> echo "test" | gpg --sign --local-user <KEY-ID> --armor --output /dev/null
+> echo "test" | gpg --sign --local-user "<KEY-ID>" --armor --output /dev/null
 > ````
 > If it does, choose another GPG private key or create a new one:
 > ````sh
@@ -70,7 +70,7 @@ gpg --list-secret-keys
 Now, export the key:
 
 ```sh
-gpg --armor --export-secret-keys <KEY-ID> > private.asc
+gpg --armor --export-secret-keys "<KEY-ID>" > private.asc
 ```
 
 Then, put the full or relative path of the GPG private key as the value for `path_to_gpg_private_key` in `terraform.tfvars.example`.
