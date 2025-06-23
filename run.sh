@@ -7,7 +7,7 @@ check_for_tfvars
 
 PRO_TOKEN=$(get_tfvar 'pro_token')
 if [[ -z "$PRO_TOKEN" ]]; then
-    print_bold_red_text "'pro_token' is not set! Please get your token from https://ubuntu.com/pro/dashboard and use it as the value for 'pro_token' in 'terraform.tfvars'."
+    print_bold_red_text "'pro_token' is not set! Please get your token from https://ubuntu.com/pro/dashboard and use it as the value for 'pro_token' in terraform.tfvars."
     exit
 fi
 
@@ -25,7 +25,7 @@ PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
 PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
 
 if [ ! -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
-    print_bold_red_text "'${PATH_TO_GPG_PRIVATE_KEY}' not found! Please export a non-password protected GPG key and put the path as 'path_to_gpg_private_key' in 'terraform.tfvars'."
+    print_bold_red_text "'${PATH_TO_GPG_PRIVATE_KEY}' not found! Please export a non-password protected GPG key and put the path as 'path_to_gpg_private_key' in terraform.tfvars."
     exit
 fi
 

@@ -49,7 +49,7 @@ juju bootstrap lxd landscape-controller
 You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [terraform.tfvars.example](./terraform.tfvars.example#L5) for `pro_token`.
 
 
-### GPG Private Key
+### GPG private key
 
 This demo will also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, you need to export a GPG private key to sign the packages and metadata. You can list your GPG secret keys and their key IDs using:
 
@@ -79,7 +79,7 @@ Then, put the full or relative path of the GPG private key as the value for `pat
 > You can also set other configuration options in that file, such as the details of the Landscape Server deployment and the Landscape Client instances. The corresponding types and descriptions can also be found in [variables.tf](./variables.tf).
 
 
-### SSL (Custom domain)
+### Using a custom domain
 
 > [!NOTE]
 > This section is **optional** and requires a custom domain.
@@ -108,14 +108,14 @@ sudo certbot certificates -d "<your-domain.com>"
 
 To perform actions like inviting new administrators to Landscape, we need to configure Postfix and SMTP relay for Landscape. You can use [SendGrid](https://sendgrid.com/), but there are several email service providers that can be configured to work with Postfix.
 
-If using SMTP, populate the following values in `terraform.tfvars`:
+If using SMTP, populate the following values in `terraform.tfvars.example`:
 
 - smtp_host
 - smtp_port
 - smtp_username
 - smtp_password
 
-### Renaming the file
+### Renaming `terraform.tfvars.example` to `terraform.tfvars`
 
 Finally, remove the `.example` extension from `terraform.tfvars.example`. The file should now be named `terraform.tfvars`.
 

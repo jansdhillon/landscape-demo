@@ -1,7 +1,7 @@
 #!/bin/bash
 check_for_tfvars() {
     if [ ! -f "terraform.tfvars" ]; then
-        print_bold_red_text "'terraform.tfvars' not found!"
+        print_bold_red_text "terraform.tfvars not found!"
         exit
     fi
 }
