@@ -47,13 +47,12 @@ printf "Workspace name: $WORKSPACE_NAME\n"
 cleanup() {
     printf "Cleaning up workspace: $WORKSPACE_NAME\n"
     ./destroy.sh "$WORKSPACE_NAME"
+    exit
 }
 
 trap cleanup INT
 trap cleanup QUIT
 trap cleanup TERM
-
-tofu init
 
 PATH_TO_SSH_KEY=$(get_tfvar 'path_to_ssh_key')
 if [[ -z "$PATH_TO_SSH_KEY" ]]; then
@@ -62,6 +61,11 @@ fi
 PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
 PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
 PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
+
+if [ ! -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
+    echo "'${PATH_TO_GPG_PRIVATE_KEY}' not found! Please export a non-password protected GPG key and put the path as 'path_to_gpg_private_key' in 'terraform.tfvars'."
+    cleanup
+fi
 
 # The reason this 'sudo' work is done outside the TF modules is because
 # calling 'sudo' with local-exec only works passwordless and will hang otherwise
@@ -83,6 +87,8 @@ if [ -n "${PATH_TO_SSL_CERT:-}" ] && [ "${PATH_TO_SSL_CERT:-}" != "null" ] &&
         cleanup
     fi
 fi
+
+tofu init
 
 # Deploy Landscape Server module (by excluding the Client module)
 if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
