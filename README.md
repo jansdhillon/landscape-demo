@@ -87,19 +87,26 @@ Then, put the full or relative path of the GPG private key as the value for `pat
 To use your own domain for the root URL, you must have the access to the SSL certificate and private key on your local filesystem. You can use `certbot` to do this:
 
 ```sh
+sudo snap install certbot --classic
+```
+
+```sh
 sudo certbot certonly --manual --preferred-challenges dns -d "<your-domain.com>"
 ```
 
 > [!NOTE]
 > If your custom domain already has a wildcard record (i.e., `*.your-domain.com`), you should use `<hostname.your-domain.com>` instead, where `hostname` matches the entry in [`terraform.tfvars.example`](./terraform.tfvars.example#L19).
 
-Then, get the paths of the certificate and private key using:
+Put paths of the certificate and private key in [`terraform.tfvars.example`](./terraform.tfvars.example) for `path_to_ssl_cert` and `path_to_ssl_key`, respectively.
 
-```sh
-sudo certbot certificates -d "<your-domain.com>"
-```
 
-...and put them in [`terraform.tfvars.example`](./terraform.tfvars.example) for `path_to_ssl_cert` and `path_to_ssl_key`, respectively.
+> [!TIP]
+> You can see where `certbot` saved the certificates using:
+> ````sh
+> sudo certbot certificates -d "<your-domain.com>"
+> ````
+
+
 
 #### SMTP (Postfix/System Email)
 
