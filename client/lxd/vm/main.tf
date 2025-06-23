@@ -7,7 +7,7 @@ resource "terraform_data" "ensure_lxd_image" {
   }
 
   provisioner "local-exec" {
-    command = <<-EOT  
+    command = <<-EOT
       echo "Ensuring LXD image is available locally..."
       
       FINGERPRINT="${local.series_to_fingerprint[var.lxd_series]}"
