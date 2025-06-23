@@ -70,7 +70,7 @@ gpg --list-secret-keys
 Now, export the key:
 
 ```sh
-gpg --armor --export-secret-keys FF106412E61197EEBFF54DE58C8AB57E5334F5D6 > private.asc
+gpg --armor --export-secret-keys <KEY-ID> > private.asc
 ```
 
 Then, put the full or relative path of the GPG private key as the value for `path_to_gpg_private_key` in `terraform.tfvars.example`.
