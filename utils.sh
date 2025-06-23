@@ -1,7 +1,7 @@
 #!/bin/bash
 check_for_tfvars() {
     if [ ! -f "terraform.tfvars" ]; then
-        printf "'terraform.tfvars' not found! Please add your Ubuntu Pro token to 'terraform.tfvars.example' and rename it to 'terraform.tfvars'.\n"
+        print_bold_red_text "'terraform.tfvars' not found!"
         exit
     fi
 }
