@@ -4,9 +4,6 @@ Spin up a preconfigured, local Landscape demo. Your system's `/etc/hosts` file w
 
 ## Installing and configuring prerequisites
 
-> [!WARNING]
-> The following has only been tested on x86_64 architecture.
-
 You need to have [snapd](https://snapcraft.io/docs/installing-snapd) installed and configured.
 
 Clone this repository, change into the directory, and make the scripts executable:

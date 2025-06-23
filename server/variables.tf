@@ -174,3 +174,9 @@ variable "smtp_password" {
   sensitive = true
   default   = ""
 }
+
+variable "arch" {
+  type = string
+  default = "amd64"
+  description = "CPU architecture"
+}

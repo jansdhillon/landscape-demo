@@ -1,4 +1,5 @@
 # Ensure the fingerprint is copied (unfrotuantely provider doesn't do this automatically)
+# https://github.com/terraform-lxd/terraform-provider-lxd/issues/599
 resource "terraform_data" "ensure_lxd_image" {
   triggers_replace = {
     lxd_series = var.lxd_series
@@ -31,7 +32,7 @@ data "lxd_image" "has_cves" {
   
   type         = "virtual-machine"
   fingerprint  = local.series_to_fingerprint[var.lxd_series]
-  architecture = "x86_64"
+  architecture = local.juju_arch_to_lxd_arch[var.architecture]
 }
 
 resource "lxd_instance" "lxd_vm" {

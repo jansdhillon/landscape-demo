@@ -34,3 +34,9 @@ variable "ubuntu_core_device_name" {
 variable "workspace_name" {
   type = string
 }
+
+variable "architecture" {
+  type = string
+  default = "amd64"
+  description = "CPU architecture"
+}

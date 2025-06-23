@@ -2,7 +2,7 @@ resource "juju_application" "landscape_server" {
   name        = "landscape-server"
   model       = var.model_name
   units       = var.landscape_server_units
-  constraints = "arch=amd64 mem=4096M"
+  constraints = "mem=4096M"
 
 
   charm {
@@ -62,7 +62,7 @@ resource "juju_application" "postgresql" {
   name        = "postgresql"
   model       = var.model_name
   units       = var.postgresql_units
-  constraints = "arch=amd64 mem=2048M"
+  constraints = "mem=2048M"
 
 
   charm {
@@ -90,7 +90,7 @@ resource "juju_application" "rabbitmq_server" {
   name        = "rabbitmq-server"
   model       = var.model_name
   units       = var.rabbitmq_server_units
-  constraints = "arch=amd64 mem=2048M"
+  constraints = "mem=2048M"
 
 
   charm {

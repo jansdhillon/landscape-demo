@@ -55,3 +55,9 @@ variable "lxd_vm_name" {
 variable "workspace_name" {
   type = string
 }
+
+variable "architecture" {
+  type = string
+  default = "amd64"
+  description = "CPU architecture"
+}

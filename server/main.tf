@@ -1,5 +1,6 @@
 resource "juju_model" "landscape" {
   name = var.model_name
+  constraints = "arch=${var.arch}"
 
   provisioner "local-exec" {
     command = <<-EOT

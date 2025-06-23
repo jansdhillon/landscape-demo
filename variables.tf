@@ -182,3 +182,9 @@ variable "smtp_password" {
   default     = ""
   description = "Often your API key. Optional unless using SMTP/custom domain."
 }
+
+variable "architecture" {
+  type = string
+  default = "amd64"
+  description = "CPU architecture"
+}
