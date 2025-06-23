@@ -120,7 +120,7 @@ If using SMTP, populate the following values in `terraform.tfvars`:
 Finally, remove the `.example` extension from `terraform.tfvars.example`. The file should now be named `terraform.tfvars`.
 
 > [!WARNING]
-> You must have followed the steps to add [your Ubuntu Pro token](./README.md#ubuntu-pro) and [the path to your private GPG key](./README.md#gpg-private-key) to `terraform.tfvars` before proceeding.
+> You must have followed the steps to add [your Ubuntu Pro token](#ubuntu-pro) and [the path to your private GPG key](#gpg-private-key) to `terraform.tfvars` before proceeding.
 
 
 ## Running the demo
