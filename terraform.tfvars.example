@@ -13,6 +13,9 @@ path_to_ssl_cert = ""
 # Path to your SSL key, if using your own domain
 path_to_ssl_key = ""
 
+# Path to a GPG key. Cannot have a password.
+path_to_gpg_private_key = "./private.asc"
+
 hostname = "landscape"
 
 domain = "example.com"
@@ -46,9 +49,6 @@ landscape_server_base = "ubuntu@24.04"
 
 # Landscape Server charm revision
 landscape_server_revision = 134
-
-# Path to a GPG key. Cannot have a password.
-path_to_gpg_private_key = "./private.asc"
 
 # Series of Ubuntu Core
 ubuntu_core_series = "core24"

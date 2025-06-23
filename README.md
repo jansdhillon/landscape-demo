@@ -1,6 +1,6 @@
 # Landscape Demo
 
-Spin up a preconfigured, local Landscape demo. Your system's `/etc/hosts` file will get modified so that you can access Landscape at the address you specify.
+Spin up a preconfigured, local Landscape demo. Your system's `/etc/hosts` file will get modified so that you can access Landscape at the specified address. By default, this will be `landscape.example.com`.
 
 ## Installing and configuring prerequisites
 
@@ -46,7 +46,7 @@ juju bootstrap lxd landscape-controller
 
 ### Ubuntu Pro
 
-You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [terraform.tfvars.example](./terraform.tfvars.example#L5) for `pro_token`.
+You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [`terraform.tfvars.example`](./terraform.tfvars.example#L5) for `pro_token`.
 
 
 ### GPG private key
@@ -73,10 +73,10 @@ Now, export the key:
 gpg --armor --export-secret-keys "<KEY-ID>" > private.asc
 ```
 
-Then, put the full or relative path of the GPG private key as the value for `path_to_gpg_private_key` in `terraform.tfvars.example`.
+Then, put the full or relative path of the GPG private key as the value for `path_to_gpg_private_key` in [`terraform.tfvars.example`](./terraform.tfvars.example#L17).
 
 > [!NOTE]
-> You can also set other configuration options in that file, such as the details of the Landscape Server deployment and the Landscape Client instances. The corresponding types and descriptions can also be found in [variables.tf](./variables.tf).
+> You can also set other configuration options in [`terraform.tfvars.example`](./terraform.tfvars.example), such as the details of the Landscape Server deployment and the Landscape Client instances. The corresponding types and descriptions can also be found in [`variables.tf`](./variables.tf).
 
 
 ### Using a custom domain
@@ -91,7 +91,7 @@ sudo certbot certonly --manual --preferred-challenges dns -d "<your-domain.com>"
 ```
 
 > [!NOTE]
-> If your custom domain already has a wildcard record (i.e., `*.your-domain.com`), you should use `<hostname.your-domain.com>` instead, where `hostname` matches the entry in `terraform.tfvars`.
+> If your custom domain already has a wildcard record (i.e., `*.your-domain.com`), you should use `<hostname.your-domain.com>` instead, where `hostname` matches the entry in [`terraform.tfvars.example`](./terraform.tfvars.example#L19).
 
 Then, get the paths of the certificate and private key using:
 
@@ -99,7 +99,7 @@ Then, get the paths of the certificate and private key using:
 sudo certbot certificates -d "<your-domain.com>"
 ```
 
-...and put them in `terraform.tfvars.example` for `path_to_ssl_cert` and `path_to_ssl_key`, respectively.
+...and put them in [`terraform.tfvars.example`](./terraform.tfvars.example) for `path_to_ssl_cert` and `path_to_ssl_key`, respectively.
 
 #### SMTP (Postfix/System Email)
 
@@ -108,7 +108,7 @@ sudo certbot certificates -d "<your-domain.com>"
 
 To perform actions like inviting new administrators to Landscape, we need to configure Postfix and SMTP relay for Landscape. You can use [SendGrid](https://sendgrid.com/), but there are several email service providers that can be configured to work with Postfix.
 
-If using SMTP, populate the following values in `terraform.tfvars.example`:
+If using SMTP, populate the following values in [`terraform.tfvars.example`](./terraform.tfvars.example#L17):
 
 - smtp_host
 - smtp_port
@@ -117,7 +117,7 @@ If using SMTP, populate the following values in `terraform.tfvars.example`:
 
 ### Renaming `terraform.tfvars.example` to `terraform.tfvars`
 
-Finally, remove the `.example` extension from `terraform.tfvars.example`. The file should now be named `terraform.tfvars`.
+Finally, remove the `.example` extension from [`terraform.tfvars.example`](./terraform.tfvars.example). The file should now be named **`terraform.tfvars`**.
 
 > [!WARNING]
 > You must have followed the steps to add [your Ubuntu Pro token](#ubuntu-pro) and [the path to your private GPG key](#gpg-private-key) to `terraform.tfvars` before proceeding.
@@ -125,7 +125,7 @@ Finally, remove the `.example` extension from `terraform.tfvars.example`. The fi
 
 ## Running the demo
 
-Finally, you can create the workspace for the infrastructure and start Landscape with [run.sh](./run.sh)
+Finally, you can create the workspace for the infrastructure and start Landscape with [`run.sh`](./run.sh)
 
 ```bash
 ./run.sh
@@ -164,11 +164,13 @@ lxc exec landscape-client-0 -- bash -c "sudo cat /root/hello.txt"
 
 As mentioned above, this demo automatically sets up [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) in Landscape to sync the packages of registered Landscape Client instances with specific pockets of a given Ubuntu series. To accomplish this, a repository profile is created to "apply" the mirror to the LXD VM(s).
 
-Using the **new web portal** (`/new_dashboard`), you can see the repository profile by going to **Profiles > Repository profiles**, and the repository mirror by going to **Repositories > Mirrors**. Additionally, you should see the `Apply repository profiles` activity under the **Activities** tab to apply the mirror to the Landscape Client instances.
+Using the **new web portal** (`/new_dashboard`), you can see the repository profile by going to **Profiles > Repository profiles**, and the repository mirror by going to **Repositories > Mirrors**. 
+
+Additionally, you should see the `Apply repository profiles` activity under the **Activities** tab to apply the mirror to the Landscape Client instances.
 
 ## Tearing down the workspace
 
-You can easily clean up the workspace using [destroy.sh](./destroy.sh):
+You can easily clean up the workspace using [`destroy.sh`](./destroy.sh):
 
 ```bash
 ./destroy.sh
