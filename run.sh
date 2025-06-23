@@ -29,6 +29,27 @@ if [ ! -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
     exit
 fi
 
+# The reason this 'sudo' work is done outside the TF modules is because
+# calling 'sudo' with local-exec only works passwordless and will hang otherwise
+printf "Using 'sudo' to read GPG private key...\n"
+# Probably a less hacky way of doing this but this uses what we have (yq)
+sudo cp "$PATH_TO_GPG_PRIVATE_KEY" gpg_private_key
+sudo chown "$(whoami)" "gpg_private_key"
+# URL-encode it
+GPG_PRIVATE_KEY_CONTENT=$(yq -r 'load_str("gpg_private_key") | @uri' /dev/null)
+sudo rm gpg_private_key
+
+if [ -n "${PATH_TO_SSL_CERT:-}" ] && [ "${PATH_TO_SSL_CERT:-}" != "null" ] &&
+    [ -n "${PATH_TO_SSL_KEY:-}" ] && [ "${PATH_TO_SSL_KEY:-}" != "null" ]; then
+    printf "Using 'sudo' to read SSL cert/key...\n"
+    B64_SSL_CERT=$(sudo base64 "$PATH_TO_SSL_CERT" 2>/dev/null)
+    B64_SSL_KEY=$(sudo base64 "$PATH_TO_SSL_KEY" 2>/dev/null)
+    if [ -z "$B64_SSL_CERT" ] || [ -z "$B64_SSL_KEY" ]; then
+        print_bold_red_text "Failed to encode SSL cert/key!"
+        exit
+    fi
+fi
+
 echo -e "${BOLD}${ORANGE}"
 cat <<'EOF'
 @@@@@@@@@@@@@@@@@@
@@ -77,27 +98,6 @@ cleanup() {
 trap cleanup INT
 trap cleanup QUIT
 trap cleanup TERM
-
-# The reason this 'sudo' work is done outside the TF modules is because
-# calling 'sudo' with local-exec only works passwordless and will hang otherwise
-print_bold_orange_text "Using 'sudo' to read GPG private key...\n"
-# Probably a less hacky way of doing this but this uses what we have (yq)
-sudo cp "$PATH_TO_GPG_PRIVATE_KEY" gpg_private_key
-sudo chown "$(whoami)" "gpg_private_key"
-# URL-encode it
-GPG_PRIVATE_KEY_CONTENT=$(yq -r 'load_str("gpg_private_key") | @uri' /dev/null)
-sudo rm gpg_private_key
-
-if [ -n "${PATH_TO_SSL_CERT:-}" ] && [ "${PATH_TO_SSL_CERT:-}" != "null" ] &&
-    [ -n "${PATH_TO_SSL_KEY:-}" ] && [ "${PATH_TO_SSL_KEY:-}" != "null" ]; then
-    print_bold_orange_text "Using 'sudo' to read SSL cert/key...\n"
-    B64_SSL_CERT=$(sudo base64 "$PATH_TO_SSL_CERT" 2>/dev/null)
-    B64_SSL_KEY=$(sudo base64 "$PATH_TO_SSL_KEY" 2>/dev/null)
-    if [ -z "$B64_SSL_CERT" ] || [ -z "$B64_SSL_KEY" ]; then
-        print_bold_red_text "Failed to encode SSL cert/key\n"
-        cleanup
-    fi
-fi
 
 tofu init
 

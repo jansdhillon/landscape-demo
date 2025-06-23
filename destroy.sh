@@ -29,13 +29,12 @@ tofu destroy -auto-approve -var-file terraform.tfvars -var "workspace_name=${WOR
 tofu workspace select default
 tofu workspace delete "$WORKSPACE_NAME"
 
-if ! juju switch "$WORKSPACE_NAME"; then
-    exit
-fi
+juju switch controller
 
 # Ideally we wouldn't have to do this but often it will get stuck 'destroying'...
-juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force
-juju switch controller
+if ! juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force; then
+    exit
+fi
 
 if [[ -n "${HAPROXY_IP:-}" && "${HAPROXY_IP:-}" != "null" ]]; then
     print_bold_orange_text "Using 'sudo' to remove all entries for IP ${HAPROXY_IP} from /etc/hosts..."
