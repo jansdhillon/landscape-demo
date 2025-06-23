@@ -4,9 +4,6 @@ Spin up a preconfigured, local Landscape demo. Your system's `/etc/hosts` file w
 
 ## Installing and configuring prerequisites
 
-> [!WARNING]
-> The following has only been tested on x86_64 architecture.
-
 You need to have [snapd](https://snapcraft.io/docs/installing-snapd) installed and configured.
 
 Clone this repository, change into the directory, and make the scripts executable:
@@ -130,7 +127,7 @@ Finally, remove the `.example` extension from [`terraform.tfvars.example`](./ter
 > You must have followed the steps to add [your Ubuntu Pro token](#ubuntu-pro) and [the path to your private GPG key](#gpg-private-key) to `terraform.tfvars` before proceeding.
 
 
-## Running the demo
+## Running the demo using the workspace
 
 Finally, you can create the workspace for the infrastructure and start Landscape with [`run.sh`](./run.sh)
 
@@ -151,11 +148,11 @@ Finally, you can create the workspace for the infrastructure and start Landscape
 > [!WARNING]
 > If using Ubuntu Core, it's possible that Multipass will time out while provisioning Ubuntu Core devices to register with Landscape. The devices should still register eventually, but the timeout is unfortunately not configurable.
 
-## Trigger-based script execution
+### Trigger-based script execution
 
 A script was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon registering.
 
-In the Activities tab, you can see that it ran on the Landscape Client instance(s). After the script has finished running, you can also verify it using the following:
+After Landscape has finished deploying, in the Activities tab, you can see that it ran on the Landscape Client instance(s). After the script has finished running, you can also verify it using the following:
 
 ```bash
 lxc exec landscape-client-0 -- bash -c "sudo cat /root/hello.txt"
@@ -167,13 +164,48 @@ lxc exec landscape-client-0 -- bash -c "sudo cat /root/hello.txt"
 > of the workspace and the LXD VM name
 > using the following format: `{workspace_name}-{lxd_vm_name}-0`
 
-## Repository mirroring
+### Repository mirroring
 
 As mentioned above, this demo automatically sets up [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) in Landscape to sync the packages of registered Landscape Client instances with specific pockets of a given Ubuntu series. To accomplish this, a repository profile is created to "apply" the mirror to the LXD VM(s).
 
 Using the **new web portal** (`/new_dashboard`), you can see the repository profile by going to **Profiles > Repository profiles**, and the repository mirror by going to **Repositories > Mirrors**. 
 
 Additionally, you should see the `Apply repository profiles` activity under the **Activities** tab to apply the mirror to the Landscape Client instances.
+
+## Updating the workspace
+
+To update the Landscape deployment, simply update the values in `terraform.tfvars`. Then you can use [`update.sh`](./update.sh):
+
+
+```bash
+./update.sh
+```
+
+> [!NOTE]
+> You can specify a workspace to update with the first argument. 
+> For example:
+> ```
+> ./update.sh landscape
+> ```
+
+> [!CAUTION]
+> This will cause the affected resources to be **replaced entirely** and can have unintended side effects due to the dependencies betwen them. It's safest when used to update the variables related to the Landscape Client instances (Ubuntu Core devices and LXD VMs).
+
+### Accessing the Landscape Server Juju model
+
+For convenience, the underlying Juju model that manages Landscape Server uses the same name as the workspace. You can see the status with:
+
+```sh
+juju status -m landscape --relations # replace with 'workspace_name'
+```
+You can then use this information to access specific instances running within the Juju model with `juju ssh -m`. For example, to connect to the main Landscape Server machine, you can use:
+
+```sh
+juju ssh -m landscape landscape-server/leader
+```
+
+> [!CAUTION]
+> While connecting to the instances with `juju ssh` is safe, modifying the Juju model with other Juju CLI commands is not and can cause issues with the Terraform plans.
 
 ## Tearing down the workspace
 

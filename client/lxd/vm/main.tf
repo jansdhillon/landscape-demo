@@ -1,4 +1,4 @@
-# Ensure the fingerprint is copied (unfrotuantely provider doesn't do this automatically)
+# Ensure the fingerprint is copied locally
 resource "terraform_data" "ensure_lxd_image" {
   triggers_replace = {
     lxd_series = var.lxd_series
@@ -7,7 +7,7 @@ resource "terraform_data" "ensure_lxd_image" {
   }
 
   provisioner "local-exec" {
-    command = <<-EOT
+    command = <<-EOT  
       echo "Ensuring LXD image is available locally..."
       
       FINGERPRINT="${local.series_to_fingerprint[var.lxd_series]}"
@@ -31,7 +31,7 @@ data "lxd_image" "has_cves" {
   
   type         = "virtual-machine"
   fingerprint  = local.series_to_fingerprint[var.lxd_series]
-  architecture = "x86_64"
+  architecture = local.juju_arch_to_lxd_arch[var.architecture]
 }
 
 resource "lxd_instance" "lxd_vm" {
