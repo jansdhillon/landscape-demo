@@ -5,6 +5,30 @@ source ./utils.sh
 
 check_for_tfvars
 
+PRO_TOKEN=$(get_tfvar 'pro_token')
+if [[ -z "$PRO_TOKEN" ]]; then
+    print_bold_red_text "'pro_token' is not set! Please get your token from https://ubuntu.com/pro/dashboard and use it as the value for 'pro_token' in 'terraform.tfvars'."
+    exit
+fi
+
+PATH_TO_SSH_KEY=$(get_tfvar 'path_to_ssh_key')
+if [[ -z "$PATH_TO_SSH_KEY" ]]; then
+    PATH_TO_SSH_KEY=$(ls ~/.ssh/id_*.pub 2>/dev/null | head -1)
+    if [[ -z "$PATH_TO_SSH_KEY" ]]; then
+        print_bold_red_text "No SSH public key found! Please generate one with 'ssh-keygen' or set 'path_to_ssh_key' in terraform.tfvars"
+        exit
+    fi
+fi
+
+PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
+PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
+PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
+
+if [ ! -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
+    print_bold_red_text "'${PATH_TO_GPG_PRIVATE_KEY}' not found! Please export a non-password protected GPG key and put the path as 'path_to_gpg_private_key' in 'terraform.tfvars'."
+    exit
+fi
+
 echo -e "${BOLD}${ORANGE}"
 cat <<'EOF'
 @@@@@@@@@@@@@@@@@@
@@ -32,6 +56,9 @@ if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
 
 fi
 
+printf "Workspace name: "
+print_bold_orange_text "$WORKSPACE_NAME"
+
 if ! tofu workspace new "$WORKSPACE_NAME"; then
     read -r -p "Use existing workspace? (y/n) " answer
 
@@ -42,10 +69,7 @@ if ! tofu workspace new "$WORKSPACE_NAME"; then
     fi
 fi
 
-printf "Workspace name: $WORKSPACE_NAME\n"
-
 cleanup() {
-    printf "Cleaning up workspace: $WORKSPACE_NAME\n"
     ./destroy.sh "$WORKSPACE_NAME"
     exit
 }
@@ -54,22 +78,9 @@ trap cleanup INT
 trap cleanup QUIT
 trap cleanup TERM
 
-PATH_TO_SSH_KEY=$(get_tfvar 'path_to_ssh_key')
-if [[ -z "$PATH_TO_SSH_KEY" ]]; then
-    PATH_TO_SSH_KEY=$(ls ~/.ssh/id_*.pub | head -1)
-fi
-PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
-PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
-PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
-
-if [ ! -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
-    echo "'${PATH_TO_GPG_PRIVATE_KEY}' not found! Please export a non-password protected GPG key and put the path as 'path_to_gpg_private_key' in 'terraform.tfvars'."
-    cleanup
-fi
-
 # The reason this 'sudo' work is done outside the TF modules is because
 # calling 'sudo' with local-exec only works passwordless and will hang otherwise
-printf "Using 'sudo' to read GPG private key...\n"
+print_bold_orange_text "Using 'sudo' to read GPG private key...\n"
 # Probably a less hacky way of doing this but this uses what we have (yq)
 sudo cp "$PATH_TO_GPG_PRIVATE_KEY" gpg_private_key
 sudo chown "$(whoami)" "gpg_private_key"
@@ -79,11 +90,11 @@ sudo rm gpg_private_key
 
 if [ -n "${PATH_TO_SSL_CERT:-}" ] && [ "${PATH_TO_SSL_CERT:-}" != "null" ] &&
     [ -n "${PATH_TO_SSL_KEY:-}" ] && [ "${PATH_TO_SSL_KEY:-}" != "null" ]; then
-    printf "Using 'sudo' to read SSL cert/key...\n"
+    print_bold_orange_text "Using 'sudo' to read SSL cert/key...\n"
     B64_SSL_CERT=$(sudo base64 "$PATH_TO_SSL_CERT" 2>/dev/null)
     B64_SSL_KEY=$(sudo base64 "$PATH_TO_SSL_KEY" 2>/dev/null)
     if [ -z "$B64_SSL_CERT" ] || [ -z "$B64_SSL_KEY" ]; then
-        printf "Failed to encode SSL cert/key\n"
+        print_bold_red_text "Failed to encode SSL cert/key\n"
         cleanup
     fi
 fi
@@ -95,7 +106,7 @@ if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
     if ! tofu plan -var-file terraform.tfvars \
         -var "b64_ssl_cert=${B64_SSL_CERT}" \
         -var "b64_ssl_key=${B64_SSL_KEY}"; then
-        printf 'Error running plan!\n'
+        print_bold_red_text 'Error running plan!\n'
         cleanup
     fi
     tofu apply -auto-approve -var-file terraform.tfvars \
@@ -106,7 +117,7 @@ if [ -n "${B64_SSL_CERT:-}" ] && [ -n "${B64_SSL_KEY:-}" ]; then
         -var "gpg_private_key_content=${GPG_PRIVATE_KEY_CONTENT}"
 else
     if ! tofu plan -var-file terraform.tfvars; then
-        printf 'Error running plan!\n'
+        print_bold_red_text 'Error running plan!\n'
         cleanup
     fi
 
@@ -126,10 +137,10 @@ ADMIN_EMAIL=$(get_tfvar 'admin_email')
 ADMIN_PASSWORD=$(get_tfvar 'admin_password')
 
 if [ -n "${HAPROXY_IP}" ] && [ -n "${LANDSCAPE_ROOT_URL}" ]; then
-    printf "Using 'sudo' to modify /etc/hosts...\n"
+    print_bold_orange_text "Using 'sudo' to modify /etc/hosts...\n"
     printf "%s %s\n" "$HAPROXY_IP" "$LANDSCAPE_ROOT_URL" | sudo tee -a /etc/hosts >/dev/null
 else
-    printf "Failed to retrieve HAProxy IP or Landscape root URL, aborting changes to /etc/hosts...\n"
+    print_bold_red_text "Failed to retrieve HAProxy IP or Landscape root URL, aborting changes to /etc/hosts...\n"
 fi
 
 # Deploy Landscape Client module

@@ -2,7 +2,7 @@
 check_for_tfvars() {
     if [ ! -f "terraform.tfvars" ]; then
         printf "'terraform.tfvars' not found! Please add your Ubuntu Pro token to 'terraform.tfvars.example' and rename it to 'terraform.tfvars'.\n"
-        exit 1
+        exit
     fi
 }
 
@@ -20,6 +20,17 @@ get_tfvar() {
     fi
 }
 
+print_bold_orange_text() {
+    local text="$1"
+    echo -e "${BOLD}${ORANGE}${text}${RESET_TEXT}"
+}
+
+print_bold_red_text() {
+    local text="$1"
+    echo -e "${BOLD}${RED}${text}${RESET_TEXT}"
+}
+
 BOLD="\e[1m"
+RED="\e[31m"
 ORANGE="\e[33m"
 RESET_TEXT="\e[0m"
