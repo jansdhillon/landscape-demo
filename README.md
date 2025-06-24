@@ -155,7 +155,7 @@ A script was added to Landscape Server, along with a script profile which makes 
 After Landscape has finished deploying, in the Activities tab, you can see that it ran on the Landscape Client instance(s). After the script has finished running, you can also verify it using the following:
 
 ```bash
-lxc exec landscape-client-0 -- bash -c "sudo cat /root/hello.txt"
+lxc exec landscape-client-0 -- bash -c "sudo cat /root/landscape.txt"
 # Hello world!
 ```
 
