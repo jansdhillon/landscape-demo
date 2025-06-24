@@ -19,6 +19,7 @@ output "admin_password" {
 output "self_signed_server" {
   description = "Landscape Server is using a self-signed certificate."
   value       = module.landscape_server.self_signed_server
+  sensitive = true
 }
 
 output "registration_key" {
@@ -29,4 +30,5 @@ output "registration_key" {
 output "using_smtp" {
   description = "If Landscape Server is using SMTP or not."
   value = module.landscape_server.using_smtp
+  sensitive = true
 }
