@@ -94,7 +94,7 @@ sudo certbot certonly --manual --preferred-challenges dns -d "<your-domain.com>"
 > [!NOTE]
 > If your custom domain already has a wildcard record (i.e., `*.your-domain.com`), you should use `<hostname.your-domain.com>` instead, where `hostname` matches the entry in [`terraform.tfvars.example`](./terraform.tfvars.example#L19).
 
-Put paths of the certificate and private key in [`terraform.tfvars.example`](./terraform.tfvars.example) for `path_to_ssl_cert` and `path_to_ssl_key`, respectively.
+Put paths of the certificate and private key in [`terraform.tfvars.example`](./terraform.tfvars.example) for `path_to_ssl_cert` and `path_to_ssl_key`, respectively. You should use the paths of the `cert.pem` and `privkey.pem` files.
 
 
 > [!TIP]
@@ -102,8 +102,6 @@ Put paths of the certificate and private key in [`terraform.tfvars.example`](./t
 > ````sh
 > sudo certbot certificates -d "<your-domain.com>"
 > ````
-
-
 
 #### SMTP (Postfix/System Email)
 

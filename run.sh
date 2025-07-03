@@ -33,6 +33,8 @@ PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
 B64_SSL_CERT=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_CERT}")
 B64_SSL_KEY=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_KEY}")
 
+tofu init
+
 echo -e "${BOLD}${ORANGE}"
 cat <<'EOF'
 @@@@@@@@@@@@@@@@@@
@@ -74,8 +76,6 @@ fi
 trap "cleanup ${WORKSPACE_NAME}" INT
 trap "cleanup ${WORKSPACE_NAME}" QUIT
 trap "cleanup ${WORKSPACE_NAME}" TERM
-
-tofu init
 
 deploy_landscape_server "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
 

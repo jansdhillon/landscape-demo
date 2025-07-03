@@ -20,7 +20,7 @@ hostname = "landscape"
 
 domain = "example.com"
 
-First and last name of the admin
+# First and last name of the admin
 admin_name = "Landscape Admin"
 
 # Email of the admin
