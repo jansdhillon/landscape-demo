@@ -13,11 +13,8 @@ fi
 
 PATH_TO_SSH_KEY=$(get_tfvar 'path_to_ssh_key')
 if [[ -z "$PATH_TO_SSH_KEY" ]]; then
-    PATH_TO_SSH_KEY=$(ls ~/.ssh/id_*.pub 2>/dev/null | head -1)
-    if [[ -z "$PATH_TO_SSH_KEY" ]]; then
-        print_bold_red_text "No SSH public key found! Please generate one with 'ssh-keygen' or set 'path_to_ssh_key' in terraform.tfvars"
-        exit 1
-    fi
+    print_bold_red_text "'path_to_ssh_key' not set! Please set it in terraform.tfvars."
+    exit 1
 fi
 
 PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
@@ -54,7 +51,7 @@ echo -e "${RESET_TEXT}"
 WORKSPACE_NAME="${1:-}"
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
     WORKSPACE_NAME=$(get_tfvar "workspace_name")
-    
+
     while [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; do
         read -r -p "Enter the name of the workspace: " WORKSPACE_NAME
     done
@@ -65,7 +62,7 @@ print_bold_orange_text "$WORKSPACE_NAME"
 
 if ! tofu workspace new "$WORKSPACE_NAME"; then
     read -r -p "Use existing workspace? (y/n) " answer
-    
+
     if [ "${answer:-}" == "y" ]; then
         tofu workspace select "$WORKSPACE_NAME"
     else

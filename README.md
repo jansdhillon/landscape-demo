@@ -46,6 +46,11 @@ juju bootstrap lxd landscape-controller
 You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [`terraform.tfvars.example`](./terraform.tfvars.example#L5) for `pro_token`.
 
 
+### SSH Public Key
+
+You need to set the path to the SSH public key you want to use for the workspace as the value for for `path_to_ssh_key` in [`terraform.tfvars.example`](./terraform.tfvars.example#L8).
+
+
 ### GPG private key
 
 This demo will also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, you need to export a GPG private key to sign the packages and metadata. You can list your GPG secret keys and their key IDs using:
