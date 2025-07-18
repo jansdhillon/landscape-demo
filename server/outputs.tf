@@ -14,6 +14,7 @@ output "landscape_account_name" {
 
 output "registration_key" {
   value = var.registration_key
+  sensitive = true
 }
 
 output "landscape_root_url" {
@@ -22,6 +23,7 @@ output "landscape_root_url" {
 
 output "self_signed_server" {
   value = local.self_signed ? true : false
+  sensitive = true
 }
 
 output "admin_email" {
@@ -35,4 +37,5 @@ output "admin_password" {
 
 output "using_smtp" {
   value = local.using_smtp ? true : false
+  sensitive = true
 }

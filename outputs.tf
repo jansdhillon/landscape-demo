@@ -25,6 +25,7 @@ output "self_signed_server" {
 output "registration_key" {
   description = "Registration key for Landscape"
   value       = module.landscape_server.registration_key
+  sensitive = true
 }
 
 output "using_smtp" {
