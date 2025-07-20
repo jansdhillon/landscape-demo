@@ -26,8 +26,21 @@ sudo snap install yq
 ```
 
 > [!IMPORTANT]
-> LXD has additional initialization steps that must be followed before proceeding. See [the LXD documentation](https://documentation.ubuntu.com/lxd) to get set up.
-
+> Make sure you're in the `lxd` group:
+>
+> ````sh
+> if ! getent group lxd | grep "$USER"; then
+>   sudo usermod -aG lxd "$USER"
+>   newgrp lxd
+> fi
+> ````
+>
+> If you've never initialized LXD, do so now:
+>
+> ````sh
+> lxd init --minimal
+> ````
+>
 
 Then, create a local LXD cloud with Juju, which will allow us to easily orchestrate the lifecycle of our Landscape system:
 
@@ -38,38 +51,27 @@ juju bootstrap lxd landscape-controller
 > [!IMPORTANT]
 > There can be multiple workspaces using this cloud, so you only need to do this once.
 
-
 ## Setting up the workspace
 
 ### Ubuntu Pro
 
-You need an Ubuntu Pro token to use Landscape, which you can get for free [here](https://ubuntu.com/pro/dashboard). Put the token value in [`terraform.tfvars.example`](./terraform.tfvars.example#L5) for `pro_token`.
+You need an Ubuntu Pro token to use Landscape, which you can get from the [Ubuntu Pro dashboard](https://ubuntu.com/pro/dashboard). Put the token value in [`terraform.tfvars.example`](./terraform.tfvars.example#L5) for `pro_token`.
 
-
-### SSH Public Key
+### SSH public key
 
 You need to set the path to the SSH public key you want to use for the workspace as the value for for `path_to_ssh_key` in [`terraform.tfvars.example`](./terraform.tfvars.example#L8).
 
-
 ### GPG private key
 
-This demo will also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, you need to export a GPG private key to sign the packages and metadata. You can list your GPG secret keys and their key IDs using:
+This demo will also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, create a GPG private key to sign the packages and metadata. **The GPG private key you use must not be password-protected, so do not enter anything for a password when prompted. The following should not ask for your password:
 
-```sh
-gpg --list-secret-keys
-```
+````sh
+gpg --full-generate-key
+````
 
-> [!IMPORTANT]
-> The GPG private key you use must not be password-protected. The following should not ask for your password:
-> ````sh
-> echo "test" | gpg --sign --local-user "<KEY-ID>" --armor --output /dev/null
-> ````
-> If it does, choose another GPG private key or create a new one:
-> ````sh
-> gpg --full-generate-key # don't set a password
-> ````
+After following the prompts in the terminal, the key will be created and the ID of the key will be printed beside `pub` and under the type of key and today's date.
 
-Now, export the key:
+Use that value to export the key, replacing `"<KEY-ID>"`:
 
 ```sh
 gpg --armor --export-secret-keys "<KEY-ID>" > private.asc
@@ -80,11 +82,7 @@ Then, put the full or relative path of the GPG private key as the value for `pat
 > [!NOTE]
 > You can also set other configuration options in [`terraform.tfvars.example`](./terraform.tfvars.example), such as the details of the Landscape Server deployment and the Landscape Client instances. The corresponding types and descriptions can also be found in [`variables.tf`](./variables.tf).
 
-
-### Using a custom domain
-
-> [!NOTE]
-> This section is **optional** and requires a custom domain.
+### (**Optional**) Using a custom domain
 
 To use your own domain for the root URL, you must have the access to the SSL certificate and private key on your local filesystem. You can use `certbot` to do this:
 
@@ -99,11 +97,11 @@ sudo certbot certonly --manual --preferred-challenges dns -d "<your-domain.com>"
 > [!NOTE]
 > If your custom domain already has a wildcard record (i.e., `*.your-domain.com`), you should use `<hostname.your-domain.com>` instead, where `hostname` matches the entry in [`terraform.tfvars.example`](./terraform.tfvars.example#L19).
 
-Put paths of the certificate and private key in [`terraform.tfvars.example`](./terraform.tfvars.example) for `path_to_ssl_cert` and `path_to_ssl_key`, respectively. You should use the paths of the `cert.pem` and `privkey.pem` files.
-
+Put paths of the certificate and private key in [`terraform.tfvars.example`](./terraform.tfvars.example) for `path_to_ssl_cert` and `path_to_ssl_key`, respectively. You should use the paths of the `fullchain.pem` and `privkey.pem` files.
 
 > [!TIP]
 > You can see where `certbot` saved the certificates using:
+>
 > ````sh
 > sudo certbot certificates -d "<your-domain.com>"
 > ````
@@ -129,7 +127,6 @@ Finally, remove the `.example` extension from [`terraform.tfvars.example`](./ter
 > [!WARNING]
 > You must have followed the steps to add [your Ubuntu Pro token](#ubuntu-pro) and [the path to your private GPG key](#gpg-private-key) to `terraform.tfvars` before proceeding.
 
-
 ## Running the demo using the workspace
 
 Finally, you can create the workspace for the infrastructure and start Landscape with [`run.sh`](./run.sh)
@@ -138,20 +135,20 @@ Finally, you can create the workspace for the infrastructure and start Landscape
 ./run.sh
 ```
 
-> [!NOTE]
-> You can specify the workspace name to create or use. For example:
-> ```
-> ./run.sh landscape
-> ```
-
 > [!TIP]
 > Press `CTRL+C` while the script is running to cleanup and destroy
 > the infrastucture.
 
+You can specify the workspace name to create or use. For example:
+
+```sh
+./run.sh landscape
+```
+
 > [!WARNING]
 > If using Ubuntu Core, it's possible that Multipass will time out while provisioning Ubuntu Core devices to register with Landscape. The devices should still register eventually, but the timeout is unfortunately not configurable.
 
-### Trigger-based script execution
+### Script execution
 
 A script was added to Landscape Server, along with a script profile which makes it execute on the Landscape Client instances upon registering.
 
@@ -171,7 +168,7 @@ lxc exec landscape-client-0 -- bash -c "sudo cat /root/landscape.txt"
 
 As mentioned above, this demo automatically sets up [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) in Landscape to sync the packages of registered Landscape Client instances with specific pockets of a given Ubuntu series. To accomplish this, a repository profile is created to "apply" the mirror to the LXD VM(s).
 
-Using the **new web portal** (`/new_dashboard`), you can see the repository profile by going to **Profiles > Repository profiles**, and the repository mirror by going to **Repositories > Mirrors**. 
+Using the **new web portal** (`/new_dashboard`), you can see the repository profile by going to **Profiles > Repository profiles**, and the repository mirror by going to **Repositories > Mirrors**.
 
 Additionally, you should see the `Apply repository profiles` activity under the **Activities** tab to apply the mirror to the Landscape Client instances.
 
@@ -179,20 +176,18 @@ Additionally, you should see the `Apply repository profiles` activity under the 
 
 To update the Landscape deployment, simply update the values in `terraform.tfvars`. Then you can use [`update.sh`](./update.sh):
 
-
 ```bash
 ./update.sh
 ```
 
-> [!NOTE]
-> You can specify a workspace to update with the first argument. 
-> For example:
-> ```
-> ./update.sh landscape
-> ```
+You can specify a workspace to update with the first argument.
+For example:
 
-> [!CAUTION]
-> This will cause the affected resources to be **replaced entirely** and can have unintended side effects due to the dependencies betwen them. It's safest when used to update the variables related to the Landscape Client instances (Ubuntu Core devices and LXD VMs).
+````sh
+./update.sh landscape
+````
+
+This should be used with caution, as it will cause the affected resources to be **replaced entirely** and can have unintended side effects due to the dependencies betwen them. It's safest when used to update the variables related to the Landscape Client instances (Ubuntu Core devices and LXD VMs).
 
 ### Accessing the Landscape Server Juju model
 
@@ -201,6 +196,7 @@ For convenience, the underlying Juju model that manages Landscape Server uses th
 ```sh
 juju status -m landscape --relations # replace with 'workspace_name'
 ```
+
 You can then use this information to access specific instances running within the Juju model with `juju ssh -m`. For example, to connect to the main Landscape Server machine, you can use:
 
 ```sh
@@ -218,12 +214,12 @@ You can easily clean up the workspace using [`destroy.sh`](./destroy.sh):
 ./destroy.sh
 ```
 
-> [!NOTE]
-> You can specify a workspace to destroy with the first argument. 
-> For example:
-> ```
-> ./destroy.sh landscape
-> ```
+You can specify a workspace to destroy with the first argument.
+For example:
+
+```sh
+./destroy.sh landscape
+```
 
 ## Destroying the LXD cloud
 
@@ -232,3 +228,9 @@ While you don't need to destroy the LXD cloud in order to create a new workspace
 ```bash
 juju destroy-controller --no-prompt landscape-controller --destroy-all-models --no-wait --force
 ```
+
+## TODO
+
+- Make GPG key/repo mirroring optional
+- Finish going through Yanisa's feedback for the README
+- Add section to README about Livepatch, the specific fingerprints of LXD VMs used

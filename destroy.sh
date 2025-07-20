@@ -16,7 +16,7 @@ fi
 printf "Cleaning up workspace: "
 print_bold_orange_text "$WORKSPACE_NAME"
 
-HAPROXY_JSON=$(server/get_haproxy_ip.sh "$WORKSPACE_NAME" 0 2>/dev/null || true)
+HAPROXY_JSON=$(./get_haproxy_ip.sh "$WORKSPACE_NAME" 0 2>/dev/null || true)
 
 if echo "$HAPROXY_JSON" | yq -e -r '.ip_address' &>/dev/null; then
     HAPROXY_IP=$(echo "$HAPROXY_JSON" | yq -r '.ip_address')

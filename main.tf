@@ -1,5 +1,5 @@
 module "landscape_server" {
-  source                   = "./server"
+  source                   = "git::https://github.com/jansdhillon/terraform-landscape-server.git/"
   model_name               = var.workspace_name
   path_to_ssh_key          = var.path_to_ssh_key
   admin_email              = var.admin_email
@@ -23,12 +23,18 @@ module "landscape_server" {
   admin_name               = var.admin_name
 }
 
+data "external" "get_haproxy_ip" {
+  program = ["bash", "${path.module}/get_haproxy_ip.sh", module.landscape_server.model_name]
+
+  depends_on = [module.landscape_server]
+}
+
 # Make REST API requests to Landscape for setup
 resource "terraform_data" "setup_landscape" {
   depends_on = [module.landscape_server]
 
   triggers_replace = {
-    haproxy_ip              = module.landscape_server.haproxy_ip
+    haproxy_ip              = data.external.get_haproxy_ip.result.ip_address
     admin_email             = var.admin_email
     admin_password          = var.admin_password
     gpg_private_key_content = var.gpg_private_key_content
@@ -55,7 +61,7 @@ resource "terraform_data" "setup_landscape" {
 
 module "landscape_client" {
   source                  = "./client"
-  landscape_root_url      = module.landscape_server.self_signed_server ? module.landscape_server.haproxy_ip : module.landscape_server.landscape_root_url
+  landscape_root_url      = module.landscape_server.self_signed_server ? data.external.get_haproxy_ip.result.ip_address : module.landscape_server.landscape_root_url
   landscape_account_name  = module.landscape_server.landscape_account_name
   registration_key        = module.landscape_server.registration_key
   pro_token               = var.pro_token
@@ -67,4 +73,3 @@ module "landscape_client" {
   lxd_vm_count            = var.lxd_vm_count
   workspace_name          = var.workspace_name
 }
-

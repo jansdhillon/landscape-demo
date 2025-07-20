@@ -1,6 +1,6 @@
 output "haproxy_ip" {
   description = "IPv4 address of the HAProxy unit"
-  value       = module.landscape_server.haproxy_ip
+  value       = data.external.get_haproxy_ip.result.ip_address
 }
 
 output "landscape_root_url" {
