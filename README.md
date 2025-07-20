@@ -63,7 +63,7 @@ You need to set the path to the SSH public key you want to use for the workspace
 
 ### GPG private key
 
-This demo will also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, create a GPG private key to sign the packages and metadata. **The GPG private key you use must not be password-protected, so do not enter anything for a password when prompted. The following should not ask for your password:
+This demo will also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, create a GPG private key to sign the packages and metadata. **The key you use must not have a passphrase**, so do not enter anything for a password when prompted:
 
 ````sh
 gpg --full-generate-key
