@@ -87,16 +87,19 @@ variable "registration_key" {
 variable "landscape_server_base" {
   type        = string
   description = "Base for the Landscape Server unit(s)"
+  default     = "ubuntu@22.04"
 }
 
 variable "landscape_server_channel" {
   type        = string
   description = "Landscape Server charm channel"
+  default     = "latest/stable"
 }
 
 variable "landscape_server_revision" {
   type        = number
   description = "Landscape Server charm revision"
+  default     = 134
 }
 
 variable "ubuntu_core_series" {
@@ -149,16 +152,19 @@ variable "gpg_private_key_content" {
 variable "landscape_server_units" {
   description = "Landscape Server charm units number"
   type        = number
+  default = 1
 }
 
 variable "postgresql_units" {
   type        = number
   description = "Number of PostgreSQL units for the Juju model"
+  default = 1
 }
 
 variable "rabbitmq_server_units" {
   type        = number
   description = "Number of RabbitMQ Server units for the Juju model"
+  default = 1
 }
 
 variable "smtp_host" {
@@ -184,7 +190,7 @@ variable "smtp_password" {
 }
 
 variable "architecture" {
-  type = string
-  default = "amd64"
+  type        = string
+  default     = "amd64"
   description = "CPU architecture"
 }
