@@ -42,13 +42,13 @@ landscape_server_units = 1
 registration_key = "key"
 
 # Landscape Server charm channel
-landscape_server_channel = "latest/stable"
+landscape_server_channel = "latest-stable/edge"
 
 # Base for the Landscape Server unit(s)
-landscape_server_base = "ubuntu@24.04"
+landscape_server_base = "ubuntu@22.04"
 
 # Landscape Server charm revision
-landscape_server_revision = 134
+landscape_server_revision = 144
 
 # Series of Ubuntu Core
 ubuntu_core_series = "core24"

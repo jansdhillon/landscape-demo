@@ -32,7 +32,7 @@ tofu workspace delete "$WORKSPACE_NAME"
 juju switch controller
 
 # Ideally we wouldn't have to do this but often it will get stuck 'destroying'...
-if ! juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force; then
+if ! juju destroy-model --no-prompt "$WORKSPACE_NAME" --no-wait --force --destroy-storage; then
     exit
 fi
 

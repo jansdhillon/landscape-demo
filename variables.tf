@@ -45,7 +45,6 @@ variable "b64_ssl_cert" {
 
 variable "b64_ssl_key" {
   type      = string
-  sensitive = true
   default   = ""
 }
 
@@ -145,7 +144,6 @@ variable "gpg_private_key_content" {
   type        = string
   description = "URL-encoded GPG private key content"
   default     = ""
-  sensitive   = true
 }
 
 

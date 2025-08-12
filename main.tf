@@ -1,30 +1,73 @@
 module "landscape_server" {
-  source                   = "git::https://github.com/jansdhillon/terraform-landscape-server.git/"
-  model_name               = var.workspace_name
-  path_to_ssh_key          = var.path_to_ssh_key
-  admin_email              = var.admin_email
-  admin_password           = var.admin_password
-  min_install              = var.min_install
-  landscape_ppa            = var.landscape_ppa
-  registration_key         = var.registration_key
-  landscape_server_base    = var.landscape_server_base
-  domain                   = var.domain
-  hostname                 = var.hostname
-  b64_ssl_cert             = var.b64_ssl_cert
-  b64_ssl_key              = var.b64_ssl_key
-  landscape_server_units   = var.landscape_server_units
-  postgresql_units         = var.postgresql_units
-  rabbitmq_server_units    = var.rabbitmq_server_units
-  landscape_server_channel = var.landscape_server_channel
-  smtp_host                = var.smtp_host
-  smtp_password            = var.smtp_password
-  smtp_port                = var.smtp_port
-  smtp_username            = var.smtp_username
-  admin_name               = var.admin_name
+  source = "git::https://github.com/jansdhillon/terraform-landscape-server.git//modules/landscape-scalable?ref=product-module"
+
+  create_model    = true
+  model           = var.workspace_name
+  path_to_ssh_key = var.path_to_ssh_key
+  arch            = var.architecture
+  domain          = var.domain
+  hostname        = var.hostname
+  smtp_host       = var.smtp_host
+  smtp_port       = var.smtp_port
+  smtp_username   = var.smtp_username
+  smtp_password   = var.smtp_password
+
+  landscape_server = {
+    app_name = "landscape-server"
+    channel  = var.landscape_server_channel
+    base     = var.landscape_server_base
+    units    = var.landscape_server_units
+    config = {
+      smtp_relay_host  = var.smtp_host
+      admin_email      = var.admin_email
+      admin_password   = var.admin_password
+      admin_name       = var.admin_name
+      registration_key = var.registration_key
+      min_install      = var.min_install
+      landscape_ppa    = var.landscape_ppa
+    }
+  }
+
+  postgresql = {
+    app_name = "postgresql"
+    channel  = "14/stable"
+    units    = var.postgresql_units
+    config = {
+      plugin_plpython3u_enable     = true
+      plugin_ltree_enable          = true
+      plugin_intarray_enable       = true
+      plugin_debversion_enable     = true
+      plugin_pg_trgm_enable        = true
+      experimental_max_connections = 500
+    }
+  }
+
+  haproxy = {
+    app_name = "haproxy"
+    channel  = "latest/edge"
+    units    = 1
+    config = {
+      ssl_cert                    = var.b64_ssl_cert,
+      ssl_key                     = var.b64_ssl_key
+      default_timeouts            = "queue 60000, connect 5000, client 120000, server 120000"
+      global_default_bind_options = "no-tlsv10"
+      services                    = ""
+    }
+  }
+
+  rabbitmq_server = {
+    app_name = "rabbitmq-server"
+    channel  = "latest/edge"
+    units    = var.rabbitmq_server_units
+    base     = "ubuntu@24.04"
+    config = {
+      consumer-timeout = 259200000
+    }
+  }
 }
 
 data "external" "get_haproxy_ip" {
-  program = ["bash", "${path.module}/get_haproxy_ip.sh", module.landscape_server.model_name]
+  program = ["bash", "${path.module}/get_haproxy_ip.sh", var.workspace_name]
 
   depends_on = [module.landscape_server]
 }
@@ -62,8 +105,8 @@ resource "terraform_data" "setup_landscape" {
 module "landscape_client" {
   source                  = "./client"
   landscape_root_url      = module.landscape_server.self_signed_server ? data.external.get_haproxy_ip.result.ip_address : module.landscape_server.landscape_root_url
-  landscape_account_name  = module.landscape_server.landscape_account_name
-  registration_key        = module.landscape_server.registration_key
+  landscape_account_name  = "standalone"
+  registration_key        = var.registration_key
   pro_token               = var.pro_token
   ubuntu_core_series      = var.ubuntu_core_series
   ubuntu_core_count       = var.ubuntu_core_count

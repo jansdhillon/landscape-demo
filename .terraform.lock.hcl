@@ -36,16 +36,16 @@ provider "registry.opentofu.org/hashicorp/local" {
 }
 
 provider "registry.opentofu.org/juju/juju" {
-  version     = "0.19.0"
-  constraints = ">= 0.18.0"
+  version     = "0.21.1"
+  constraints = ">= 0.14.0, >= 0.18.0, >= 0.19.0"
   hashes = [
-    "h1:sWo4pFb0CYEqLFX2OF/ObAB8vZFZUgL/lceamTLyHsc=",
-    "zh:1d5c0b2671052bbc4600dae6b07bd5d0ca0ca492e2b8c408e3358518cca419dd",
-    "zh:26b8f4e409d22ab21ed4a9d192a8d40f3887bf0ac1865b427102327ccec30502",
-    "zh:3e52068e40067ab8f68ee12a56e733fe73180050c0e9644da87ded6a1eab0d1a",
-    "zh:577ac4ca9e6bb6d79c209d85c3ea5f4271349443200acdd6852ff8748a13e99a",
+    "h1:zBouWSkvdaPsLpoM2UyXKsZ+zOl/cofO4xgFPvHSENA=",
+    "zh:263e6be572235056517c21088d1627d64e65038a41c1493aed0998ad8fbbc1f2",
+    "zh:5e9db42224fef435a690ab904c11ae2cf71a21b395432bbc48d4a68e1c180552",
     "zh:753ad16d007180a77a147bd377de2fb334f409123f6fee36d4c50c7fe8b76a29",
-    "zh:d62a0e40e9010712c993c39ade6d051d33d6f3e584bfefc2f7041abefcadbcef",
+    "zh:90fcac31d46e402de63716bd2d3f0deac8f62fc1592a2333ed2783e1fa8daa15",
+    "zh:b4cce95c3e5f3b62a207ad8b0d7e843b1e5dd464f6176535b7a0827e439b4bf2",
+    "zh:e84a85ec01e672e59a3bfd4bc7d9644eb2430d73dc1373a178e9934ea1794ec0",
   ]
 }
 
