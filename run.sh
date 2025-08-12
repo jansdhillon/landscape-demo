@@ -90,4 +90,4 @@ deploy_landscape_client "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY"
 ADMIN_EMAIL=$(get_tfvar 'admin_email')
 ADMIN_PASSWORD=$(get_tfvar 'admin_password')
 
-echo -e "${BOLD}${ORANGE}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_ROOT_URL}/new_dashboard${RESET_TEXT} using the following credentials:\n${BOLD}Email:${RESET_TEXT} ${ADMIN_EMAIL}\n${BOLD}Password:${RESET_TEXT} ${ADMIN_PASSWORD}\n"
+echo -e "${BOLD}${ORANGE}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_ROOT_URL}/new_dashboard${RESET_TEXT} using the following credentials:\nEmail: ${BOLD}${ADMIN_EMAIL}${RESET_TEXT}\nPassword: ${BOLD}${ADMIN_PASSWORD}${RESET_TEXT}\n"

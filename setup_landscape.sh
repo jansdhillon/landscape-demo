@@ -7,7 +7,7 @@ ADMIN_PASSWORD="$3"
 GPG_PRIVATE_KEY_CONTENT="$4"
 SERIES="$5"
 
-timeout=300 # 5 minutes
+timeout=600 # 10 minutes
 start_time=$(date +%s)
 while true; do
   current_time=$(date +%s)

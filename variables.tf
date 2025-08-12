@@ -6,13 +6,11 @@ variable "workspace_name" {
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"
   type        = string
-  sensitive   = true
 }
 
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
-  sensitive   = true
 }
 
 variable "domain" {
@@ -35,7 +33,6 @@ variable "path_to_ssl_key" {
   type        = string
   default     = ""
   description = "Path to your SSL key, if using your own domain"
-  sensitive   = true
 }
 
 variable "b64_ssl_cert" {
@@ -62,7 +59,6 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the admin"
   type        = string
-  sensitive   = true
 }
 
 variable "min_install" {
@@ -182,7 +178,6 @@ variable "smtp_username" {
 
 variable "smtp_password" {
   type        = string
-  sensitive   = true
   default     = ""
   description = "Often your API key. Optional unless using SMTP/custom domain."
 }
