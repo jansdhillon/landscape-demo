@@ -1,5 +1,5 @@
 module "landscape_server" {
-  source = "git::https://github.com/canonical/terraform-juju-landscape-server.git//modules/landscape-scalable"
+  source = "git::https://github.com/canonical/terraform-juju-landscape-server.git//modules/landscape-scalable?ref=v1.0.1"
 
   create_model    = true
   model           = var.workspace_name
