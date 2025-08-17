@@ -1,16 +1,11 @@
 variables.txt
-**/.terraform/*
-*.tfstate
-*.tfstate.*
 cloud-init.yaml
-terraform.log
-# For testing exporting bundle
 bundle*.yaml
-terraform.tfvars
-terraform.tfvars.json
 *.pem
 *.asc
 landscape
+!cmd/landscape
+!internal/landscape
 .vscode/*
 # Local .terraform directories
 **/.terraform/*

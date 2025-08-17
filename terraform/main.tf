@@ -1,22 +1,5 @@
 module "landscape_server" {
-<<<<<<< HEAD:main.tf
   source = "git::https://github.com/canonical/terraform-juju-landscape-server.git//modules/landscape-scalable?ref=v1.0.1"
-=======
-  source                = "./server"
-  model_name            = var.model_name
-  path_to_ssh_key       = var.path_to_ssh_key
-  admin_email           = var.admin_email
-  admin_password        = var.admin_password
-  min_install           = var.min_install
-  landscape_ppa         = var.landscape_ppa
-  registration_key      = var.registration_key
-  landscape_server_base = var.landscape_server_base
-  domain                = var.domain
-  hostname              = var.hostname
-  b64_ssl_cert          = var.b64_ssl_cert
-  b64_ssl_key           = var.b64_ssl_key
-}
->>>>>>> 991e9f4 (probably not worth it.):terraform/main.tf
 
   create_model    = true
   model           = var.workspace_name
