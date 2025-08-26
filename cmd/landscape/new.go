@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-
-	"os"
-
-	"errors"
+	"log"
+	"log/slog"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
@@ -23,44 +21,55 @@ var newCmd = &cli.Command{
 }
 
 func actionNew(_ context.Context, cmd *cli.Command) (err error) {
+	err = actionSetup(cmd)
+	if err != nil {
+		return err
+	}
 	workingDir, err := config.TerraformDirectory()
 	if err != nil {
 		ec := cli.Exit(fmt.Sprintf("error getting working directory: %v\n", err), 0)
 		return ec
 	}
-	if _, err := os.Stat(config.TfVarsFileName); errors.Is(err, os.ErrNotExist) {
-		ec := cli.Exit(fmt.Sprintf("error checking for tfvars: %v\n", err), 0)
+
+	slog.Debug("Working dir set!", slog.String("working dir", workingDir))
+
+	tfVarsPath, err := config.TfVarsPath(workingDir)
+	if err != nil {
+		ec := cli.Exit(err, 1)
 		return ec
 	}
-	fmt.Fprintf(cmd.Root().Writer, "%s found!\n", config.TfVarsFileName)
+	fmt.Fprintf(cmd.Root().Writer, "%s found! %s\n", config.TfVarsFileName, tfVarsPath)
 
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
-		Version: version.Must(version.NewVersion("1.0.6")),
+		Version: version.Must(version.NewVersion(config.TerraformVersion)),
 	}
 
 	execPath, err := installer.Install(context.Background())
 	if err != nil {
-		ec := cli.Exit(fmt.Sprintf("error installing tf: %v\n", err), 0)
-		return ec
+		return err
 	}
 
 	tf, err := tfexec.NewTerraform(workingDir, execPath)
 	if err != nil {
-		ec := cli.Exit(fmt.Sprintf("error creating tf: %v\n", err), 0)
-		return ec
+		return err
 	}
+
+	tf.SetLogger(log.Default())
 
 	err = tf.Init(context.Background(), tfexec.Upgrade(true))
 	if err != nil {
-		ec := cli.Exit(fmt.Sprintf("error initializing workspace: %v\n", err), 0)
-		return ec
+		return err
+	}
+
+	err = tf.Apply(context.Background(), tfexec.Var("hello=world"))
+	if err != nil {
+		return err
 	}
 
 	state, err := tf.Show(context.Background())
 	if err != nil {
-		ec := cli.Exit(fmt.Sprintf("error running show: %v\n", err), 0)
-		return ec
+		return err
 	}
 
 	fmt.Fprintf(cmd.Root().Writer, "state: %v\n", state)

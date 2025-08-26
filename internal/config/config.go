@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	TerraformVersion = "1.12.0"
+	TerraformVersion = "1.13.0"
 	TfVarsFileName   = "terraform.tfvars"
 )
 
@@ -22,14 +22,11 @@ func TerraformDirectory() (string, error) {
 		return "", err
 	}
 
-	terraformDir := filepath.Join(dir, "terraform")
-	fmt.Printf("%s\n", terraformDir)
-
-	return terraformDir, nil
+	return dir, nil
 }
 
 func TfVarsPath(workingDirectory string) (string, error) {
-	varsPath := filepath.Join(workingDirectory, "terraform.tfvars")
+	varsPath := filepath.Join(workingDirectory, TfVarsFileName)
 
 	if _, err := os.Stat(varsPath); err != nil {
 		if os.IsNotExist(err) {
@@ -69,7 +66,7 @@ func ParseHCLTfvars(filename string) (map[string]cty.Value, error) {
 	return vars, nil
 }
 
-func WriteHCLTfvars(filename string, vars map[string]cty.Value) error {
+func WriteHCLTfVars(filename string, vars map[string]cty.Value) error {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 

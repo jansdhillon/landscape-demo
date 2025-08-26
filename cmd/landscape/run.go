@@ -36,7 +36,7 @@ func actionRun(_ context.Context, cmd *cli.Command) (err error) {
 
 	vars["hello"] = cty.StringVal("updated_world")
 
-	err = config.WriteHCLTfvars(config.TfVarsFileName, vars)
+	err = config.WriteHCLTfVars(config.TfVarsFileName, vars)
 	if err != nil {
 		log.Fatalf("Error writing tfvars: %s", err)
 	}
