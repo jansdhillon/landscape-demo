@@ -22,7 +22,7 @@ func TerraformDirectory() (string, error) {
 		return "", err
 	}
 
-	return dir, nil
+	return dir + "/terraform", nil
 }
 
 func TfVarsPath(workingDirectory string) (string, error) {

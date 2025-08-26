@@ -30,39 +30,16 @@ module "landscape_server" {
 
   postgresql = {
     app_name = "postgresql"
-    channel  = "14/stable"
     units    = var.postgresql_units
-    config = {
-      plugin_plpython3u_enable     = true
-      plugin_ltree_enable          = true
-      plugin_intarray_enable       = true
-      plugin_debversion_enable     = true
-      plugin_pg_trgm_enable        = true
-      experimental_max_connections = 500
-    }
   }
 
   haproxy = {
     app_name = "haproxy"
-    channel  = "latest/edge"
-    units    = 1
-    config = {
-      ssl_cert                    = var.b64_ssl_cert,
-      ssl_key                     = var.b64_ssl_key
-      default_timeouts            = "queue 60000, connect 5000, client 120000, server 120000"
-      global_default_bind_options = "no-tlsv10"
-      services                    = ""
-    }
   }
 
   rabbitmq_server = {
     app_name = "rabbitmq-server"
-    channel  = "latest/edge"
     units    = var.rabbitmq_server_units
-    base     = "ubuntu@24.04"
-    config = {
-      consumer-timeout = 259200000
-    }
   }
 }
 

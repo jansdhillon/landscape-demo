@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,24 +22,7 @@ func newApp() *cli.Command {
 			runCmd,
 			newCmd,
 		},
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    logLevelFlag,
-				Aliases: []string{"l"},
-				Value:   slog.LevelInfo.String(),
-				Usage:   "Log level.",
-			},
-		},
 	}
-}
-
-func actionSetup(cmd *cli.Command) error {
-	err := initLogger(cmd.String(logLevelFlag))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func main() {

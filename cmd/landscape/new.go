@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
@@ -21,7 +20,6 @@ var newCmd = &cli.Command{
 }
 
 func actionNew(_ context.Context, cmd *cli.Command) (err error) {
-	err = actionSetup(cmd)
 	if err != nil {
 		return err
 	}
@@ -31,7 +29,7 @@ func actionNew(_ context.Context, cmd *cli.Command) (err error) {
 		return ec
 	}
 
-	slog.Debug("Working dir set!", slog.String("working dir", workingDir))
+	log.Printf("Working dir set: %s", workingDir)
 
 	tfVarsPath, err := config.TfVarsPath(workingDir)
 	if err != nil {
@@ -62,7 +60,7 @@ func actionNew(_ context.Context, cmd *cli.Command) (err error) {
 		return err
 	}
 
-	err = tf.Apply(context.Background(), tfexec.Var("hello=world"))
+	err = tf.Apply(context.Background())
 	if err != nil {
 		return err
 	}
