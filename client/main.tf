@@ -1,13 +1,17 @@
-module "lxd-vm" {
-  source                 = "./lxd/vm"
-  lxd_vm_name            = var.lxd_vm_name
-  lxd_series             = var.lxd_series
-  registration_key       = var.registration_key
-  pro_token              = var.pro_token
-  landscape_root_url     = var.landscape_root_url
-  landscape_account_name = var.landscape_account_name
-  lxd_vm_count           = var.lxd_vm_count
-  workspace_name         = var.workspace_name
+module "landscape-client" {
+  source  = "jansdhillon/landscape-client/lxd"
+  version = "1.0.0"
+  pro_token = var.pro_token
+  source_image = "${var.architecture}/${var.lxd_series}"
+  instance_name_prefix = "${var.workspace_name}-${var.lxd_vm_name}"
+  client_config = {
+    registration_key = var.registration_key
+    ppa = "ppa:landscape/self-hosted-beta"
+    fqdn = var.landscape_root_url
+    account_name = var.landscape_account_name
+
+  }
+  count = var.lxd_vm_count
 }
 
 module "ubuntu-core-device" {
@@ -21,4 +25,3 @@ module "ubuntu-core-device" {
   ubuntu_core_count       = var.ubuntu_core_count
   workspace_name          = var.workspace_name
 }
-
