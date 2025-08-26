@@ -15,6 +15,7 @@ func newApp() *cli.Command {
 		Usage: "Demo Landscape",
 		Commands: []*cli.Command{
 			runCmd,
+			newCmd,
 		},
 	}
 }
