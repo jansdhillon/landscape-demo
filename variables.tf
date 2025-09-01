@@ -187,3 +187,7 @@ variable "architecture" {
   default     = "amd64"
   description = "CPU architecture"
 }
+
+variable "hello" {
+  type = list(number)
+}

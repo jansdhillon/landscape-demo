@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
@@ -19,24 +18,14 @@ var newCmd = &cli.Command{
 	Action: actionNew,
 }
 
-func actionNew(_ context.Context, cmd *cli.Command) (err error) {
+func actionNew(ctx context.Context, cmd *cli.Command) (err error) {
+	tfVarsPath, err := config.TfVarsPath()
 	if err != nil {
-		return err
-	}
-	workingDir, err := config.TerraformDirectory()
-	if err != nil {
-		ec := cli.Exit(fmt.Sprintf("error getting working directory: %v\n", err), 0)
+		ec := cli.Exit(fmt.Sprintf("error getting terraform.tfvars path: %v\n", err), 0)
 		return ec
 	}
 
-	log.Printf("Working dir set: %s", workingDir)
-
-	tfVarsPath, err := config.TfVarsPath(workingDir)
-	if err != nil {
-		ec := cli.Exit(err, 1)
-		return ec
-	}
-	fmt.Fprintf(cmd.Root().Writer, "%s found! %s\n", config.TfVarsFileName, tfVarsPath)
+	fmt.Fprintf(cmd.Root().Writer, "%s found!\n", tfVarsPath)
 
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
@@ -48,24 +37,46 @@ func actionNew(_ context.Context, cmd *cli.Command) (err error) {
 		return err
 	}
 
-	tf, err := tfexec.NewTerraform(workingDir, execPath)
+	wd, err := config.TerraformDirectory()
 	if err != nil {
-		return err
+		ec := cli.Exit(fmt.Sprintf("error gettings terraform directory: %v", err), 0)
+		return ec
+	}
+	tf, err := tfexec.NewTerraform(wd, execPath)
+	if err != nil {
+		ec := cli.Exit(fmt.Sprintf("error creating tf: %v\n", err), 0)
+		return ec
 	}
 
-	tf.SetLogger(log.Default())
-
-	err = tf.Init(context.Background(), tfexec.Upgrade(true))
+	err = tf.Init(ctx, tfexec.Upgrade(true))
 	if err != nil {
-		return err
+		ec := cli.Exit(fmt.Sprintf("error initializing workspace: %v\n", err), 0)
+		return ec
 	}
 
-	err = tf.Apply(context.Background())
-	if err != nil {
-		return err
+	m := config.LandscapeDemoModule{
+		TfVarsPath:   tfVarsPath,
+		TerraformDir: wd,
 	}
 
-	state, err := tf.Show(context.Background())
+	workspaceName := cmd.Args().Get(0)
+
+	if workspaceName == "" {
+		val, err := m.GetModuleValue(ctx, "hello")
+		if err != nil {
+			return fmt.Errorf("error getting module variable: %w", err)
+		}
+
+		workspaceName = val.AsString()
+	}
+
+	err = tf.WorkspaceNew(ctx, workspaceName)
+	if err != nil {
+		ec := cli.Exit(fmt.Sprintf("error creating workspace: %v", err), 1)
+		return ec
+	}
+
+	state, err := tf.Show(ctx)
 	if err != nil {
 		return err
 	}
