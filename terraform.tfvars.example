@@ -1,8 +1,43 @@
 # Name of the OpenTofu/Terraform workspace. It will also be used as the name of the Juju model.
 workspace_name = ""
 
-# Ubuntu Pro token
+# Landscape Client Configuration
+
+## Ubuntu Pro token
 pro_token = ""
+
+## LXD VMs
+lxd_vms = [
+  {
+    computer_title        = "client-0"
+    image_alias           = "noble"
+    additional_cloud_init = <<EOT
+#cloud-config
+apt:
+  sources:
+    fish-ppa:
+      source: "ppa:fish-shell/release-4"
+packages:
+  - fish
+  - landscape-client
+users:
+  - name: ubuntu
+    shell: /usr/bin/fish
+    sudo: ALL=(ALL) NOPASSWD:ALL
+EOT
+  },
+  {
+    computer_title = "client-1"
+    image_alias    = "jammy"
+  }
+]
+
+## Ubuntu Core
+ubuntu_core_series = "core24"
+
+ubuntu_core_count = 0
+
+ubuntu_core_device_name = "core-client"
 
 # Path to your local SSH public key to use for the Juju model
 path_to_ssh_key = ""
@@ -13,71 +48,57 @@ path_to_ssl_cert = ""
 # Path to your SSL key, if using your own domain
 path_to_ssl_key = ""
 
-# Path to a GPG key. Cannot have a password.
-path_to_gpg_private_key = "./private.asc"
+# Path to a GPG key. Cannot have a password. Optional unless setting up repo mirroring.
+# path_to_gpg_private_key = "./private.asc"
 
 hostname = "landscape"
 
 domain = "example.com"
 
-# First and last name of the admin
 admin_name = "Landscape Admin"
 
-# Email of the admin
 admin_email = "admin@example.com"
 
-# Password of the admin
 admin_password = "pwd"
 
-# Install recommended packages like landscape-hashids but takes longer to install
-min_install = true
-
-# PPA to use for the Landscape Server charm
-landscape_ppa = "ppa:landscape/self-hosted-beta"
-
-# Landscape Server charm units number
-landscape_server_units = 1
-
-# Registration key for Landscape (optional)
 registration_key = "key"
 
-# Landscape Server charm channel
-landscape_server_channel = "latest-stable/edge"
+landscape_ppa = "ppa:landscape/latest-stable"
 
-# Base for the Landscape Server unit(s)
-landscape_server_base = "ubuntu@22.04"
+min_install = true
 
-# Landscape Server charm revision
-landscape_server_revision = 144
+# Landscape Server configuration
+landscape_server = {
+  app_name = "landscape-server"
+  channel  = "latest-stable/edge"
+  config = {
+    autoregistration = true
+  }
+  constraints = "arch=amd64"
+  revision    = null
+  base        = "ubuntu@22.04"
+  units       = 1
+}
 
-# Series of Ubuntu Core
-ubuntu_core_series = "core24"
 
-# Number of Ubuntu Core devices
-ubuntu_core_count = 0
+# PostgreSQL configuration
+postgresql = {
+  channel  = "14/stable"
+}
 
-ubuntu_core_device_name = "core-client"
+# HAProxy configuration
+haproxy = {
+  channel  = "latest/edge"
+  config = {
+    default_timeouts            = "queue 60000, connect 5000, client 120000, server 120000"
+    global_default_bind_options = "no-tlsv10"
+    services                    = ""
+    ssl_cert                    = "SELFSIGNED"
+  }
+}
 
-# Number of LXD VM(s)
-lxd_vm_count = 2
-
-# Series of LXD VM
-lxd_series = "noble"
-
-# The name of the LXD VM(s)
-lxd_vm_name = "client"
-
-# Number of PostgreSQL units for the Juju model
-postgresql_units = 1
-
-# Number of RabbitMQ Server units for the Juju model
-rabbitmq_server_units = 1
-
-smtp_host = "smtp.sendgrid.net"
-
-smtp_port = 587
-
-smtp_username = "apikey"
-
-# Often your API key. Optional unless using SMTP/custom domain.
-smtp_password = ""
+# RabbitMQ Server configuration
+rabbitmq_server = {
+  channel  = "latest/edge"
+  base        = "ubuntu@24.04"
+}
