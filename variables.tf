@@ -3,6 +3,14 @@ variable "workspace_name" {
   type        = string
 }
 
+
+variable "create_model" {
+  description = "Create a new Juju model with the given workspace_name, otherwise use an existing model with that name"
+  type        = bool
+  default     = true
+}
+
+
 variable "path_to_ssh_key" {
   description = "Path to your local SSH public key to use for the Juju model"
   type        = string
@@ -41,14 +49,8 @@ variable "b64_ssl_cert" {
 }
 
 variable "b64_ssl_key" {
-  type      = string
-  default   = ""
-}
-
-variable "admin_name" {
-  description = "First and last name of the admin"
-  type        = string
-  default     = "Landscape Admin"
+  type    = string
+  default = ""
 }
 
 variable "admin_email" {
@@ -61,16 +63,10 @@ variable "admin_password" {
   type        = string
 }
 
-variable "min_install" {
-  description = "Install recommended packages like landscape-hashids but takes longer to install"
-  type        = bool
-  default     = true
-}
-
-variable "landscape_ppa" {
-  description = "PPA to use for the Landscape Server charm"
+variable "admin_name" {
+  description = "First and last name of the admin"
   type        = string
-  default     = "ppa:landscape/self-hosted-beta"
+  default     = "Landscape Admin"
 }
 
 variable "registration_key" {
@@ -79,22 +75,30 @@ variable "registration_key" {
   description = "Registration key for Landscape (optional)"
 }
 
-variable "landscape_server_base" {
+variable "landscape_ppa" {
+  description = "PPA to use for the Landscape Server charm"
   type        = string
-  description = "Base for the Landscape Server unit(s)"
-  default     = "ubuntu@22.04"
+  default     = "ppa:landscape/latest-stable"
 }
 
-variable "landscape_server_channel" {
-  type        = string
-  description = "Landscape Server charm channel"
-  default     = "latest/stable"
+variable "min_install" {
+  description = "Install recommended packages like landscape-hashids but takes longer to install"
+  type        = bool
+  default     = true
 }
 
-variable "landscape_server_revision" {
-  type        = number
-  description = "Landscape Server charm revision"
-  default     = 134
+variable "landscape_server" {
+  type = object({
+    app_name = optional(string, "landscape-server")
+    channel  = optional(string, "latest-stable/edge")
+    config = optional(map(string), {
+      autoregistration = true
+    })
+    constraints = optional(string, "arch=amd64")
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@22.04")
+    units       = optional(number, 1)
+  })
 }
 
 variable "ubuntu_core_series" {
@@ -114,51 +118,48 @@ variable "ubuntu_core_count" {
   default     = 0
 }
 
-variable "lxd_vm_count" {
-  type        = number
-  description = "Number of LXD VM(s)"
+variable "lxd_vms" {
+  type = set(object({
+    bus                     = optional(string, "session")
+    computer_title          = string
+    image_alias             = string
+    account_name            = optional(string)
+    registration_key        = optional(string)
+    fqdn                    = optional(string)
+    data_path               = optional(string, "/var/lib/landscape/client")
+    http_proxy              = optional(string)
+    https_proxy             = optional(string)
+    log_dir                 = optional(string, "/var/log/landscape")
+    log_level               = optional(string, "info")
+    pid_file                = optional(string, "/var/run/landscape-client.pid")
+    ping_url                = optional(string)
+    include_manager_plugins = optional(string, "ScriptExecution")
+    include_monitor_plugins = optional(string, "ALL")
+    script_users            = optional(string, "landscape,root")
+    ssl_public_key          = optional(string, "/etc/landscape/server.pem")
+    tags                    = optional(string, "")
+    url                     = optional(string)
+    package_hash_id_url     = optional(string)
+    additional_cloud_init   = optional(string)
+    device = optional(object({
+      name       = string
+      type       = string
+      properties = map(string)
+    }))
+  }))
 }
 
-variable "lxd_series" {
-  type        = string
-  default     = "jammy"
-  description = "Series of LXD VM"
-}
-
-variable "lxd_vm_name" {
-  type        = string
-  description = "The name of the LXD VM(s)"
-}
 
 variable "path_to_gpg_private_key" {
   type        = string
-  description = "Path to a GPG key. Cannot have a password."
-
+  description = "Path to a GPG key. Cannot have a password. Optional."
+  default     = ""
 }
 
 variable "gpg_private_key_content" {
   type        = string
   description = "URL-encoded GPG private key content"
   default     = ""
-}
-
-
-variable "landscape_server_units" {
-  description = "Landscape Server charm units number"
-  type        = number
-  default = 1
-}
-
-variable "postgresql_units" {
-  type        = number
-  description = "Number of PostgreSQL units for the Juju model"
-  default = 1
-}
-
-variable "rabbitmq_server_units" {
-  type        = number
-  description = "Number of RabbitMQ Server units for the Juju model"
-  default = 1
 }
 
 variable "smtp_host" {
@@ -186,4 +187,60 @@ variable "architecture" {
   type        = string
   default     = "amd64"
   description = "CPU architecture"
+}
+
+variable "enable_repo_mirroring" {
+  type        = bool
+  default     = false
+  description = "Enable repository mirroring functionality. Requires GPG key."
+}
+
+variable "postgresql" {
+  type = object({
+    app_name = optional(string, "postgresql")
+    channel  = optional(string, "14/stable")
+    config = optional(map(string), {
+      plugin_plpython3u_enable     = true
+      plugin_ltree_enable          = true
+      plugin_intarray_enable       = true
+      plugin_debversion_enable     = true
+      plugin_pg_trgm_enable        = true
+      experimental_max_connections = 500
+    })
+    constraints = optional(string, "arch=amd64")
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@22.04")
+    units       = optional(number, 1)
+  })
+}
+
+variable "haproxy" {
+  type = object({
+    app_name = optional(string, "haproxy")
+    channel  = optional(string, "latest/edge")
+    config = optional(map(string), {
+      default_timeouts            = "queue 60000, connect 5000, client 120000, server 120000"
+      global_default_bind_options = "no-tlsv10"
+      services                    = ""
+      ssl_cert                    = "SELFSIGNED"
+    })
+    constraints = optional(string, "arch=amd64")
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@22.04")
+    units       = optional(number, 1)
+  })
+}
+
+variable "rabbitmq_server" {
+  type = object({
+    app_name = optional(string, "rabbitmq-server")
+    channel  = optional(string, "latest/edge")
+    config = optional(map(string), {
+      consumer-timeout = 259200000
+    })
+    constraints = optional(string, "arch=amd64")
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 1)
+  })
 }

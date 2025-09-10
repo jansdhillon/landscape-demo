@@ -35,22 +35,36 @@ variable "ubuntu_core_series" {
   default = "core24"
 }
 
-variable "lxd_vm_count" {
-  type    = number
-  default = 1
+variable "lxd_vms" {
+  type = set(object({
+    bus                     = optional(string, "session")
+    computer_title          = string
+    image_alias             = string
+    account_name            = optional(string)
+    registration_key        = optional(string)
+    fqdn                    = optional(string)
+    data_path               = optional(string, "/var/lib/landscape/client")
+    http_proxy              = optional(string)
+    https_proxy             = optional(string)
+    log_dir                 = optional(string, "/var/log/landscape")
+    log_level               = optional(string, "info")
+    pid_file                = optional(string, "/var/run/landscape-client.pid")
+    ping_url                = optional(string)
+    include_manager_plugins = optional(string, "ScriptExecution")
+    include_monitor_plugins = optional(string, "ALL")
+    script_users            = optional(string, "landscape,root")
+    ssl_public_key          = optional(string, "/etc/landscape/server.pem")
+    tags                    = optional(string, "")
+    url                     = optional(string)
+    package_hash_id_url     = optional(string)
+    additional_cloud_init   = optional(string)
+    device = optional(object({
+      name       = string
+      type       = string
+      properties = map(string)
+    }))
+  }))
 }
-
-variable "lxd_series" {
-  type    = string
-  default = "jammy"
-}
-
-variable "lxd_vm_name" {
-  type        = string
-  description = "The name of the LXD VM"
-  default     = "client"
-}
-
 
 variable "workspace_name" {
   type = string

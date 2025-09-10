@@ -1,13 +1,13 @@
-module "lxd-vm" {
-  source                 = "./lxd/vm"
-  lxd_vm_name            = var.lxd_vm_name
-  lxd_series             = var.lxd_series
-  registration_key       = var.registration_key
-  pro_token              = var.pro_token
-  landscape_root_url     = var.landscape_root_url
-  landscape_account_name = var.landscape_account_name
-  lxd_vm_count           = var.lxd_vm_count
-  workspace_name         = var.workspace_name
+module "lxd-landscape-client" {
+  source    = "git::https://github.com/jansdhillon/terraform-lxd-landscape-client.git//"
+  instances = var.lxd_vms
+
+  account_name     = var.landscape_account_name
+  fqdn             = var.landscape_root_url
+  registration_key = var.registration_key
+  pro_token        = var.pro_token
+  instance_type    = "virtual-machine"
+  architecture     = var.architecture
 }
 
 module "ubuntu-core-device" {
@@ -20,5 +20,5 @@ module "ubuntu-core-device" {
   landscape_account_name  = var.landscape_account_name
   ubuntu_core_count       = var.ubuntu_core_count
   workspace_name          = var.workspace_name
+  architecture            = var.architecture
 }
-
