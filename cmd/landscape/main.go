@@ -10,23 +10,17 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-// Flags
-const (
-	logLevelFlag = "log-level"
-)
-
 func newApp() *cli.Command {
 	return &cli.Command{
 		Usage: "Demo Landscape",
 		Commands: []*cli.Command{
-			runCmd,
 			newCmd,
 		},
 	}
 }
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
 	app := newApp()

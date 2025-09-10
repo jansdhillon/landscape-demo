@@ -1,23 +1,53 @@
 package config
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
-
-	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/hashicorp/hcl/v2/hclwrite"
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/gocty"
 )
 
 const (
-	TerraformVersion = "1.13.0"
-	TfVarsFileName   = "terraform.tfvars"
+	TerraformVersion   = "1.13.0"
+	TfVarsJsonFileName = "terraform.tfvars.json"
 )
+
+type Config struct {
+	WorkspaceName           string `json:"workspace_name"`
+	PathToSSHKey            string `json:"path_to_ssh_key"`
+	ProToken                string `json:"pro_token"`
+	Domain                  string `json:"domain"`
+	Hostname                string `json:"hostname"`
+	PathToSSLCert           string `json:"path_to_ssl_cert"`
+	PathToSSLKey            string `json:"path_to_ssl_key"`
+	B64SSLCert              string `json:"b64_ssl_cert"`
+	B64SSLKey               string `json:"b64_ssl_key"`
+	AdminName               string `json:"admin_name"`
+	AdminEmail              string `json:"admin_email"`
+	AdminPassword           string `json:"admin_password"`
+	MinInstall              bool   `json:"min_install"`
+	LandscapePPA            string `json:"landscape_ppa"`
+	RegistrationKey         string `json:"registration_key"`
+	LandscapeServerBase     string `json:"landscape_server_base"`
+	LandscapeServerChannel  string `json:"landscape_server_channel"`
+	LandscapeServerRevision int    `json:"landscape_server_revision"`
+	UbuntuCoreSeries        string `json:"ubuntu_core_series"`
+	UbuntuCoreDeviceName    string `json:"ubuntu_core_device_name"`
+	UbuntuCoreCount         int    `json:"ubuntu_core_count"`
+	LxdVMCount              int    `json:"lxd_vm_count"`
+	LxdSeries               string `json:"lxd_series"`
+	LxdVMName               string `json:"lxd_vm_name"`
+	PathToGPGPrivateKey     string `json:"path_to_gpg_private_key"`
+	GPGPrivateKeyContent    string `json:"gpg_private_key_content"`
+	LandscapeServerUnits    int    `json:"landscape_server_units"`
+	PostgreSQLUnits         int    `json:"postgresql_units"`
+	RabbitMQServerUnits     int    `json:"rabbitmq_server_units"`
+	SMTPHost                string `json:"smtp_host"`
+	SMTPPort                int    `json:"smtp_port"`
+	SMTPUsername            string `json:"smtp_username"`
+	SMTPPassword            string `json:"smtp_password"`
+	Architecture            string `json:"architecture"`
+}
 
 func TerraformDirectory() (string, error) {
 	dir, err := os.Getwd()
@@ -35,7 +65,7 @@ func TfVarsPath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	varsPath := filepath.Join(tfDir, "terraform.tfvars")
+	varsPath := filepath.Join(tfDir, TfVarsJsonFileName)
 
 	if _, err := os.Stat(varsPath); err != nil {
 		if os.IsNotExist(err) {
@@ -47,106 +77,19 @@ func TfVarsPath() (string, error) {
 	return varsPath, nil
 }
 
-func ParseHCLTfvars(filename string) (map[string]cty.Value, error) {
+func ParseTfJsonVars(filename string) (*Config, error) {
 	content, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return &Config{}, err
 	}
 
-	file, diags := hclsyntax.ParseConfig(content, filename, hcl.Pos{Line: 1, Column: 1})
-	if diags.HasErrors() {
-		return nil, fmt.Errorf("parse errors: %s", diags.Error())
-	}
-
-	vars := make(map[string]cty.Value)
-	attrs, diags := file.Body.JustAttributes()
-	if diags.HasErrors() {
-		return nil, fmt.Errorf("attribute errors: %s", diags.Error())
-	}
-
-	for name, attr := range attrs {
-		evalContext := &hcl.EvalContext{
-			Variables: vars,
-		}
-		val, diags := attr.Expr.Value(evalContext)
-		if diags.HasErrors() {
-			return nil, fmt.Errorf("value errors for %s: %s", name, diags.Error())
-		}
-		vars[name] = val
-	}
-
-	return vars, nil
-}
-
-func WriteHCLTfVars(filename string, vars map[string]cty.Value) error {
-	f := hclwrite.NewEmptyFile()
-	rootBody := f.Body()
-
-	var names []string
-	for name := range vars {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-
-	for _, name := range names {
-		entry := vars[name]
-
-		if entry.IsNull() {
-			continue
-		}
-
-		tokens := hclwrite.TokensForValue(entry)
-		rootBody.SetAttributeRaw(name, tokens)
-
-		rootBody.AppendNewline()
-	}
-
-	return os.WriteFile(filename, f.Bytes(), 0644)
-}
-
-type Module interface {
-	GetModuleValue(context.Context, string) (cty.Value, error)
-	SetModuleValue(context.Context, string, any) (cty.Value, error)
-}
-
-type LandscapeDemoModule struct {
-	TfVarsPath   string
-	TerraformDir string
-}
-
-func (m *LandscapeDemoModule) SetModuleValue(ctx context.Context, name string, value any) (cty.Value, error) {
-	currentVars, err := ParseHCLTfvars(m.TfVarsPath)
+	var config Config
+	err = json.Unmarshal(content, &config)
 	if err != nil {
-		fmt.Printf("error parsing HCL tfvars: %v", err)
-		return cty.Value{}, err
+		return &Config{}, fmt.Errorf("parse errors: %s", err)
 	}
 
-	ctyVal, err := gocty.ToCtyValue(value, cty.DynamicPseudoType)
-	if err != nil {
-		return cty.Value{}, fmt.Errorf("failed to convert value to cty: %w", err)
-	}
+	fmt.Printf("config: %v", config)
 
-	currentVars[name] = ctyVal
-
-	err = WriteHCLTfVars(m.TfVarsPath, currentVars)
-	if err != nil {
-		return cty.Value{}, fmt.Errorf("error writing tfvars: %w", err)
-	}
-
-	return ctyVal, nil
-
-}
-
-func (m *LandscapeDemoModule) GetModuleValue(ctx context.Context, name string) (cty.Value, error) {
-	currentVars, err := ParseHCLTfvars(m.TfVarsPath)
-	if err != nil {
-		return cty.Value{}, fmt.Errorf("error parsing tfvars: %v", err)
-	}
-
-	entry, exists := currentVars[name]
-	if !exists {
-		return cty.Value{}, fmt.Errorf("variable %s not found", name)
-	}
-
-	return entry, nil
+	return &config, nil
 }

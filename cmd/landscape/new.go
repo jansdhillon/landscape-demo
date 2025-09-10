@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/hc-install/releases"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/jansdhillon/landscape-demo/internal/config"
+	"github.com/jansdhillon/landscape-demo/internal/server"
 	"github.com/urfave/cli/v3"
 )
 
@@ -21,11 +22,16 @@ var newCmd = &cli.Command{
 func actionNew(ctx context.Context, cmd *cli.Command) (err error) {
 	tfVarsPath, err := config.TfVarsPath()
 	if err != nil {
-		ec := cli.Exit(fmt.Sprintf("error getting terraform.tfvars path: %v\n", err), 0)
+		ec := cli.Exit(fmt.Sprintf("error getting terraform.tfvars.json path: %v\n", err), 0)
+		return ec
+	}
+	vars, err := config.ParseTfJsonVars(tfVarsPath)
+	if err != nil {
+		ec := cli.Exit(fmt.Sprintf("error parsing terraform.tfvars.json: %v\n", err), 0)
 		return ec
 	}
 
-	fmt.Fprintf(cmd.Root().Writer, "%s found!\n", tfVarsPath)
+	fmt.Fprintf(cmd.Root().Writer, "vars: %v\n", vars)
 
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
@@ -54,20 +60,10 @@ func actionNew(ctx context.Context, cmd *cli.Command) (err error) {
 		return ec
 	}
 
-	m := config.LandscapeDemoModule{
-		TfVarsPath:   tfVarsPath,
-		TerraformDir: wd,
-	}
-
 	workspaceName := cmd.Args().Get(0)
 
 	if workspaceName == "" {
-		val, err := m.GetModuleValue(ctx, "hello")
-		if err != nil {
-			return fmt.Errorf("error getting module variable: %w", err)
-		}
-
-		workspaceName = val.AsString()
+		workspaceName = vars.WorkspaceName
 	}
 
 	err = tf.WorkspaceNew(ctx, workspaceName)
@@ -82,6 +78,14 @@ func actionNew(ctx context.Context, cmd *cli.Command) (err error) {
 	}
 
 	fmt.Fprintf(cmd.Root().Writer, "state: %v\n", state)
+
+	var deployOpts []server.DeployServerOption
+	deployOpts = append(deployOpts, server.NewDeployServerOpt(&vars.B64SSLCert, &vars.B64SSLKey, &vars.GPGPrivateKeyContent))
+	err = server.DeployLandscapeServer(ctx, tf, workspaceName, deployOpts...)
+	if err != nil {
+		ec := cli.Exit(fmt.Sprintf("error deploying Landscape Server: %v", err), 1)
+		return ec
+	}
 
 	return nil
 }
