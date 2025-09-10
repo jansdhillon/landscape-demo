@@ -15,12 +15,11 @@ cd landscape-demo
 find . -type f -name "*.sh" -exec chmod +x {} +
 ```
 
-Install the [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), [Multipass](https://github.com/canonical/multipass), [OpenTofu](https://github.com/opentofu/opentofu), and [yq](https://github.com/mikefarah/yq) snaps:
+Install the [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), [OpenTofu](https://github.com/opentofu/opentofu), and [yq](https://github.com/mikefarah/yq) snaps:
 
 ```bash
 sudo snap install juju --classic
 sudo snap install lxd
-sudo snap install multipass
 sudo snap install opentofu --classic
 sudo snap install yq
 ```
@@ -41,6 +40,12 @@ sudo snap install yq
 > lxd init --minimal
 > ````
 >
+
+If you want to deploy Ubuntu Core devices (optional, not currently recommended due to provider issues), install [Multipass](https://github.com/canonical/multipass):
+
+```sh
+sudo snap install multipass
+```
 
 Then, create a local LXD cloud with Juju, which will allow us to easily orchestrate the lifecycle of our Landscape system:
 
