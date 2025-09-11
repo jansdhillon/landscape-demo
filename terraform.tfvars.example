@@ -9,8 +9,10 @@ pro_token = ""
 ## LXD VMs
 lxd_vms = [
   {
-    computer_title        = "client-0"
-    image_alias           = "noble"
+    image_alias = "noble"
+    client_config = {
+      computer_title = "client-0"
+    }
     additional_cloud_init = <<EOT
 #cloud-config
 apt:
@@ -27,8 +29,10 @@ users:
 EOT
   },
   {
-    computer_title = "client-1"
-    image_alias    = "jammy"
+    image_alias = "jammy"
+    client_config = {
+      computer_title = "client-1"
+    }
   }
 ]
 
