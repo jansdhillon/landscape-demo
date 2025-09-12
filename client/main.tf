@@ -5,6 +5,7 @@ module "lxd-landscape-client" {
   landscape_root_url = var.landscape_root_url
   registration_key   = var.registration_key
   pro_token          = var.pro_token
+  ppa                = var.ppa
   instance_type      = "virtual-machine"
   architecture       = local.juju_arch_to_lxd_arch[var.architecture]
 }

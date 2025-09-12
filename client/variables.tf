@@ -104,3 +104,9 @@ variable "architecture" {
   default     = "amd64"
   description = "CPU architecture"
 }
+
+variable "ppa" {
+  description = "PPA to use for the Landscape Server/Landscape Client"
+  type        = string
+  default     = "ppa:landscape/latest-stable"
+}

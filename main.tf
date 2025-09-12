@@ -134,6 +134,7 @@ module "landscape_client" {
   landscape_account_name  = "standalone"
   registration_key        = var.registration_key
   pro_token               = var.pro_token
+  ppa                     = var.landscape_ppa
   ubuntu_core_series      = var.ubuntu_core_series
   ubuntu_core_count       = var.ubuntu_core_count
   ubuntu_core_device_name = var.ubuntu_core_device_name

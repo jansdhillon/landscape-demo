@@ -77,7 +77,7 @@ variable "registration_key" {
 }
 
 variable "landscape_ppa" {
-  description = "PPA to use for the Landscape Server charm"
+  description = "PPA to use for Landscape Server/Landscape Client"
   type        = string
   default     = "ppa:landscape/latest-stable"
 }
