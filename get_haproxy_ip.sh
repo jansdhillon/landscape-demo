@@ -3,8 +3,12 @@ MODEL_NAME="$1"
 TIMEOUT="$2"
 
 IP_ADDRESS=""
-timeout="${TIMEOUT:-120}" # 2 minutes
+timeout="${TIMEOUT:-300}" # 5 minutes
 start_time=$(date +%s)
+
+# This may seem hacky but unfortunately the Juju provider doesn't output the IP
+# addresses of the deployed instances (yet).
+# TODO: add support for multiple units.
 while true; do
   IP_ADDRESS=$(juju show-unit -m "$MODEL_NAME" "haproxy/0" | yq '."haproxy/0".public-address')
 

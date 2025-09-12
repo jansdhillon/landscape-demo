@@ -19,6 +19,7 @@ variable "path_to_ssh_key" {
 variable "pro_token" {
   description = "Ubuntu Pro token"
   type        = string
+  sensitive   = true
 }
 
 variable "domain" {

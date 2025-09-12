@@ -26,7 +26,7 @@ resource "terraform_data" "juju_wait_for_landscape" {
 }
 
 module "landscape_server" {
-  source = "git::https://github.com/canonical/terraform-juju-landscape-server.git//modules/landscape-scalable"
+  source = "git::https://github.com/canonical/terraform-juju-landscape-server.git//modules/landscape-scalable?ref=v1.0.3"
 
   model = juju_model.landscape[0].name
 
@@ -139,5 +139,5 @@ module "landscape_client" {
   ubuntu_core_device_name = var.ubuntu_core_device_name
   workspace_name          = var.workspace_name
   lxd_vms                 = var.lxd_vms
-  architecture            = local.juju_arch_to_lxd_arch[var.architecture]
+  architecture            = var.architecture
 }

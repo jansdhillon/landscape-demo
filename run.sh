@@ -29,7 +29,7 @@ PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
 B64_SSL_CERT=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_CERT}")
 B64_SSL_KEY=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_KEY}")
 
-tofu init -upgrade
+tofu init
 
 echo -e "${BOLD}${ORANGE}"
 cat <<'EOF'

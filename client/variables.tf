@@ -1,6 +1,7 @@
 variable "pro_token" {
   type        = string
   description = "Ubuntu Pro token"
+  sensitive   = true
 }
 
 variable "landscape_root_url" {
@@ -99,7 +100,7 @@ variable "workspace_name" {
 }
 
 variable "architecture" {
-  type = string
-  default = "amd64"
+  type        = string
+  default     = "amd64"
   description = "CPU architecture"
 }
