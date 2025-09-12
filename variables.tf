@@ -148,12 +148,13 @@ variable "lxd_vms" {
     http_proxy            = optional(string)
     https_proxy           = optional(string)
     additional_cloud_init = optional(string)
-    device = optional(object({
+    devices = optional(list(object({
       name       = string
       type       = string
       properties = map(string)
-    }))
-    execs = optional(object({
+    })), [])
+    execs = optional(list(object({
+      name          = string
       command       = list(string)
       enabled       = optional(bool, true)
       trigger       = optional(string, "on_change")
@@ -163,8 +164,8 @@ variable "lxd_vms" {
       fail_on_error = optional(bool, false)
       uid           = optional(number, 0)
       gid           = optional(number, 0)
-    }))
-    file = optional(object({
+    })), [])
+    files = optional(list(object({
       content            = optional(string)
       source_path        = optional(string)
       target_path        = string
@@ -172,7 +173,7 @@ variable "lxd_vms" {
       gid                = optional(number)
       mode               = optional(string, "0755")
       create_directories = optional(bool, false)
-    }))
+    })), [])
   }))
 }
 
