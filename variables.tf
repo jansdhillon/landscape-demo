@@ -91,15 +91,19 @@ variable "min_install" {
 variable "landscape_server" {
   type = object({
     app_name = optional(string, "landscape-server")
-    channel  = optional(string, "latest-stable/edge")
+    channel  = optional(string, "25.10/beta")
     config = optional(map(string), {
       autoregistration = true
+      landscape_ppa    = "ppa:landscape/self-hosted-beta"
+      min_install      = true
     })
     constraints = optional(string, "arch=amd64")
     revision    = optional(number)
     base        = optional(string, "ubuntu@22.04")
     units       = optional(number, 1)
   })
+
+  default = {}
 }
 
 variable "ubuntu_core_series" {
@@ -176,6 +180,8 @@ variable "lxd_vms" {
       create_directories = optional(bool, false)
     })), [])
   }))
+
+  default = []
 }
 
 
@@ -241,6 +247,8 @@ variable "postgresql" {
     base        = optional(string, "ubuntu@22.04")
     units       = optional(number, 1)
   })
+
+  default = {}
 }
 
 variable "haproxy" {
@@ -258,6 +266,8 @@ variable "haproxy" {
     base        = optional(string, "ubuntu@22.04")
     units       = optional(number, 1)
   })
+
+  default = {}
 }
 
 variable "rabbitmq_server" {
@@ -272,4 +282,6 @@ variable "rabbitmq_server" {
     base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
+
+  default = {}
 }
