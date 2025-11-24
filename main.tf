@@ -26,7 +26,7 @@ resource "terraform_data" "juju_wait_for_landscape" {
 }
 
 module "landscape_server" {
-  source = "git::https://github.com/canonical/terraform-juju-landscape-server.git//modules/landscape-scalable?ref=v1.0.3"
+  source = "git::https://github.com/canonical/terraform-juju-landscape.git//modules/landscape-scalable?ref=v0.1.0"
 
   model = juju_model.landscape[0].name
 
