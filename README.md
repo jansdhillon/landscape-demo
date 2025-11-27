@@ -15,12 +15,11 @@ cd landscape-demo
 find . -type f -name "*.sh" -exec chmod +x {} +
 ```
 
-Install the [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), [Multipass](https://github.com/canonical/multipass), [OpenTofu](https://github.com/opentofu/opentofu), and [yq](https://github.com/mikefarah/yq) snaps:
+Install the [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), [OpenTofu](https://github.com/opentofu/opentofu), and [yq](https://github.com/mikefarah/yq) snaps:
 
 ```bash
 sudo snap install juju --classic
 sudo snap install lxd
-sudo snap install multipass
 sudo snap install opentofu --classic
 sudo snap install yq
 ```
@@ -42,6 +41,12 @@ sudo snap install yq
 > ````
 >
 
+If you want to deploy Ubuntu Core devices (optional, not currently recommended due to provider issues), install [Multipass](https://github.com/canonical/multipass):
+
+```sh
+sudo snap install multipass
+```
+
 Then, create a local LXD cloud with Juju, which will allow us to easily orchestrate the lifecycle of our Landscape system:
 
 ```bash
@@ -61,9 +66,9 @@ You need an Ubuntu Pro token to use Landscape, which you can get from the [Ubunt
 
 You need to set the path to the SSH public key you want to use for the workspace as the value for for `path_to_ssh_key` in [`terraform.tfvars.example`](./terraform.tfvars.example#L8).
 
-### GPG private key
+### (**Optional**) Creating a GPG private key for repository mirroring
 
-This demo will also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, create a GPG private key to sign the packages and metadata. **The key you use must not have a passphrase**, so do not enter anything for a password when prompted:
+This demo can also setup [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) for Landscape. To do so, create a GPG private key to sign the packages and metadata. **The key you use must not have a passphrase**, so do not enter anything for a password when prompted:
 
 ````sh
 gpg --full-generate-key
@@ -125,7 +130,7 @@ If using SMTP, populate the following values in [`terraform.tfvars.example`](./t
 Finally, remove the `.example` extension from [`terraform.tfvars.example`](./terraform.tfvars.example). The file should now be named **`terraform.tfvars`**.
 
 > [!WARNING]
-> You must have followed the steps to add [your Ubuntu Pro token](#ubuntu-pro) and [the path to your private GPG key](#gpg-private-key) to `terraform.tfvars` before proceeding.
+> You must have followed the steps to add [your Ubuntu Pro token](#ubuntu-pro) to `terraform.tfvars` before proceeding.
 
 ## Running the demo using the workspace
 
@@ -155,18 +160,19 @@ A script was added to Landscape Server, along with a script profile which makes 
 After Landscape has finished deploying, in the Activities tab, you can see that it ran on the Landscape Client instance(s). After the script has finished running, you can also verify it using the following:
 
 ```bash
-lxc exec landscape-client-0 -- bash -c "sudo cat /root/landscape.txt"
-# Hello world!
+lxc exec client-0 -- bash -c "sudo cat /root/landscape.txt"
+# Welcome to Landscape!
 ```
 
 > [!NOTE]
-> The above command will need to be adjusted based on the name
-> of the workspace and the LXD VM name
-> using the following format: `{workspace_name}-{lxd_vm_name}-0`
+> Replace "client-0" with the value you set for `computer_title` for any LXD instance in the `lxd_vms` config of `terraform.tfvars`.
 
 ### Repository mirroring
 
-As mentioned above, this demo automatically sets up [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) in Landscape to sync the packages of registered Landscape Client instances with specific pockets of a given Ubuntu series. To accomplish this, a repository profile is created to "apply" the mirror to the LXD VM(s).
+> [!NOTE]
+> This section is only applicable if you created a GPG key and set the path as `path_to_gpg_private_key` before running the workspace.
+
+If you added a GPG key when deploying the workspace, [repository mirroring](https://documentation.ubuntu.com/landscape/explanation/repository-mirroring/repository-mirroring/) was automatically configured in Landscape to sync the packages of registered Landscape Client instances with specific pockets of a given Ubuntu series. To accomplish this, a repository profile was created to "apply" the mirror to the LXD VM(s).
 
 Using the **new web portal** (`/new_dashboard`), you can see the repository profile by going to **Profiles > Repository profiles**, and the repository mirror by going to **Repositories > Mirrors**.
 
@@ -228,9 +234,3 @@ While you don't need to destroy the LXD cloud in order to create a new workspace
 ```bash
 juju destroy-controller --no-prompt landscape-controller --destroy-all-models --no-wait --force
 ```
-
-## TODO
-
-- Make GPG key/repo mirroring optional
-- Finish going through Yanisa's feedback for the README
-- Add section to README about Livepatch, the specific fingerprints of LXD VMs used

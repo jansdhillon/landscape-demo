@@ -109,11 +109,6 @@ deploy_landscape_server() {
         return 1
     fi
 
-    if [[ -z "$gpg_private_key_content" ]]; then
-        print_bold_red_text "Error: gpg_private_key_content required for deploy_landscape_server"
-        return 1
-    fi
-
     if [ -n "${b64_ssl_cert:-}" ] && [ -n "${b64_ssl_key:-}" ]; then
         if ! tofu plan -var-file terraform.tfvars \
             -var "b64_ssl_cert=${b64_ssl_cert}" \

@@ -27,7 +27,7 @@ fi
 
 tofu destroy -auto-approve -var-file terraform.tfvars -var "workspace_name=${WORKSPACE_NAME}"
 tofu workspace select default
-tofu workspace delete "$WORKSPACE_NAME"
+tofu workspace delete -force "$WORKSPACE_NAME"
 
 juju switch controller
 

@@ -28,13 +28,10 @@ trap "cleanup ${WORKSPACE_NAME}" QUIT
 trap "cleanup ${WORKSPACE_NAME}" TERM
 
 PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
-if [ ! -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
-    print_bold_red_text "'${PATH_TO_GPG_PRIVATE_KEY}' not found! Please export a non-password protected GPG key and put the path as 'path_to_gpg_private_key' in terraform.tfvars."
-    exit 1
+GPG_PRIVATE_KEY_CONTENT=""
+if [ -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
+    GPG_PRIVATE_KEY_CONTENT=$(process_gpg_private_key "$PATH_TO_GPG_PRIVATE_KEY")
 fi
-
-GPG_PRIVATE_KEY_CONTENT=$(process_gpg_private_key "$PATH_TO_GPG_PRIVATE_KEY")
-
 print_bold_orange_text "Updating Landscape Server..."
 deploy_landscape_server "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
 

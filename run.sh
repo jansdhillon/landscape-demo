@@ -18,12 +18,11 @@ if [[ -z "$PATH_TO_SSH_KEY" ]]; then
 fi
 
 PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
-if [ ! -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
-    print_bold_red_text "'${PATH_TO_GPG_PRIVATE_KEY}' not found! Please export a non-password protected GPG key and put the path as 'path_to_gpg_private_key' in terraform.tfvars."
-    exit 1
-fi
+GPG_PRIVATE_KEY_CONTENT=""
 
-GPG_PRIVATE_KEY_CONTENT=$(process_gpg_private_key "$PATH_TO_GPG_PRIVATE_KEY")
+if [ -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
+    GPG_PRIVATE_KEY_CONTENT=$(process_gpg_private_key "$PATH_TO_GPG_PRIVATE_KEY")
+fi
 
 PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
 PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
@@ -63,12 +62,12 @@ print_bold_orange_text "$WORKSPACE_NAME"
 if ! tofu workspace new "$WORKSPACE_NAME"; then
     read -r -p "Use existing workspace? (y/n) " answer
 
-    if [ "${answer:-}" == "y" ]; then
-        tofu workspace select "$WORKSPACE_NAME"
-    else
+    if [ "${answer:-}" != "y" ]; then
         exit 1
     fi
 fi
+
+tofu workspace select "$WORKSPACE_NAME"
 
 trap "cleanup ${WORKSPACE_NAME}" INT
 trap "cleanup ${WORKSPACE_NAME}" QUIT
