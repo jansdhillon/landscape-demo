@@ -73,7 +73,7 @@ trap "cleanup ${WORKSPACE_NAME}" INT
 trap "cleanup ${WORKSPACE_NAME}" QUIT
 trap "cleanup ${WORKSPACE_NAME}" TERM
 
-deploy_landscape_server "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
+deploy_landscape "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
 
 HAPROXY_IP=$(./get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
 DOMAIN=$(get_tfvar 'domain')

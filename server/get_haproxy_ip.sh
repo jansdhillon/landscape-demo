@@ -10,7 +10,7 @@ start_time=$(date +%s)
 # addresses of the deployed instances (yet).
 # TODO: add support for multiple units.
 while true; do
-  IP_ADDRESS=$(juju show-unit -m "$MODEL_NAME" "haproxy/0" | yq '."haproxy/0".public-address')
+  IP_ADDRESS=$(juju show-unit -m "$MODEL_NAME" "haproxy/leader" | yq '."haproxy/0".public-address')
 
   if [[ -z "${IP_ADDRESS}" || "$IP_ADDRESS" == "null" ]]; then
     current_time=$(date +%s)
@@ -20,7 +20,7 @@ while true; do
         printf "Timeout reached after %d seconds." "$timeout" >&2
         break
     fi
-    
+
     printf "HAProxy unit public address not found.\n" >&2
     printf "Trying again...\n" >&2
     sleep 5

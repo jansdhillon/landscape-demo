@@ -33,7 +33,7 @@ if [ -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
     GPG_PRIVATE_KEY_CONTENT=$(process_gpg_private_key "$PATH_TO_GPG_PRIVATE_KEY")
 fi
 print_bold_orange_text "Updating Landscape Server..."
-deploy_landscape_server "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
+deploy_landscape "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
 
 HAPROXY_IP=$(./get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
 DOMAIN=$(get_tfvar 'domain')

@@ -55,12 +55,12 @@ check_for_and_b64_encode_ssl_item() {
 
 process_gpg_private_key() {
     local path_to_gpg_private_key="${1:-}"
-    
+
     if [[ -z "$path_to_gpg_private_key" ]]; then
         print_bold_red_text "Error: GPG private key path required" >&2
         return 1
     fi
-    
+
     printf "Using 'sudo' to read GPG private key...\n" >&2
     # Probably a less hacky way of doing this but this uses what we have (yq)
     sudo cp "$path_to_gpg_private_key" gpg_private_key
@@ -68,34 +68,21 @@ process_gpg_private_key() {
     # URL-encode it
     local gpg_private_key_content=$(yq -r 'load_str("gpg_private_key") | @uri' /dev/null)
     sudo rm gpg_private_key
-    
+
     echo "$gpg_private_key_content"
 }
 
 deploy_landscape_client() {
     local workspace_name="${1:-}"
-    local b64_ssl_cert="${2:-}"
-    local b64_ssl_key="${3:-}"
 
     if [[ -z "$workspace_name" ]]; then
         print_bold_red_text "Error: workspace_name required for deploy_landscape_client"
         return 1
     fi
 
-    # Don't overwrite vars
-    if [ -n "${b64_ssl_cert:-}" ] && [ -n "${b64_ssl_key:-}" ]; then
-        tofu apply -auto-approve \
-            -var-file terraform.tfvars \
-            -var "workspace_name=${workspace_name}" \
-            -var "b64_ssl_cert=${b64_ssl_cert}" \
-            -var "b64_ssl_key=${b64_ssl_key}" \
-            -target module.landscape_client
-    else
-        tofu apply -auto-approve \
-            -var-file terraform.tfvars \
-            -var "workspace_name=${workspace_name}" \
-            -target module.landscape_client
-    fi
+    tofu apply -auto-approve \
+        -var "workspace_name=${workspace_name}" \
+        -target module.landscape_client
 }
 
 deploy_landscape_server() {
@@ -110,27 +97,22 @@ deploy_landscape_server() {
     fi
 
     if [ -n "${b64_ssl_cert:-}" ] && [ -n "${b64_ssl_key:-}" ]; then
-        if ! tofu plan -var-file terraform.tfvars \
             -var "b64_ssl_cert=${b64_ssl_cert}" \
             -var "b64_ssl_key=${b64_ssl_key}"; then
             print_bold_red_text 'Error running plan!\n'
             cleanup "$workspace_name"
         fi
-        tofu apply -auto-approve -var-file terraform.tfvars \
-            -exclude module.landscape_client \
             -var "workspace_name=${workspace_name}" \
             -var "b64_ssl_cert=${b64_ssl_cert}" \
             -var "b64_ssl_key=${b64_ssl_key}" \
             -var "gpg_private_key_content=${gpg_private_key_content}"
     else
-        if ! tofu plan -var-file terraform.tfvars; then
+        if ! tofu plan; then
             print_bold_red_text 'Error running plan!\n'
             cleanup "$workspace_name"
         fi
 
         tofu apply -auto-approve \
-            -exclude module.landscape_client \
-            -var-file terraform.tfvars \
             -var "workspace_name=${workspace_name}" \
             -var "gpg_private_key_content=${gpg_private_key_content}"
     fi
