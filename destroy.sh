@@ -1,15 +1,13 @@
 #!/bin/bash
 source ./utils.sh
 
-check_for_tfvars
-
 WORKSPACE_NAME="${1:-}"
 
 if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
     read -r -p "Enter the name of the workspace to destroy: " WORKSPACE_NAME
 fi
 
-if ! tofu workspace select "$WORKSPACE_NAME"; then
+if ! terraform workspace select "$WORKSPACE_NAME"; then
     exit
 fi
 
@@ -25,9 +23,9 @@ else
     HAPROXY_IP=""
 fi
 
-tofu destroy -auto-approve -var-file terraform.tfvars -var "workspace_name=${WORKSPACE_NAME}"
-tofu workspace select default
-tofu workspace delete -force "$WORKSPACE_NAME"
+terraform destroy -auto-approve -var-file terraform.tfvars -var "workspace_name=${WORKSPACE_NAME}"
+terraform workspace select default
+terraform workspace delete -force "$WORKSPACE_NAME"
 
 juju switch controller
 

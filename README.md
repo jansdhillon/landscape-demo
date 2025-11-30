@@ -15,12 +15,12 @@ cd landscape-demo
 find . -type f -name "*.sh" -exec chmod +x {} +
 ```
 
-Install the [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), [OpenTofu](https://github.com/opentofu/opentofu), and [yq](https://github.com/mikefarah/yq) snaps:
+Install the [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), [Openterraform](https://github.com/openterraform/openterraform), and [yq](https://github.com/mikefarah/yq) snaps:
 
 ```bash
 sudo snap install juju --classic
 sudo snap install lxd
-sudo snap install opentofu --classic
+sudo snap install openterraform --classic
 sudo snap install yq
 ```
 

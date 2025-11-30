@@ -3,8 +3,6 @@ set -euo pipefail
 
 source ./utils.sh
 
-check_for_tfvars
-
 PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
 PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
 B64_SSL_CERT=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_CERT}")
@@ -18,7 +16,7 @@ fi
 printf "Updating workspace: "
 print_bold_orange_text "$WORKSPACE_NAME"
 
-if ! tofu workspace select "$WORKSPACE_NAME"; then
+if ! terraform workspace select "$WORKSPACE_NAME"; then
     print_bold_red_text "Failed to select workspace '$WORKSPACE_NAME'"
     exit 1
 fi

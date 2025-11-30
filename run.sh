@@ -3,8 +3,6 @@ set -euo pipefail
 
 source ./utils.sh
 
-check_for_tfvars
-
 PRO_TOKEN=$(get_tfvar 'pro_token')
 if [[ -z "$PRO_TOKEN" ]]; then
     print_bold_red_text "'pro_token' is not set! Please get your token from https://ubuntu.com/pro/dashboard and use it as the value for 'pro_token' in terraform.tfvars."
@@ -29,7 +27,7 @@ PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
 B64_SSL_CERT=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_CERT}")
 B64_SSL_KEY=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_KEY}")
 
-tofu init
+terraform init
 
 echo -e "${BOLD}${ORANGE}"
 cat <<'EOF'
@@ -59,7 +57,7 @@ fi
 printf "Workspace name: "
 print_bold_orange_text "$WORKSPACE_NAME"
 
-if ! tofu workspace new "$WORKSPACE_NAME"; then
+if ! terraform workspace new "$WORKSPACE_NAME"; then
     read -r -p "Use existing workspace? (y/n) " answer
 
     if [ "${answer:-}" != "y" ]; then
@@ -67,13 +65,13 @@ if ! tofu workspace new "$WORKSPACE_NAME"; then
     fi
 fi
 
-tofu workspace select "$WORKSPACE_NAME"
+terraform workspace select "$WORKSPACE_NAME"
 
 trap "cleanup ${WORKSPACE_NAME}" INT
 trap "cleanup ${WORKSPACE_NAME}" QUIT
 trap "cleanup ${WORKSPACE_NAME}" TERM
 
-deploy_landscape "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
+deploy_landscape_server "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
 
 HAPROXY_IP=$(./get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
 DOMAIN=$(get_tfvar 'domain')
@@ -84,7 +82,7 @@ update_etc_hosts "${HAPROXY_IP}" "${LANDSCAPE_ROOT_URL}"
 
 # Sometimes cloud-init will report an error even if it works
 set +e +o pipefail
-deploy_landscape_client "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY"
+deploy_landscape_client "$WORKSPACE_NAME"
 
 ADMIN_EMAIL=$(get_tfvar 'admin_email')
 ADMIN_PASSWORD=$(get_tfvar 'admin_password')

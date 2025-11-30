@@ -80,7 +80,7 @@ deploy_landscape_client() {
         return 1
     fi
 
-    tofu apply -auto-approve \
+    terraform apply -auto-approve \
         -var "workspace_name=${workspace_name}" \
         -target module.landscape_client
 }
@@ -95,26 +95,34 @@ deploy_landscape_server() {
         print_bold_red_text "Error: workspace_name required for deploy_landscape_server"
         return 1
     fi
-
     if [ -n "${b64_ssl_cert:-}" ] && [ -n "${b64_ssl_key:-}" ]; then
-            -var "b64_ssl_cert=${b64_ssl_cert}" \
-            -var "b64_ssl_key=${b64_ssl_key}"; then
-            print_bold_red_text 'Error running plan!\n'
-            cleanup "$workspace_name"
-        fi
+        if ! terraform plan \
             -var "workspace_name=${workspace_name}" \
             -var "b64_ssl_cert=${b64_ssl_cert}" \
             -var "b64_ssl_key=${b64_ssl_key}" \
-            -var "gpg_private_key_content=${gpg_private_key_content}"
-    else
-        if ! tofu plan; then
+            -var "gpg_private_key_content=${gpg_private_key_content}"; then
             print_bold_red_text 'Error running plan!\n'
             cleanup "$workspace_name"
         fi
 
-        tofu apply -auto-approve \
+        if ! terraform apply -auto-approve \
             -var "workspace_name=${workspace_name}" \
-            -var "gpg_private_key_content=${gpg_private_key_content}"
+            -var "b64_ssl_cert=${b64_ssl_cert}" \
+            -var "b64_ssl_key=${b64_ssl_key}" \
+            -var "gpg_private_key_content=${gpg_private_key_content}"; then
+            print_bold_red_text 'Error running apply!\n'
+            cleanup "$workspace_name"
+        fi
+    else
+        if ! terraform plan -var "workspace_name=${workspace_name}" -var "gpg_private_key_content=${gpg_private_key_content}"; then
+            print_bold_red_text 'Error running plan!\n'
+            cleanup "$workspace_name"
+        fi
+
+        if ! terraform apply -auto-approve -var "workspace_name=${workspace_name}" -var "gpg_private_key_content=${gpg_private_key_content}"; then
+            print_bold_red_text 'Error running apply!\n'
+            cleanup "$workspace_name"
+        fi
     fi
 }
 

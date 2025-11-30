@@ -13,6 +13,8 @@ module "lxd-landscape-client" {
   ppa                = var.ppa
   instance_type      = "virtual-machine"
   architecture       = local.juju_arch_to_lxd_arch[var.architecture]
+
+  count = length(tolist(var.lxd_vms)) > 0 ? 1 : 0
 }
 
 module "ubuntu-core-device" {
@@ -26,4 +28,6 @@ module "ubuntu-core-device" {
   ubuntu_core_count       = var.ubuntu_core_count
   workspace_name          = var.workspace_name
   architecture            = var.architecture
+
+  count = var.ubuntu_core_count > 0 ? 1 : 0
 }

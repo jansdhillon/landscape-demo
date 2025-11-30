@@ -7,15 +7,14 @@ module "landscape_server" {
 }
 
 locals {
-  self_signed = lookup(var.haproxy.config, "ssl_key", null) == null || lookup(var.haproxy.config, "ssl_cert", null) == null
-  root_url    = "${var.hostname}.${var.domain}"
-  using_smtp  = !local.self_signed && lookup(var.landscape_server.config, "smtp_password", null) != null && lookup(var.landscape_server.config, "smtp_host", null) != null && lookup(var.landscape_server.config, "smtp_username", null) != null
-  model       = var.workspace_name
+  root_url   = "${var.hostname}.${var.domain}"
+  using_smtp = lookup(var.landscape_server.config, "smtp_password", null) != null && lookup(var.landscape_server.config, "smtp_host", null) != null && lookup(var.landscape_server.config, "smtp_username", null) != null
+  model      = var.workspace_name
 }
 
 module "landscape_client" {
   source                  = "./client"
-  landscape_root_url      = local.self_signed ? data.external.get_haproxy_ip.result.ip_address : module.landscape_server.landscape_root_url
+  landscape_root_url      = module.landscape_server.root_url
   landscape_account_name  = "standalone"
   registration_key        = var.registration_key
   pro_token               = var.pro_token
@@ -26,4 +25,6 @@ module "landscape_client" {
   workspace_name          = var.workspace_name
   lxd_vms                 = var.lxd_vms
   architecture            = var.architecture
+
+  depends_on = [module.landscape_server]
 }

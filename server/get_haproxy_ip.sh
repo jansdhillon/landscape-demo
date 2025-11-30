@@ -10,7 +10,7 @@ start_time=$(date +%s)
 # addresses of the deployed instances (yet).
 # TODO: add support for multiple units.
 while true; do
-  IP_ADDRESS=$(juju show-unit -m "$MODEL_NAME" "haproxy/leader" | yq '."haproxy/0".public-address')
+  IP_ADDRESS=$(juju show-unit -m "$MODEL_NAME" "haproxy/0" | yq '."haproxy/0".public-address')
 
   if [[ -z "${IP_ADDRESS}" || "$IP_ADDRESS" == "null" ]]; then
     current_time=$(date +%s)

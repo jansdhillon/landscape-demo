@@ -1,4 +1,4 @@
-# Name of the OpenTofu/Terraform workspace. It will also be used as the name of the Juju model.
+# Name of the Openterraform/Terraform workspace. It will also be used as the name of the Juju model.
 workspace_name = ""
 
 # Landscape Client Configuration
