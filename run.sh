@@ -53,7 +53,7 @@ fi
 
 "$TF_CMD" workspace select "$WORKSPACE_NAME"
 
-trap "cleanup ${WORKSPACE_NAME}" INT QUIT TERM
+trap 'cleanup "${WORKSPACE_NAME}"' INT QUIT TERM
 
 "$TF_CMD" apply -auto-approve -var-file terraform.tfvars -var "workspace_name=${WORKSPACE_NAME}"
 
