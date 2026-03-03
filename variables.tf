@@ -32,28 +32,6 @@ variable "hostname" {
   default = "landscape"
 }
 
-variable "path_to_ssl_cert" {
-  type        = string
-  default     = ""
-  description = "Path to your SSL cert, if using your own domain"
-}
-
-variable "path_to_ssl_key" {
-  type        = string
-  default     = ""
-  description = "Path to your SSL key, if using your own domain"
-}
-
-variable "b64_ssl_cert" {
-  type    = string
-  default = ""
-}
-
-variable "b64_ssl_key" {
-  type    = string
-  default = ""
-}
-
 variable "admin_email" {
   description = "Email of the admin"
   type        = string
@@ -62,6 +40,7 @@ variable "admin_email" {
 variable "admin_password" {
   description = "Password of the admin"
   type        = string
+  sensitive   = true
 }
 
 variable "admin_name" {
@@ -76,30 +55,66 @@ variable "registration_key" {
   description = "Registration key for Landscape (optional)"
 }
 
+variable "smtp_host" {
+  description = "SMTP relay hostname (optional)"
+  type        = string
+  default     = null
+}
+
+variable "smtp_port" {
+  description = "SMTP relay port"
+  type        = number
+  default     = 587
+}
+
+variable "smtp_username" {
+  description = "SMTP relay username"
+  type        = string
+  default     = ""
+}
+
+variable "smtp_password" {
+  description = "SMTP relay password"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "path_to_ssl_cert" {
+  description = "Path to SSL certificate file (pre-26.04 HAProxy deployments only)"
+  type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "path_to_ssl_key" {
+  description = "Path to SSL private key file (pre-26.04 HAProxy deployments only)"
+  type        = string
+  default     = null
+  nullable    = true
+}
+
 variable "landscape_ppa" {
   description = "PPA to use for Landscape Server/Landscape Client"
   type        = string
   default     = "ppa:landscape/latest-stable"
 }
 
-variable "min_install" {
-  description = "Install recommended packages like landscape-hashids but takes longer to install"
-  type        = bool
-  default     = true
-}
-
 variable "landscape_server" {
   type = object({
     app_name = optional(string, "landscape-server")
-    channel  = optional(string, "25.10/beta")
+    channel  = optional(string, "25.10/edge")
     config = optional(map(string), {
-      autoregistration = true
-      landscape_ppa    = "ppa:landscape/self-hosted-beta"
-      min_install      = true
+      autoregistration               = "true"
+      landscape_ppa                  = "ppa:landscape/self-hosted-beta"
+      min_install                    = "true"
+      enable_hostagent_messenger     = "true"
+      enable_ubuntu_installer_attach = "true"
     })
     constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
     revision    = optional(number)
-    base        = optional(string, "ubuntu@22.04")
+    base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
 
@@ -185,73 +200,36 @@ variable "lxd_vms" {
 }
 
 
-variable "path_to_gpg_private_key" {
-  type        = string
-  description = "Path to a GPG key. Cannot have a password. Optional."
-  default     = ""
-}
-
-variable "gpg_private_key_content" {
-  type        = string
-  description = "URL-encoded GPG private key content"
-  default     = ""
-}
-
-variable "smtp_host" {
-  type    = string
-  default = "smtp.sendgrid.net"
-}
-
-variable "smtp_port" {
-  type    = number
-  default = 587
-}
-
-variable "smtp_username" {
-  type    = string
-  default = "apikey"
-}
-
-variable "smtp_password" {
-  type        = string
-  default     = ""
-  description = "Often your API key. Optional unless using SMTP/custom domain."
-}
-
 variable "architecture" {
   type        = string
   default     = "amd64"
   description = "CPU architecture"
 }
 
-variable "enable_repo_mirroring" {
-  type        = bool
-  default     = false
-  description = "Enable repository mirroring functionality. Requires GPG key."
-}
-
 variable "postgresql" {
   type = object({
     app_name = optional(string, "postgresql")
-    channel  = optional(string, "14/stable")
+    channel  = optional(string, "16/stable")
     config = optional(map(string), {
-      plugin_plpython3u_enable     = true
-      plugin_ltree_enable          = true
-      plugin_intarray_enable       = true
-      plugin_debversion_enable     = true
-      plugin_pg_trgm_enable        = true
-      experimental_max_connections = 500
+      plugin_plpython3u_enable     = "true"
+      plugin_ltree_enable          = "true"
+      plugin_intarray_enable       = "true"
+      plugin_debversion_enable     = "true"
+      plugin_pg_trgm_enable        = "true"
+      experimental_max_connections = "500"
     })
     constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
     revision    = optional(number)
-    base        = optional(string, "ubuntu@22.04")
+    base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
-
-  default = {}
+  default  = {}
+  nullable = true
 }
 
 variable "haproxy" {
+  description = "Legacy external HAProxy charm. Set to null when using Landscape 26.04 LTS beta+ (uses internal HAProxy)."
   type = object({
     app_name = optional(string, "haproxy")
     channel  = optional(string, "latest/edge")
@@ -262,12 +240,13 @@ variable "haproxy" {
       ssl_cert                    = "SELFSIGNED"
     })
     constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
     revision    = optional(number)
     base        = optional(string, "ubuntu@22.04")
     units       = optional(number, 1)
   })
-
-  default = {}
+  default  = null
+  nullable = true
 }
 
 variable "rabbitmq_server" {
@@ -275,13 +254,78 @@ variable "rabbitmq_server" {
     app_name = optional(string, "rabbitmq-server")
     channel  = optional(string, "latest/edge")
     config = optional(map(string), {
-      consumer-timeout = 259200000
+      consumer-timeout = "259200000"
     })
     constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
     revision    = optional(number)
     base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
+  default  = {}
+  nullable = true
+}
 
-  default = {}
+variable "lb_certs" {
+  description = "self-signed-certificates charm for internal HAProxy TLS (Landscape 26.04 LTS beta+). Set to null to skip."
+  type = object({
+    app_name    = optional(string, "lb-certs")
+    channel     = optional(string, "1/stable")
+    config      = optional(map(string), {})
+    constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 1)
+  })
+  default  = {}
+  nullable = true
+}
+
+variable "http_ingress" {
+  description = "HTTP ingress configurator charm (for external LBaaS, Landscape 26.04 LTS beta+). Set to null to skip."
+  type = object({
+    app_name    = optional(string, "http-ingress")
+    channel     = optional(string, "latest/edge")
+    config      = optional(map(string), {})
+    constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 1)
+  })
+  default  = null
+  nullable = true
+}
+
+variable "hostagent_messenger_ingress" {
+  description = "Hostagent messenger ingress configurator charm (for external LBaaS, Landscape 26.04 LTS beta+). Set to null to skip."
+  type = object({
+    app_name    = optional(string, "hostagent-messenger-ingress")
+    channel     = optional(string, "latest/edge")
+    config      = optional(map(string), {})
+    constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 1)
+  })
+  default  = null
+  nullable = true
+}
+
+variable "ubuntu_installer_attach_ingress" {
+  description = "Ubuntu installer attach ingress configurator charm (for external LBaaS, Landscape 26.04 LTS beta+). Set to null to skip."
+  type = object({
+    app_name    = optional(string, "ubuntu-installer-attach-ingress")
+    channel     = optional(string, "latest/edge")
+    config      = optional(map(string), {})
+    constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 1)
+  })
+  default  = null
+  nullable = true
 }

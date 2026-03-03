@@ -7,7 +7,7 @@ check_for_tfvars
 
 PRO_TOKEN=$(get_tfvar 'pro_token')
 if [[ -z "$PRO_TOKEN" ]]; then
-    print_bold_red_text "'pro_token' is not set! Please get your token from https://ubuntu.com/pro/dashboard and use it as the value for 'pro_token' in terraform.tfvars."
+    print_bold_red_text "'pro_token' is not set! Get your token from https://ubuntu.com/pro/dashboard and set it in terraform.tfvars."
     exit 1
 fi
 
@@ -17,19 +17,7 @@ if [[ -z "$PATH_TO_SSH_KEY" ]]; then
     exit 1
 fi
 
-PATH_TO_GPG_PRIVATE_KEY=$(get_tfvar 'path_to_gpg_private_key')
-GPG_PRIVATE_KEY_CONTENT=""
-
-if [ -f "$PATH_TO_GPG_PRIVATE_KEY" ]; then
-    GPG_PRIVATE_KEY_CONTENT=$(process_gpg_private_key "$PATH_TO_GPG_PRIVATE_KEY")
-fi
-
-PATH_TO_SSL_CERT=$(get_tfvar 'path_to_ssl_cert')
-PATH_TO_SSL_KEY=$(get_tfvar 'path_to_ssl_key')
-B64_SSL_CERT=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_CERT}")
-B64_SSL_KEY=$(check_for_and_b64_encode_ssl_item "${PATH_TO_SSL_KEY}")
-
-tofu init
+"$TF_CMD" init
 
 echo -e "${BOLD}${ORANGE}"
 cat <<'EOF'
@@ -56,37 +44,30 @@ if [ -z "${WORKSPACE_NAME:-}" ] || [ "${WORKSPACE_NAME:-}" == "null" ]; then
     done
 fi
 
-printf "Workspace name: "
-print_bold_orange_text "$WORKSPACE_NAME"
+print_bold_orange_text "Workspace name: $WORKSPACE_NAME"
 
-if ! tofu workspace new "$WORKSPACE_NAME"; then
-    read -r -p "Use existing workspace? (y/n) " answer
-
-    if [ "${answer:-}" != "y" ]; then
-        exit 1
-    fi
+if ! "$TF_CMD" workspace new "$WORKSPACE_NAME" 2>/dev/null; then
+    read -r -p "Use existing workspace '$WORKSPACE_NAME'? (y/n) " answer
+    [ "${answer:-}" = "y" ] || exit 1
 fi
 
-tofu workspace select "$WORKSPACE_NAME"
+"$TF_CMD" workspace select "$WORKSPACE_NAME"
 
-trap "cleanup ${WORKSPACE_NAME}" INT
-trap "cleanup ${WORKSPACE_NAME}" QUIT
-trap "cleanup ${WORKSPACE_NAME}" TERM
+trap "cleanup ${WORKSPACE_NAME}" INT QUIT TERM
 
-deploy_landscape_server "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY" "$GPG_PRIVATE_KEY_CONTENT"
-
-HAPROXY_IP=$(./get_haproxy_ip.sh "$WORKSPACE_NAME" | yq -r ".ip_address")
-DOMAIN=$(get_tfvar 'domain')
-HOSTNAME=$(get_tfvar 'hostname')
-LANDSCAPE_ROOT_URL="${HOSTNAME}.${DOMAIN}"
-
-update_etc_hosts "${HAPROXY_IP}" "${LANDSCAPE_ROOT_URL}"
-
-# Sometimes cloud-init will report an error even if it works
-set +e +o pipefail
-deploy_landscape_client "$WORKSPACE_NAME" "$B64_SSL_CERT" "$B64_SSL_KEY"
+"$TF_CMD" apply -auto-approve -var-file terraform.tfvars -var "workspace_name=${WORKSPACE_NAME}"
 
 ADMIN_EMAIL=$(get_tfvar 'admin_email')
 ADMIN_PASSWORD=$(get_tfvar 'admin_password')
+DOMAIN=$(get_tfvar 'domain')
+HOSTNAME_VAR=$(get_tfvar 'hostname')
+LANDSCAPE_ROOT_URL="${HOSTNAME_VAR}.${DOMAIN}"
 
-echo -e "${BOLD}${ORANGE}Setup complete 🚀${RESET_TEXT}\nYou can now login at ${BOLD}https://${LANDSCAPE_ROOT_URL}/new_dashboard${RESET_TEXT} using the following credentials:\nEmail: ${BOLD}${ADMIN_EMAIL}${RESET_TEXT}\nPassword: ${BOLD}${ADMIN_PASSWORD}${RESET_TEXT}\n"
+echo ""
+print_bold_orange_text "Setup complete!"
+echo -e "Add the HAProxy IP (pre-26.04) or Landscape Server IP (26.04 LTS beta+) to /etc/hosts:"
+echo -e "  <IP>  ${LANDSCAPE_ROOT_URL}"
+echo ""
+echo -e "Then login at: ${BOLD}https://${LANDSCAPE_ROOT_URL}/new_dashboard${RESET_TEXT}"
+echo -e "  Email:    ${BOLD}${ADMIN_EMAIL}${RESET_TEXT}"
+echo -e "  Password: ${BOLD}${ADMIN_PASSWORD}${RESET_TEXT}"

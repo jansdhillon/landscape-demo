@@ -1,32 +1,66 @@
-# Name of the OpenTofu/Terraform workspace. It will also be used as the name of the Juju model.
+# Name of the Terraform/OpenTofu workspace. Also used as the Juju model name.
 workspace_name = ""
 
-# Landscape Client Configuration
-
-## Ubuntu Pro token
+# Ubuntu Pro token (https://ubuntu.com/pro/dashboard)
 pro_token = ""
 
-## LXD VMs
+# Path to your local SSH public key
+path_to_ssh_key = ""
+
+hostname = "landscape"
+domain   = "example.com"
+
+# After the first apply, an SRE must add the server IP to /etc/hosts on any machine
+# that needs to reach the Landscape UI. See the README for details.
+
+admin_name = "Landscape Admin"
+
+admin_email = "admin@example.com"
+
+admin_password = "changeme"
+
+registration_key = ""
+
+landscape_ppa = "ppa:landscape/latest-stable"
+
+# Landscape Server charm
+# haproxy = null  => Landscape 26.04 LTS beta+ (internal HAProxy, recommended)
+# haproxy = {}   => pre-26.04 (deploys external HAProxy charm)
+landscape_server = {
+  channel = "25.10/edge"
+  base    = "ubuntu@24.04"
+  units   = 1
+  config = {
+    autoregistration               = "true"
+    landscape_ppa                  = "ppa:landscape/self-hosted-beta"
+    min_install                    = "true"
+    enable_hostagent_messenger     = "true"
+    enable_ubuntu_installer_attach = "true"
+  }
+}
+
+# PostgreSQL configuration
+postgresql = {
+  channel = "16/stable"
+  base    = "ubuntu@24.04"
+}
+
+# HAProxy — set to null to use Landscape Server's internal HAProxy (26.04 LTS beta+)
+haproxy = null
+
+# RabbitMQ Server configuration
+rabbitmq_server = {
+  channel = "latest/edge"
+  base    = "ubuntu@24.04"
+}
+
+## LXD client VMs
 lxd_vms = [
   {
     image_alias = "noble"
     client_config = {
       computer_title = "client-0"
     }
-    additional_cloud_init = <<EOT
-#cloud-config
-apt:
-  sources:
-    fish-ppa:
-      source: "ppa:fish-shell/release-4"
-packages:
-  - fish
-  - landscape-client
-users:
-  - name: ubuntu
-    shell: /usr/bin/fish
-    sudo: ALL=(ALL) NOPASSWD:ALL
-EOT
   },
   {
     image_alias = "jammy"
@@ -36,73 +70,13 @@ EOT
   }
 ]
 
-## Ubuntu Core
-ubuntu_core_series = "core24"
-
-ubuntu_core_count = 0
-
+## Ubuntu Core (optional)
+ubuntu_core_series      = "core24"
+ubuntu_core_count       = 0
 ubuntu_core_device_name = "core-client"
 
-# Path to your local SSH public key to use for the Juju model
-path_to_ssh_key = ""
-
-# Path to your SSL cert, if using your own domain
-path_to_ssl_cert = ""
-
-# Path to your SSL key, if using your own domain
-path_to_ssl_key = ""
-
-# Path to a GPG key. Cannot have a password. Optional unless setting up repo mirroring.
-# path_to_gpg_private_key = "./private.asc"
-
-hostname = "landscape"
-
-domain = "example.com"
-
-admin_name = "Landscape Admin"
-
-admin_email = "admin@example.com"
-
-admin_password = "pwd"
-
-registration_key = "key"
-
-landscape_ppa = "ppa:landscape/latest-stable"
-
-min_install = true
-
-# Landscape Server configuration
-landscape_server = {
-  app_name = "landscape-server"
-  channel  = "latest-stable/edge"
-  config = {
-    autoregistration = true
-  }
-  constraints = "arch=amd64"
-  revision    = null
-  base        = "ubuntu@22.04"
-  units       = 1
-}
-
-
-# PostgreSQL configuration
-postgresql = {
-  channel  = "14/stable"
-}
-
-# HAProxy configuration
-haproxy = {
-  channel  = "latest/edge"
-  config = {
-    default_timeouts            = "queue 60000, connect 5000, client 120000, server 120000"
-    global_default_bind_options = "no-tlsv10"
-    services                    = ""
-    ssl_cert                    = "SELFSIGNED"
-  }
-}
-
-# RabbitMQ Server configuration
-rabbitmq_server = {
-  channel  = "latest/edge"
-  base        = "ubuntu@24.04"
-}
+# SMTP relay for Landscape system email (optional)
+# smtp_host     = "smtp.sendgrid.net"
+# smtp_port     = 587
+# smtp_username = "apikey"
+# smtp_password = ""
