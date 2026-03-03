@@ -1,6 +1,3 @@
-# Landscape Terraform provider
-# Dev: build and install from ../terraform-provider-landscape with `make install`
-# The ~/.terraformrc dev_overrides block points jansdhillon/landscape -> ~/go/bin
 provider "landscape" {
   base_url = "https://${local.root_url}"
   email    = var.admin_email

@@ -1,6 +1,6 @@
 # Landscape Demo
 
-Spin up a preconfigured, local Landscape demo using Terraform or OpenTofu and Juju.
+Spin up a preconfigured, local Landscape demo using Terraform and Juju.
 
 ## Prerequisites
 
@@ -12,16 +12,7 @@ sudo snap install lxd
 sudo snap install yq
 ```
 
-Install **either** OpenTofu (recommended) or Terraform:
-
-OpenTofu:
-
-```bash
-sudo snap install opentofu --classic
-alias terraform=tofu
-```
-
-Terraform:
+Install Terraform:
 
 ```bash
 sudo snap install terraform --classic
@@ -72,18 +63,7 @@ Minimum required values:
 - **Landscape 26.04 LTS beta+** ships with an internal HAProxy — set `haproxy = null` (the default).
 - **Pre-26.04** deployments require the external HAProxy charm — set `haproxy = {}` or provide a full config block.
 
-### 3. (Optional) GPG key for repository mirroring
-
-Generate a key without a passphrase and export it:
-
-```sh
-gpg --full-generate-key
-gpg --armor --export-secret-keys "<KEY-ID>" > private.asc
-```
-
-Set `path_to_gpg_private_key = "./private.asc"` in `terraform.tfvars`.
-
-### 4. (Optional) SMTP relay
+### 3. (Optional) SMTP relay
 
 Uncomment and fill in the `smtp_*` variables in `terraform.tfvars` to configure Postfix on the Landscape Server unit for outgoing email.
 
@@ -132,10 +112,6 @@ echo "<IP>  <hostname>.<domain>" | sudo tee -a /etc/hosts
 ```bash
 terraform apply
 ```
-
-This creates all remaining resources including the welcome script and script profile
-(`landscape_script_v2` and `landscape_script_profile`) via the Landscape Terraform provider,
-auto-registration preferences, and any configured repo mirroring.
 
 Terraform outputs the Landscape URL and the IP retrieval commands after each apply.
 
