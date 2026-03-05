@@ -12,18 +12,6 @@ sudo snap install lxd
 sudo snap install yq
 ```
 
-Install Terraform:
-
-```bash
-sudo snap install terraform --classic
-```
-
-Install Terragrunt:
-
-```bash
-curl -sL https://docs.terragrunt.com/install | bash
-```
-
 > [!IMPORTANT]
 > Ensure you're in the `lxd` group, then initialize LXD:
 >
@@ -32,13 +20,25 @@ curl -sL https://docs.terragrunt.com/install | bash
 > lxd init --minimal
 > ```
 
+Install [Terraform](https://developer.hashicorp.com/terraform):
+
+```bash
+sudo snap install terraform --classic
+```
+
+Install [Terragrunt](https://terragrunt.com/):
+
+```bash
+curl -sL https://docs.terragrunt.com/install | bash
+```
+
 If you want Ubuntu Core devices (optional), install [Multipass](https://github.com/canonical/multipass):
 
 ```sh
 sudo snap install multipass
 ```
 
-Bootstrap a Juju controller on LXD (only needed once per machine):
+Bootstrap a Juju controller on LXD (only needed once per host machine):
 
 ```bash
 juju bootstrap lxd landscape-controller
@@ -66,8 +66,8 @@ Minimum required values:
 
 ### 2. HAProxy: internal vs. external
 
-- **Landscape 26.04 LTS beta+** ships with an internal HAProxy — set `haproxy = null` (the default).
-- **Pre-26.04** deployments require the external HAProxy charm — set `haproxy = {}`.
+- Starting with the 26.04 LTS beta charm, Landscape ships with an internal HAProxy service, set `haproxy = null` (the default).
+- Pre-26.04 deployments require the external HAProxy charm. Configure the `haproxy` object as needed, at minimum setting `haproxy = {}`.
 
 ### 3. (Optional) SMTP relay
 
