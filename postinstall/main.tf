@@ -1,14 +1,7 @@
-terraform {
-  required_providers {
-    landscape = {
-      source  = "registry.terraform.io/jansdhillon/landscape"
-      version = "~> 0.1.9"
-    }
-  }
-}
 locals {
   using_smtp = var.smtp_host != null && var.smtp_host != ""
 }
+
 resource "terraform_data" "setup_postfix" {
   count = local.using_smtp ? 1 : 0
 

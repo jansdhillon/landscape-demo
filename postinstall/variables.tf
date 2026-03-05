@@ -1,3 +1,9 @@
+variable "tls_ca_cert" {
+  description = "PEM-encoded CA certificate for Landscape Server TLS."
+  type        = string
+  default     = ""
+}
+
 variable "server_ip" {
   description = "Landscape Server IP address."
   type        = string
