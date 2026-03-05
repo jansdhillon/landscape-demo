@@ -2,8 +2,15 @@ locals {
   using_smtp = var.smtp_host != null && var.smtp_host != ""
 }
 
+resource "terraform_data" "wait_for_landscape" {
+  provisioner "local-exec" {
+    command = "juju wait-for application landscape-server -m ${var.workspace_name} --timeout 3600s --query='name==\"landscape-server\" && workload-status==\"active\"'"
+  }
+}
+
 resource "terraform_data" "setup_postfix" {
-  count = local.using_smtp ? 1 : 0
+  count      = local.using_smtp ? 1 : 0
+  depends_on = [terraform_data.wait_for_landscape]
 
   triggers_replace = {
     smtp_host = var.smtp_host
@@ -34,6 +41,7 @@ resource "terraform_data" "setup_postfix" {
 }
 
 resource "landscape_script_v2" "welcome" {
+  depends_on = [terraform_data.wait_for_landscape]
   title      = "Welcome to Landscape"
   code       = <<-EOT
     #!/bin/bash
@@ -56,9 +64,10 @@ resource "landscape_script_profile" "welcome" {
 }
 
 resource "landscape_gpg_key" "mirror" {
-  count    = var.gpg_key != null ? 1 : 0
-  name     = "mirror-key"
-  material = var.gpg_key
+  count      = var.gpg_key != null ? 1 : 0
+  depends_on = [terraform_data.wait_for_landscape]
+  name       = "mirror-key"
+  material   = var.gpg_key
 }
 
 resource "landscape_distribution" "ubuntu" {

@@ -10,7 +10,7 @@ locals {
   hostname         = "landscape"
   domain           = "example.com"
   registration_key = ""
-  landscape_ppa    = "ppa:landscape/latest-stable"
+  client_ppa = "ppa:landscape/self-hosted-beta"
 
   landscape_server = {
     channel = "25.10/edge"

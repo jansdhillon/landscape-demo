@@ -24,7 +24,7 @@ resource "terraform_data" "juju_wait_for_landscape" {
   depends_on = [module.landscape_server, local.model]
   provisioner "local-exec" {
     command = <<-EOT
-      juju wait-for model $MODEL_NAME --timeout 3600s --query='forEach(units, unit => (unit.workload-status == "active" || unit.workload-status == "blocked"))'
+      juju wait-for model $MODEL_NAME --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
     EOT
     environment = {
       MODEL_NAME = local.model.name
@@ -33,7 +33,7 @@ resource "terraform_data" "juju_wait_for_landscape" {
 }
 
 module "landscape_server" {
-  source = "git::https://github.com/canonical/landscape-server-operator//terraform/product/modules/landscape-scalable?ref=rev232"
+  source = "git::https://github.com/canonical/landscape-server-operator//terraform/product/modules/landscape-scalable?ref=rev240"
 
   model_uuid = local.model.uuid
   depends_on = [local.model]

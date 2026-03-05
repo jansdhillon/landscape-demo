@@ -8,7 +8,7 @@ bundle*.yaml
 terraform.tfvars
 terraform.tfvars.json
 root.hcl
-terragrunt.hcl
+/terragrunt.hcl
 *.pem
 *.asc
 landscape
