@@ -96,19 +96,19 @@ Initialize all modules:
 terragrunt run --all init
 ```
 
-Deploy in one shot (Terragrunt resolves dependency order automatically):
+Deploy:
 
 ```bash
 terragrunt run --all apply
 ```
 
-Or step by step:
-
-```bash
-cd deploy && terragrunt apply
-
-cd .. && terragrunt run --all apply --terragrunt-exclude-dir deploy
-```
+> [!TIP]
+> Use the `--non-interactive` flag for `terragrunt` commands to automatically approve operations,
+> for example:
+>
+> ```sh
+> terragrunt run --all --non-interactive apply
+> ```
 
 ## Updating
 
