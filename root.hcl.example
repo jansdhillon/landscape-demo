@@ -1,0 +1,64 @@
+locals {
+  workspace_name  = ""
+  path_to_ssh_key = "~/.ssh/id_ed25519.pub"
+  architecture    = "amd64"
+
+  admin_email    = "admin@example.com"
+  admin_password = "changeme"
+  admin_name     = "Landscape Admin"
+
+  hostname         = "landscape"
+  domain           = "example.com"
+  registration_key = ""
+  landscape_ppa    = "ppa:landscape/latest-stable"
+
+  landscape_server = {
+    channel = "25.10/edge"
+    base    = "ubuntu@24.04"
+    units   = 1
+    config = {
+      autoregistration               = "true"
+      landscape_ppa                  = "ppa:landscape/self-hosted-beta"
+      min_install                    = "true"
+      enable_hostagent_messenger     = "true"
+      enable_ubuntu_installer_attach = "true"
+    }
+  }
+
+  postgresql = {
+    channel = "16/stable"
+    base    = "ubuntu@24.04"
+  }
+
+  haproxy = null
+
+  rabbitmq_server = {
+    channel = "latest/edge"
+    base    = "ubuntu@24.04"
+  }
+
+  smtp_host     = null
+  smtp_port     = 587
+  smtp_username = ""
+  smtp_password = ""
+
+  pro_token = ""
+
+  lxd_vms = [
+    {
+      image_alias   = "noble"
+      client_config = { computer_title = "client-0" }
+    },
+    {
+      image_alias   = "jammy"
+      client_config = { computer_title = "client-1" }
+    },
+  ]
+
+  ubuntu_core_series      = "core24"
+  ubuntu_core_count       = 0
+  ubuntu_core_device_name = "core-client"
+
+  gpg_key_file  = null
+  mirror_series = "noble"
+}

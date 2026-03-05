@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Based on: https://documentation.ubuntu.com/landscape/how-to-guides/landscape-installation-and-set-up/configure-postfix/
+
 set -euo pipefail
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y postfix
 

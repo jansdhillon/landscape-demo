@@ -4,14 +4,30 @@ variables.txt
 *.tfstate.*
 cloud-init.yaml
 terraform.log
-# For testing exporting bundle
 bundle*.yaml
 terraform.tfvars
 terraform.tfvars.json
+root.hcl
+terragrunt.hcl
 *.pem
 *.asc
 landscape
 .vscode/*
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+.terragrunt-cache/
 # Local .terraform directories
 **/.terraform/*
 
