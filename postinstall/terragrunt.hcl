@@ -5,6 +5,11 @@ include "root" {
 
 terraform {
   source = "."
+
+  before_hook "wait_for_landscape" {
+    commands = ["apply"]
+    execute  = ["bash", "-c", "IP=${dependency.deploy.outputs.server_ip}; [ \"$IP\" = \"0.0.0.0\" ] && exit 0; echo 'Waiting for Landscape login...'; until curl -skf --max-time 5 -X POST https://$IP/api/login -H 'Content-Type: application/json' -d '{\"email\":\"${local.r.admin_email}\",\"password\":\"${local.r.admin_password}\"}' | grep -q 'token'; do sleep 10; done; echo 'Landscape login ready.'"]
+  }
 }
 
 locals {

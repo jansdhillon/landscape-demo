@@ -118,6 +118,12 @@ Edit `root.hcl`, then:
 terragrunt run --all apply
 ```
 
+To re-run only a specific unit without re-deploying (ex. after a `postinstall` failure):
+
+```bash
+terragrunt --non-interactive --working-dir postinstall -- apply
+```
+
 ## Accessing the Juju model
 
 ```sh
