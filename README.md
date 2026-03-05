@@ -20,10 +20,10 @@ sudo snap install yq
 > lxd init --minimal
 > ```
 
-Install [Terraform](https://developer.hashicorp.com/terraform):
+Install [OpenTofu](https://opentofu.org/):
 
 ```bash
-sudo snap install terraform --classic
+sudo snap install --classic opentofu
 ```
 
 Install [Terragrunt](https://terragrunt.com/):
