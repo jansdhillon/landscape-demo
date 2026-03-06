@@ -24,7 +24,7 @@ resource "terraform_data" "juju_wait_for_landscape" {
   depends_on = [module.landscape_server, local.model]
   provisioner "local-exec" {
     command = <<-EOT
-      juju wait-for model $MODEL_NAME --timeout 3600s --query='forEach(units, unit => unit.workload-status == "active")'
+      juju wait-for unit landscape-server/0 -m $MODEL_NAME --timeout 3600s --query='workload-status=="active" && workload-message=="Unit is ready"'
     EOT
     environment = {
       MODEL_NAME = local.model.name

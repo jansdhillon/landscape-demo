@@ -13,24 +13,25 @@ locals {
   client_ppa = "ppa:landscape/self-hosted-beta"
 
   landscape_server = {
-    channel = "25.10/edge"
+    channel = "24.04/beta"
     base    = "ubuntu@24.04"
     units   = 1
-    config = {
+      config = {
       autoregistration               = "true"
-      landscape_ppa                  = "ppa:landscape/self-hosted-beta"
+      landscape_ppa                  = "ppa:landscape/self-hosted-24.04"
       min_install                    = "true"
-      enable_hostagent_messenger     = "true"
-      enable_ubuntu_installer_attach = "true"
     }
   }
 
   postgresql = {
-    channel = "16/stable"
-    base    = "ubuntu@24.04"
+    channel = "14/stable"
+    base    = "ubuntu@22.04"
   }
 
-  haproxy = null
+  haproxy = {
+    channel = "latest/edge"
+    base    = "ubuntu@24.04"
+  }
 
   rabbitmq_server = {
     channel = "latest/edge"

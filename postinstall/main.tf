@@ -33,28 +33,6 @@ resource "terraform_data" "setup_postfix" {
   lifecycle { ignore_changes = all }
 }
 
-resource "landscape_script_v2" "welcome" {
-  title      = "Welcome to Landscape"
-  code       = <<-EOT
-    #!/bin/bash
-    echo "Welcome to Landscape!" | tee landscape.txt
-  EOT
-  username   = "root"
-  time_limit = 300
-}
-
-resource "landscape_script_profile" "welcome" {
-  title         = "Welcome to Landscape"
-  script_id     = landscape_script_v2.welcome.id
-  username      = "root"
-  time_limit    = 300
-  all_computers = true
-  trigger = {
-    type       = "event"
-    event_type = "post_enrollment"
-  }
-}
-
 resource "landscape_gpg_key" "mirror" {
   count    = var.gpg_key != null ? 1 : 0
   name     = "mirror-key"
@@ -83,7 +61,7 @@ resource "landscape_repository_profile" "mirror" {
   count        = var.gpg_key != null ? 1 : 0
   title        = "apply-ubuntu-${var.mirror_series}-mirror"
   distribution = landscape_distribution.ubuntu[0].name
-  series       = landscape_series.ubuntu[0].name
+  series       = var.mirror_series
   pockets      = ["release", "updates", "security", "proposed", "backports"]
   tags         = [var.mirror_series]
   depends_on   = [landscape_series.ubuntu]

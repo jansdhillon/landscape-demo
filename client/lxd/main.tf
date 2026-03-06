@@ -1,7 +1,7 @@
 resource "lxd_cached_image" "image" {
   for_each = {
     for instance in var.lxd_vms :
-    coalesce(instance.image_alias, instance.fingerprint) => instance...
+    coalesce(instance.image_alias, instance.fingerprint) => instance
   }
 
   source_image  = each.value.image_alias != null ? each.value.image_alias : each.value.fingerprint
@@ -70,7 +70,7 @@ resource "lxd_instance" "vm" {
       "002-ssl-handshake" = {
         command = [
           "/bin/bash", "-c",
-          "echo | openssl s_client -connect ${var.landscape_root_url}:443 | openssl x509 > /etc/landscape/server.pem"
+          "mkdir -p /etc/landscape && echo | openssl s_client -connect ${var.landscape_root_url}:443 | openssl x509 > /etc/landscape/server.pem"
         ]
         trigger       = "once"
         record_output = true

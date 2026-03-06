@@ -27,7 +27,7 @@ dependency "deploy" {
 
 inputs = {
   server_ip      = dependency.deploy.outputs.server_ip
-  tls_ca_cert    = run_cmd("--terragrunt-quiet", "bash", "-c", "openssl s_client -connect ${dependency.deploy.outputs.server_ip}:443 -showcerts </dev/null 2>/dev/null | openssl x509 -outform PEM || echo ''")
+  tls_ca_cert    = run_cmd("--terragrunt-quiet", "bash", "-c", "IP=${dependency.deploy.outputs.server_ip}; [ \"$IP\" = \"0.0.0.0\" ] && echo '' && exit 0; for i in $(seq 1 72); do cert=$(openssl s_client -connect \"$IP\":443 </dev/null 2>/dev/null | openssl x509 -outform PEM 2>/dev/null); [ -n \"$cert\" ] && echo \"$cert\" && exit 0; sleep 5; done; echo ''")
   admin_email    = local.r.admin_email
   admin_password = local.r.admin_password
   workspace_name = local.r.workspace_name
