@@ -1,150 +1,81 @@
-# Landscape Demo
+# Landscape Demo Deployment
 
-Spin up a preconfigured, local Landscape demo using Terragrunt and Juju.
+A CC008-compliant Terraform deployment of Landscape Server with demo client machines,
+deployed entirely via Juju charms — no Terragrunt, no LXD provider, no multipass.
 
 ## Prerequisites
 
-Install [Juju](https://github.com/juju/juju), [LXD](https://github.com/canonical/lxd), and [yq](https://github.com/mikefarah/yq):
+- Juju controller bootstrapped on LXD:
+  ```sh
+  juju bootstrap lxd landscape-controller
+  ```
+- [OpenTofu](https://opentofu.org/) ≥ 1.0:
+  ```sh
+  sudo snap install --classic opentofu
+  ```
+- [yq](https://github.com/mikefarah/yq) for status queries:
+  ```sh
+  sudo snap install yq
+  ```
 
-```bash
-sudo snap install juju --classic
-sudo snap install lxd
-sudo snap install yq
+## Quick start
+
+1. Copy and edit `terraform.tfvars`:
+
+   ```sh
+   cp terraform.tfvars.example terraform.tfvars
+   # edit terraform.tfvars with your values
+   ```
+
+2. Initialize and apply:
+
+   ```sh
+   tofu init
+   tofu apply
+   ```
+
+3. After apply, find the server IP and add a `/etc/hosts` entry:
+
+   ```sh
+   juju status -m landscape-demo
+   # Add to /etc/hosts: <server-ip>  landscape.local
+   ```
+
+## Key variables
+
+| Variable                   | Description                                           | Default           |
+|----------------------------|-------------------------------------------------------|-------------------|
+| `model_name`               | Juju model name                                       | `landscape-demo`  |
+| `admin_email`              | Landscape admin email (required)                      |                   |
+| `admin_password`           | Landscape admin password (required)                   |                   |
+| `landscape_fqdn`           | FQDN used in server config and client URL             | `landscape.local` |
+| `registration_key`         | Auto-registration key                                 | `""`              |
+| `landscape_client.units`   | Number of demo client machines                        | `3`               |
+| `landscape_server.channel` | Landscape Server charm channel                        | `26.04/edge`      |
+| `landscape_server.revision`| Landscape Server charm revision                       | `355`             |
+
+## Demo data
+
+Demo data (accounts, machines, policies) is seeded automatically via the
+`add-demo-data` charm action on landscape-server rev355, `26.04/edge`.
+
+## Architecture
+
+```
+landscape-demo/
+├── main.tf                    # Model, landscape-server, landscape-client, demo data
+├── variables.tf               # All deployment inputs
+├── outputs.tf                 # landscape_url, model_name
+├── locals.tf                  # model local
+├── terraform.tf               # Provider requirements
+├── providers.tf               # Juju provider
+├── backend.tf                 # Local state backend
+└── modules/
+    └── landscape-client/      # CC008 charm module for landscape-client charm
 ```
 
-> [!IMPORTANT]
-> Ensure you're in the `lxd` group, then initialize LXD:
->
-> ```sh
-> sudo usermod -aG lxd "$USER" && newgrp lxd
-> lxd init --minimal
-> ```
+## Modules
 
-Install [OpenTofu](https://opentofu.org/):
-
-```bash
-sudo snap install --classic opentofu
-```
-
-Install [Terragrunt](https://terragrunt.com/):
-
-```bash
-curl -sL https://docs.terragrunt.com/install | bash
-```
-
-If you want Ubuntu Core devices (optional), install [Multipass](https://github.com/canonical/multipass):
-
-```sh
-sudo snap install multipass
-```
-
-Bootstrap a Juju controller on LXD (only needed once per host machine):
-
-```bash
-juju bootstrap lxd landscape-controller
-```
-
-## Configuration
-
-### 1. Copy and edit `root.hcl`
-
-```sh
-cp root.hcl.example root.hcl
-```
-
-Edit `root.hcl` with your values. All configuration lives in the `locals` block at the top of this file.
-
-Minimum required values:
-
-| Local             | Description                                                      |
-| ----------------- | ---------------------------------------------------------------- |
-| `workspace_name`  | Name of the Juju model                                           |
-| `path_to_ssh_key` | Path to your SSH public key                                      |
-| `pro_token`       | Ubuntu Pro token ([dashboard](https://ubuntu.com/pro/dashboard)) |
-| `admin_email`     | Landscape admin email                                            |
-| `admin_password`  | Landscape admin password                                         |
-
-### 2. HAProxy: internal vs. external
-
-- Starting with the 26.04 LTS beta charm, Landscape ships with an internal HAProxy service, set `haproxy = null` (the default).
-- Pre-26.04 deployments require the external HAProxy charm. Configure the `haproxy` object as needed, at minimum setting `haproxy = {}`.
-
-### 3. (Optional) SMTP relay
-
-Set `smtp_host`, `smtp_username`, and `smtp_password` in `root.hcl` to configure Postfix on the Landscape Server unit for outgoing email.
-
-### 4. (Optional) Repository mirroring
-
-Export your GPG signing key and set `gpg_key_file` to its path:
-
-```bash
-gpg --export-secret-keys --armor <KEY_ID> > mirror-key.asc
-```
-
-Then in `root.hcl`:
-
-```hcl
-gpg_key_file  = "mirror-key.asc"
-mirror_series = "noble"
-```
-
-## Deploying
-
-Initialize all modules:
-
-```bash
-terragrunt run --all init
-```
-
-Deploy:
-
-```bash
-terragrunt run --all apply
-```
-
-> [!TIP]
-> Use the `--non-interactive` flag for `terragrunt` commands to automatically approve operations,
-> for example:
->
-> ```sh
-> terragrunt run --all --non-interactive apply
-> ```
-
-## Updating
-
-Edit `root.hcl`, then:
-
-```bash
-terragrunt run --all apply
-```
-
-To re-run only a specific unit without re-deploying (ex. after a `postinstall` failure):
-
-```bash
-terragrunt --non-interactive --working-dir postinstall -- apply
-```
-
-## Accessing the Juju model
-
-```sh
-juju status -m <workspace_name> --relations
-juju ssh -m <workspace_name> landscape-server/leader
-```
-
-> [!CAUTION]
-> Use `juju ssh` for read-only access only. Modifying the model with other Juju CLI commands can break Terraform state.
-
-## Tearing down
-
-```bash
-terragrunt run --all destroy
-juju destroy-model --no-prompt <workspace_name> --no-wait --force --destroy-storage
-```
-
-## Destroying the LXD controller
-
-Only needed if you want to remove the controller entirely:
-
-```bash
-juju destroy-controller --no-prompt landscape-controller --destroy-all-models --no-wait --force
-```
+- `modules/landscape-client/` — CC008 charm module for the `landscape-client` charm.
+  Deploys the landscape-client Juju charm on machines and handles registration
+  retries automatically via Juju's event system.

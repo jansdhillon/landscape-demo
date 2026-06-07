@@ -1,65 +1,35 @@
-variables.txt
-**/.terraform/*
+# Terraform/OpenTofu provider cache
+**/.terraform/
+
+# Provider lock files in module subdirectories (root lock file is tracked)
+modules/**/.terraform.lock.hcl
+
+# State — contains sensitive values (admin password, charm configs)
+# CC008 recommends versioning state, but we omit it here for security
 *.tfstate
 *.tfstate.*
-cloud-init.yaml
-terraform.log
-bundle*.yaml
-terraform.tfvars
-terraform.tfvars.json
-root.hcl
-/terragrunt.hcl
+crash.log
+crash.*.log
+
+# Variable files — contain user-specific secrets
+*.tfvars
+*.tfvars.json
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Terragrunt (no longer used)
+.terragrunt-cache/
+
+# Sensitive files
 *.pem
 *.asc
-landscape
-.vscode/*
-**/.terraform/*
-*.tfstate
-*.tfstate.*
-crash.log
-crash.*.log
-*.tfvars
-*.tfvars.json
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-.terraformrc
-terraform.rc
-.terraform.lock.hcl
-.terragrunt-cache/
-# Local .terraform directories
-**/.terraform/*
+root.hcl
 
-# .tfstate files
-*.tfstate
-*.tfstate.*
-
-# Crash log files
-crash.log
-crash.*.log
-
-# Exclude all .tfvars files, which are likely to contain sensitive data, such as
-# password, private keys, and other secrets. These should not be part of version
-# control as they are data points which are potentially sensitive and subject
-# to change depending on the environment.
-*.tfvars
-*.tfvars.json
-
-# Ignore override files as they are usually used to override resources locally and so
-# are not checked in
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
-
-# Include override files you do wish to add to version control using negated pattern
-# !example_override.tf
-
-# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
-# example: *tfplan*
-
-# Ignore CLI configuration files
-.terraformrc
-terraform.rc
-.terraform.lock.hcl
+# Editor
+.vscode/

@@ -182,7 +182,6 @@ variable "landscape_client" {
     channel     = optional(string, "latest/stable")
     config      = optional(map(string), {})
     constraints = optional(string, "arch=amd64")
-    resources   = optional(map(string), {})
     revision    = optional(number)
     base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 3)

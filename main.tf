@@ -52,7 +52,6 @@ resource "juju_machine" "demo_client" {
   model_uuid  = local.model.uuid
   base        = var.landscape_client.base
   constraints = var.landscape_client.constraints
-  name        = "demo-client-${count.index}"
 
   depends_on = [local.model]
 }

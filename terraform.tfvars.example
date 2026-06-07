@@ -1,0 +1,4 @@
+model_name     = "landscape-demo"
+admin_email    = "admin@example.com"
+admin_password = "changeme"
+landscape_fqdn = "landscape.local"
