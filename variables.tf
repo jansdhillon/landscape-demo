@@ -111,67 +111,17 @@ variable "rabbitmq_server" {
   nullable = true
 }
 
-variable "lb_certs" {
-  description = "Configuration overrides for the self-signed-certificates charm. Set to null to skip."
+variable "tls_certificates" {
+  description = "Configuration for the certificates charm deployed. Currently only integrated with HAProxy automatically. Set to null to skip deployment."
   type = object({
-    app_name    = optional(string, "lb-certs")
+    app_name    = optional(string, "tls-certificates")
     channel     = optional(string, "1/stable")
-    config      = optional(map(string), {})
+    charm_name  = optional(string, "self-signed-certificates")
     constraints = optional(string, "arch=amd64")
-    resources   = optional(map(string), {})
     revision    = optional(number)
     base        = optional(string, "ubuntu@24.04")
-    units       = optional(number, 1)
   })
   default  = {}
-  nullable = true
-}
-
-variable "http_ingress" {
-  description = "Configuration overrides for the http ingress-configurator charm. Set to null to skip."
-  type = object({
-    app_name    = optional(string, "http-ingress")
-    channel     = optional(string, "latest/edge")
-    config      = optional(map(string), {})
-    constraints = optional(string, "arch=amd64")
-    resources   = optional(map(string), {})
-    revision    = optional(number)
-    base        = optional(string, "ubuntu@24.04")
-    units       = optional(number, 1)
-  })
-  default  = null
-  nullable = true
-}
-
-variable "hostagent_messenger_ingress" {
-  description = "Configuration overrides for the hostagent-messenger ingress-configurator charm. Set to null to skip."
-  type = object({
-    app_name    = optional(string, "hostagent-messenger-ingress")
-    channel     = optional(string, "latest/edge")
-    config      = optional(map(string), {})
-    constraints = optional(string, "arch=amd64")
-    resources   = optional(map(string), {})
-    revision    = optional(number)
-    base        = optional(string, "ubuntu@24.04")
-    units       = optional(number, 1)
-  })
-  default  = null
-  nullable = true
-}
-
-variable "ubuntu_installer_attach_ingress" {
-  description = "Configuration overrides for the ubuntu-installer-attach ingress-configurator charm. Set to null to skip."
-  type = object({
-    app_name    = optional(string, "ubuntu-installer-attach-ingress")
-    channel     = optional(string, "latest/edge")
-    config      = optional(map(string), {})
-    constraints = optional(string, "arch=amd64")
-    resources   = optional(map(string), {})
-    revision    = optional(number)
-    base        = optional(string, "ubuntu@24.04")
-    units       = optional(number, 1)
-  })
-  default  = null
   nullable = true
 }
 
@@ -187,30 +137,4 @@ variable "landscape_client" {
     units       = optional(number, 3)
   })
   default = {}
-}
-
-variable "smtp_host" {
-  description = "SMTP relay hostname. Set to null to skip Postfix configuration."
-  type        = string
-  default     = null
-  nullable    = true
-}
-
-variable "smtp_port" {
-  description = "SMTP relay port."
-  type        = number
-  default     = 587
-}
-
-variable "smtp_username" {
-  description = "SMTP relay username."
-  type        = string
-  default     = ""
-}
-
-variable "smtp_password" {
-  description = "SMTP relay password."
-  type        = string
-  sensitive   = true
-  default     = ""
 }
