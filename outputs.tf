@@ -1,0 +1,11 @@
+# © 2026 Canonical Ltd.
+
+output "landscape_url" {
+  description = "URL of the Landscape web interface."
+  value       = "https://${var.landscape_fqdn}"
+}
+
+output "model_name" {
+  description = "Juju model name."
+  value       = local.model.name
+}
