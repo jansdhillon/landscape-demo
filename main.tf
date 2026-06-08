@@ -1,5 +1,10 @@
 # © 2026 Canonical Ltd.
 
+locals {
+  model = var.create_model ? juju_model.landscape[0] : data.juju_model.landscape[0]
+}
+
+
 data "juju_model" "landscape" {
   count = var.create_model ? 0 : 1
   name  = var.model_name
@@ -43,18 +48,27 @@ module "landscape_server" {
 
 }
 
+resource "juju_offer" "landscape_server_juju_info" {
+  model_uuid       = local.model.uuid
+  application_name = module.landscape_server.applications.landscape_server.app_name
+  endpoints        = ["juju-info"]
+}
+
+data "juju_offer" "landscape_server_juju_info" {
+  url = juju_offer.landscape_server_juju_info.url
+}
+
 # Demo client machines
 resource "juju_application" "ubuntu" {
   name        = "ubuntu"
-  count       = var.landscape_client.units
-  model_uuid  = local.model.uuid
+  model_uuid  = juju_model.clients.uuid
+  units       = var.landscape_client.units
   constraints = var.landscape_client.constraints
 
   charm {
     name = "ubuntu"
     base = var.landscape_client.base
   }
-
 }
 
 # landscape-client charm deployed on the demo machines.
@@ -62,23 +76,23 @@ resource "juju_application" "ubuntu" {
 module "landscape_client" {
   source = "./modules/landscape-client"
 
-  model_uuid = local.model.uuid
+  model_uuid = juju_model.clients.uuid
   app_name   = var.landscape_client.app_name
   channel    = var.landscape_client.channel
   revision   = var.landscape_client.revision
 
   config = merge(var.landscape_client.config, {
-    landscape_url    = "https://${var.landscape_fqdn}/message-system"
-    ping_url         = "http://${var.landscape_fqdn}/ping"
-    account_name     = "standalone"
-    registration_key = var.registration_key
+    url              = "https://${var.landscape_fqdn}/message-system"
+    ping-url         = "http://${var.landscape_fqdn}/ping"
+    account-name     = "standalone"
+    registration-key = var.registration_key
   })
 
 }
 
 
 resource "juju_integration" "landscape_client_ubuntu" {
-  model_uuid = local.model.uuid
+  model_uuid = juju_model.clients.uuid
 
   application {
     name     = module.landscape_client.app_name
@@ -86,22 +100,67 @@ resource "juju_integration" "landscape_client_ubuntu" {
   }
 
   application {
-    name     = juju_application.ubuntu[0].name
+    name     = juju_application.ubuntu.name
     endpoint = "juju-info"
   }
 
 }
 
-resource "juju_integration" "lansdcape_server_landscape_client" {
-  model_uuid = local.model.uuid
+resource "juju_integration" "landscape_server_landscape_client" {
+  model_uuid = juju_model.clients.uuid
+
+  application {
+    offer_url = data.juju_offer.landscape_server_juju_info.url
+  }
+
   application {
     name     = module.landscape_client.app_name
-    endpoint = "juju-info"
+    endpoint = "container"
+  }
+}
+
+resource "terraform_data" "remove_landscape_server_saas" {
+  triggers_replace = {
+    model    = juju_model.clients.name
+    saas_app = module.landscape_server.applications.landscape_server.app_name
   }
 
-  application {
-    name     = module.landscape_server.applications.landscape_server.app_name
-    endpoint = "juju-info"
+  provisioner "local-exec" {
+    when    = destroy
+    command = "juju remove-saas -m ${self.triggers_replace.model} ${self.triggers_replace.saas_app} --force 2>/dev/null || true"
   }
+}
 
+resource "terraform_data" "wait_for_landscape" {
+  provisioner "local-exec" {
+    command = <<EOF
+      juju wait-for application ${module.landscape_server.applications.landscape_server.app_name} \
+      --model ${local.model.name} \
+      --timeout 3600s \
+      --query='forEach(units, unit => unit.workload-status=="active")'
+  EOF
+  }
+}
+
+data "external" "landscape_server_ip" {
+  depends_on = [terraform_data.wait_for_landscape]
+
+  program = ["bash", "-c", <<-EOT
+    IP=$(juju status --model "${local.model.name}" --format=json \
+      | jq -r '.applications["${var.landscape_server.app_name}"].units | to_entries[0].value["public-address"]')
+    printf '{"ip":"%s"}' "$IP"
+  EOT
+  ]
+}
+
+resource "juju_model" "clients" {
+  name = var.client_model_name
+
+  config = {
+    "cloudinit-userdata" = yamlencode({
+      bootcmd = [
+        ["sh", "-c", "grep -qF '${var.landscape_fqdn}' /etc/hosts || echo '${data.external.landscape_server_ip.result.ip} ${var.landscape_fqdn}' >> /etc/hosts"]
+      ]
+    })
+  }
 }

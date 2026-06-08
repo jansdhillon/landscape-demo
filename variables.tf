@@ -6,6 +6,12 @@ variable "model_name" {
   default     = "landscape-demo"
 }
 
+variable "client_model_name" {
+  description = "Name of the separate Juju model for landscape-client machines. cloudinit-userdata is set on this model at apply time so machines boot with the correct /etc/hosts entry."
+  type        = string
+  default     = "landscape-demo-clients"
+}
+
 variable "create_model" {
   description = "Set to false to use an existing model instead of creating one."
   type        = bool
@@ -137,4 +143,10 @@ variable "landscape_client" {
     units       = optional(number, 3)
   })
   default = {}
+}
+
+variable "wait_for_landscape" {
+  description = "Wait for Landscape Server to finish deploying before completing the apply."
+  default     = false
+  type        = bool
 }
