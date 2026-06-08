@@ -54,10 +54,6 @@ resource "juju_offer" "landscape_server_juju_info" {
   endpoints        = ["juju-info"]
 }
 
-data "juju_offer" "landscape_server_juju_info" {
-  url = juju_offer.landscape_server_juju_info.url
-}
-
 # Demo client machines
 resource "juju_application" "ubuntu" {
   name        = "ubuntu"
@@ -110,7 +106,7 @@ resource "juju_integration" "landscape_server_landscape_client" {
   model_uuid = juju_model.clients.uuid
 
   application {
-    offer_url = data.juju_offer.landscape_server_juju_info.url
+    offer_url = juju_offer.landscape_server_juju_info.url
   }
 
   application {
