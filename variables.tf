@@ -81,7 +81,7 @@ variable "postgresql" {
     base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
-  default  = {}
+  default = {}
 }
 
 variable "haproxy" {
@@ -96,7 +96,7 @@ variable "haproxy" {
     base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
-  default  = {}
+  default = {}
 }
 
 variable "rabbitmq_server" {
@@ -111,7 +111,7 @@ variable "rabbitmq_server" {
     base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
-  default  = {}
+  default = {}
 }
 
 variable "tls_certificates" {
@@ -124,7 +124,7 @@ variable "tls_certificates" {
     revision    = optional(number)
     base        = optional(string, "ubuntu@24.04")
   })
-  default  = {}
+  default = {}
 }
 
 variable "landscape_client" {

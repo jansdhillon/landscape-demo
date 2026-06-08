@@ -117,7 +117,7 @@ resource "juju_integration" "ubuntu_ubuntu_pro" {
   }
 
   application {
-    name = juju_application.ubuntu_pro.name
+    name     = juju_application.ubuntu_pro.name
     endpoint = "juju"
   }
 
