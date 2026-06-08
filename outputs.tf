@@ -2,7 +2,7 @@
 
 output "landscape_url" {
   description = "URL of the Landscape web interface."
-  value       = "https://${var.landscape_fqdn}"
+  value       = "https://${var.landscape_root_url}"
 }
 
 output "model_name" {

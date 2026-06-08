@@ -1,4 +1,5 @@
 model_name     = "landscape-demo"
 admin_email    = "admin@example.com"
 admin_password = "changeme"
-landscape_fqdn = "landscape.local"
+landscape_root_url = "landscape.local"
+ubuntu_pro_token =

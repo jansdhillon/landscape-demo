@@ -48,7 +48,7 @@ variable "registration_key" {
   default     = ""
 }
 
-variable "landscape_fqdn" {
+variable "landscape_root_url" {
   description = "Fully qualified domain name for the Landscape server (e.g. landscape.example.com). Used in both server root_url and client url config so both charms can be deployed in parallel without sequencing."
   type        = string
   default     = "landscape.local"
@@ -82,7 +82,6 @@ variable "postgresql" {
     units       = optional(number, 1)
   })
   default  = {}
-  nullable = true
 }
 
 variable "haproxy" {
@@ -98,7 +97,6 @@ variable "haproxy" {
     units       = optional(number, 1)
   })
   default  = {}
-  nullable = true
 }
 
 variable "rabbitmq_server" {
@@ -114,7 +112,6 @@ variable "rabbitmq_server" {
     units       = optional(number, 1)
   })
   default  = {}
-  nullable = true
 }
 
 variable "tls_certificates" {
@@ -128,7 +125,6 @@ variable "tls_certificates" {
     base        = optional(string, "ubuntu@24.04")
   })
   default  = {}
-  nullable = true
 }
 
 variable "landscape_client" {
@@ -147,6 +143,12 @@ variable "landscape_client" {
 
 variable "wait_for_landscape" {
   description = "Wait for Landscape Server to finish deploying before completing the apply."
-  default     = false
+  default     = true
   type        = bool
+}
+
+variable "ubuntu_pro_token" {
+  description = "Ubuntu Pro token. Passed to Landscape Client to register with Landscape Server."
+  type        = string
+  sensitive   = true
 }
