@@ -2,7 +2,7 @@
 
 Terraform deployment of Landscape Server with demo client machines, built to the CC008 spec. Everything runs via Juju charms — no Terragrunt, no LXD provider, no external scripts.
 
-Two Juju models are created: one for the Landscape server stack, one for the demo client machines. The client model's `cloudinit-userdata` is set at apply time (after the server is up) so client machines boot with the correct `/etc/hosts` entry and can reach the server by FQDN.
+Two Juju models are created: one for the Landscape server stack, one for the demo client machines. The client model's `cloudinit-userdata` is set at apply time (after the server is up and its IP is known) so client machines boot with the correct `/etc/hosts` entry. The landscape-client charm is then deployed as a subordinate on the ubuntu machines and registers with the server via charm config.
 
 ## Prerequisites
 
@@ -39,7 +39,7 @@ The apply will wait for Landscape Server to become active before provisioning cl
 ## Layout
 
 ```
-main.tf                    # models, server stack, client machines, CMR wiring
+main.tf                    # models, server stack, client machines, integrations
 variables.tf               # all inputs
 outputs.tf                 # landscape_url, model_name, client_model_name
 modules/landscape-client/  # landscape-client charm module
