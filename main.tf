@@ -17,7 +17,7 @@ resource "juju_model" "landscape" {
 }
 
 module "landscape_server" {
-  source = "git::https://github.com/canonical/landscape-server-operator//terraform/product/modules/landscape-scalable?ref=rev240"
+  source = "git::https://github.com/canonical/landscape-server-operator//terraform/product/modules/landscape-scalable?ref=rev355"
 
   model_uuid = local.model.uuid
 
@@ -154,7 +154,7 @@ resource "juju_model" "clients" {
 
   config = {
     "cloudinit-userdata" = yamlencode({
-      runcmd = [
+      preruncmd = [
         "grep -qF '${var.landscape_fqdn}' /etc/hosts || echo '${data.external.landscape_server_ip.result.ip} ${var.landscape_fqdn}' >> /etc/hosts"
       ]
     })
