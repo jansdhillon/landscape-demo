@@ -154,8 +154,8 @@ resource "juju_model" "clients" {
 
   config = {
     "cloudinit-userdata" = yamlencode({
-      bootcmd = [
-        ["sh", "-c", "grep -qF '${var.landscape_fqdn}' /etc/hosts || echo '${data.external.landscape_server_ip.result.ip} ${var.landscape_fqdn}' >> /etc/hosts"]
+      runcmd = [
+        "grep -qF '${var.landscape_fqdn}' /etc/hosts || echo '${data.external.landscape_server_ip.result.ip} ${var.landscape_fqdn}' >> /etc/hosts"
       ]
     })
   }
