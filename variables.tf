@@ -86,18 +86,18 @@ variable "postgresql" {
 }
 
 variable "haproxy" {
-  description = "Configuration overrides for the legacy HAProxy charm. Set to null for 26.04+ deployments with internal HAProxy."
+  description = "Configuration overrides for the HAProxy charm."
   type = object({
     app_name    = optional(string, "haproxy")
-    channel     = optional(string, "latest/edge")
+    channel     = optional(string, "2.8/edge")
     config      = optional(map(string), {})
     constraints = optional(string, "arch=amd64")
     resources   = optional(map(string), {})
     revision    = optional(number)
-    base        = optional(string, "ubuntu@22.04")
+    base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
-  default  = null
+  default  = {}
   nullable = true
 }
 

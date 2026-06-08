@@ -136,6 +136,8 @@ resource "terraform_data" "wait_for_landscape" {
       --query='forEach(units, unit => unit.workload-status=="active")'
   EOF
   }
+
+  count = var.wait_for_landscape ? 1 : 0
 }
 
 data "external" "landscape_server_ip" {
