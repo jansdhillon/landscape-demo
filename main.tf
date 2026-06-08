@@ -48,12 +48,6 @@ module "landscape_server" {
 
 }
 
-resource "juju_offer" "landscape_server_juju_info" {
-  model_uuid       = local.model.uuid
-  application_name = module.landscape_server.applications.landscape_server.app_name
-  endpoints        = ["juju-info"]
-}
-
 # Demo client machines
 resource "juju_application" "ubuntu" {
   name        = "ubuntu"
@@ -92,7 +86,7 @@ resource "juju_integration" "landscape_client_ubuntu" {
 
   application {
     name     = module.landscape_client.app_name
-    endpoint = "juju-info"
+    endpoint = "container"
   }
 
   application {
@@ -100,31 +94,6 @@ resource "juju_integration" "landscape_client_ubuntu" {
     endpoint = "juju-info"
   }
 
-}
-
-resource "juju_integration" "landscape_server_landscape_client" {
-  model_uuid = juju_model.clients.uuid
-
-  application {
-    offer_url = juju_offer.landscape_server_juju_info.url
-  }
-
-  application {
-    name     = module.landscape_client.app_name
-    endpoint = "container"
-  }
-}
-
-resource "terraform_data" "remove_landscape_server_saas" {
-  triggers_replace = {
-    model    = juju_model.clients.name
-    saas_app = module.landscape_server.applications.landscape_server.app_name
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = "juju remove-saas -m ${self.triggers_replace.model} ${self.triggers_replace.saas_app} --force 2>/dev/null || true"
-  }
 }
 
 resource "terraform_data" "wait_for_landscape" {
