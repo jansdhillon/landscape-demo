@@ -19,3 +19,14 @@ cp terraform.tfvars.example terraform.tfvars
 terraform init
 terraform apply
 ```
+
+After the apply succeeds, get the IP addres of the HAProxy unit in the main model:
+
+```sh
+# replace `landscape-demo` with the name of the model Landscape Server
+# is running in, and `landscape.local` with the configured hostname, if changed.
+IP=$(juju status --model landscape-demo --format=json | jq -r '.applications["haproxy"].units | to_entries[0].value["public-address"]')
+echo "$IP landscape.local" | sudo tee -a /etc/hosts
+```
+
+Then, you can access the Landscape UI in your web browser at https://landscape.local (or whatever you set the root URL to).
