@@ -12,7 +12,5 @@ resource "juju_application" "landscape_client" {
   }
 
   config      = var.config
-  constraints = var.constraints
-  units       = var.machines == null ? var.units : null
   machines    = var.machines
 }

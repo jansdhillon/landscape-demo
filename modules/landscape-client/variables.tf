@@ -18,12 +18,6 @@ variable "config" {
   default     = {}
 }
 
-variable "constraints" {
-  description = "Juju constraints to apply for this application."
-  type        = string
-  default     = "arch=amd64"
-}
-
 variable "model_uuid" {
   description = "UUID of the Juju model to deploy into. Not nullable."
   type        = string
@@ -42,11 +36,6 @@ variable "base" {
   default     = "ubuntu@24.04"
 }
 
-variable "units" {
-  description = "Number of units to deploy. Ignored when 'machines' is set."
-  type        = number
-  default     = 1
-}
 
 variable "machines" {
   description = "Set of Juju machine IDs to place units on. When set, 'units' is ignored."
