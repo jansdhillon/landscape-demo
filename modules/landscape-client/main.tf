@@ -11,6 +11,6 @@ resource "juju_application" "landscape_client" {
     base     = var.base
   }
 
-  config      = var.config
-  machines    = var.machines
+  config   = var.config
+  machines = var.machines
 }
