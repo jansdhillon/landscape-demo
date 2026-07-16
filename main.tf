@@ -116,11 +116,12 @@ resource "juju_integration" "ubuntu_ubuntu_pro" {
 
   application {
     name = module.landscape_client.app_name
+    endpoint = "juju-info"
   }
 
   application {
     name     = juju_application.ubuntu_pro.name
-    endpoint = "juju"
+    endpoint = "juju-info"
   }
 
 }
