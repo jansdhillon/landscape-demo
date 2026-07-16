@@ -17,7 +17,7 @@ resource "juju_model" "landscape" {
 }
 
 module "landscape_server" {
-  source = "git::https://github.com/canonical/landscape-server-operator//terraform/product/modules/landscape-scalable?ref=rev355"
+  source = "git::https://github.com/canonical/landscape-server-operator//terraform/product/modules/landscape-scalable?ref=rev446"
 
   model_uuid = local.model.uuid
 
