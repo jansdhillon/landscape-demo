@@ -70,6 +70,10 @@ resource "juju_application" "ubuntu_pro" {
     base = var.landscape_client.base
   }
 
+  config = {
+    token = var.ubuntu_pro_token
+  }
+
 }
 
 # landscape-client charm deployed on the demo machines.
@@ -88,8 +92,6 @@ module "landscape_client" {
     account-name     = "standalone"
     registration-key = var.registration_key
   })
-
-  ubuntu_pro_token = var.ubuntu_pro_token
 
 }
 

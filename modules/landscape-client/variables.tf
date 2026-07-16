@@ -43,9 +43,3 @@ variable "machines" {
   default     = null
   nullable    = true
 }
-
-variable "ubuntu_pro_token" {
-  description = "Ubuntu Pro token. Required to register with Landscape Server."
-  type        = string
-  sensitive   = true
-}
