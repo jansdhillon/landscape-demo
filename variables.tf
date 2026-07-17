@@ -1,287 +1,154 @@
-variable "workspace_name" {
-  description = "Name of the OpenTofu/Terraform workspace. It will also be used as the name of the Juju model."
+# © 2026 Canonical Ltd.
+
+variable "model_name" {
+  description = "Name of the Juju model to create."
   type        = string
+  default     = "landscape-demo"
 }
 
+variable "client_model_name" {
+  description = "Name of the separate Juju model for landscape-client machines. cloudinit-userdata is set on this model at apply time so machines boot with the correct /etc/hosts entry."
+  type        = string
+  default     = "landscape-demo-clients"
+}
 
 variable "create_model" {
-  description = "Create a new Juju model with the given workspace_name, otherwise use an existing model with that name"
+  description = "Set to false to use an existing model instead of creating one."
   type        = bool
   default     = true
 }
 
-
-variable "path_to_ssh_key" {
-  description = "Path to your local SSH public key to use for the Juju model"
+variable "architecture" {
+  description = "CPU architecture constraint applied to the model and all charms."
   type        = string
-}
-
-variable "pro_token" {
-  description = "Ubuntu Pro token"
-  type        = string
-  sensitive   = true
-}
-
-variable "domain" {
-  type    = string
-  default = "example.com"
-}
-
-variable "hostname" {
-  type    = string
-  default = "landscape"
-}
-
-variable "path_to_ssl_cert" {
-  type        = string
-  default     = ""
-  description = "Path to your SSL cert, if using your own domain"
-}
-
-variable "path_to_ssl_key" {
-  type        = string
-  default     = ""
-  description = "Path to your SSL key, if using your own domain"
-}
-
-variable "b64_ssl_cert" {
-  type    = string
-  default = ""
-}
-
-variable "b64_ssl_key" {
-  type    = string
-  default = ""
+  default     = "amd64"
 }
 
 variable "admin_email" {
-  description = "Email of the admin"
+  description = "Landscape administrator email address."
   type        = string
 }
 
 variable "admin_password" {
-  description = "Password of the admin"
+  description = "Landscape administrator password."
   type        = string
+  sensitive   = true
 }
 
 variable "admin_name" {
-  description = "First and last name of the admin"
+  description = "Landscape administrator display name."
   type        = string
   default     = "Landscape Admin"
 }
 
 variable "registration_key" {
+  description = "Landscape auto-registration key."
   type        = string
+  sensitive   = true
   default     = ""
-  description = "Registration key for Landscape (optional)"
 }
 
-variable "landscape_ppa" {
-  description = "PPA to use for Landscape Server/Landscape Client"
+variable "landscape_root_url" {
+  description = "Fully qualified domain name for the Landscape server (e.g. landscape.example.com). Used in both server root_url and client url config so both charms can be deployed in parallel without sequencing."
   type        = string
-  default     = "ppa:landscape/latest-stable"
-}
-
-variable "min_install" {
-  description = "Install recommended packages like landscape-hashids but takes longer to install"
-  type        = bool
-  default     = true
+  default     = "landscape.local"
 }
 
 variable "landscape_server" {
+  description = "Configuration overrides for the landscape-server charm."
   type = object({
-    app_name = optional(string, "landscape-server")
-    channel  = optional(string, "25.10/beta")
-    config = optional(map(string), {
-      autoregistration = true
-      landscape_ppa    = "ppa:landscape/self-hosted-beta"
-      min_install      = true
-    })
+    app_name    = optional(string, "landscape-server")
+    channel     = optional(string, "26.04/edge")
+    config      = optional(map(string), {})
     constraints = optional(string, "arch=amd64")
-    revision    = optional(number)
-    base        = optional(string, "ubuntu@22.04")
+    resources   = optional(map(string), {})
+    revision    = optional(number, 355)
+    base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
-
   default = {}
-}
-
-variable "ubuntu_core_series" {
-  type        = string
-  description = "Series of Ubuntu Core"
-  default     = "core24"
-}
-
-variable "ubuntu_core_device_name" {
-  type    = string
-  default = "core-client"
-}
-
-variable "ubuntu_core_count" {
-  description = "Number of Ubuntu Core devices"
-  type        = number
-  default     = 0
-}
-
-variable "lxd_vms" {
-  type = set(object({
-    client_config = object({
-      account_name             = optional(string)
-      access_group             = optional(string)
-      bus                      = optional(string)
-      computer_title           = string
-      registration_key         = optional(string)
-      data_path                = optional(string)
-      log_dir                  = optional(string)
-      log_level                = optional(string)
-      pid_file                 = optional(string)
-      ping_url                 = optional(string)
-      include_manager_plugins  = optional(string)
-      include_monitor_plugins  = optional(string)
-      script_users             = optional(string)
-      ssl_public_key           = optional(string)
-      tags                     = optional(string)
-      url                      = optional(string)
-      package_hash_id_url      = optional(string)
-      exchange_interval        = optional(number)
-      urgent_exchange_interval = optional(number)
-      ping_interval            = optional(number)
-    })
-    fingerprint           = optional(string)
-    image_alias           = optional(string)
-    fqdn                  = optional(string)
-    http_proxy            = optional(string)
-    https_proxy           = optional(string)
-    additional_cloud_init = optional(string)
-    devices = optional(list(object({
-      name       = string
-      type       = string
-      properties = map(string)
-    })), [])
-    execs = optional(list(object({
-      name          = string
-      command       = list(string)
-      enabled       = optional(bool, true)
-      trigger       = optional(string, "on_change")
-      environment   = optional(map(string))
-      working_dir   = optional(string)
-      record_output = optional(bool, false)
-      fail_on_error = optional(bool, false)
-      uid           = optional(number, 0)
-      gid           = optional(number, 0)
-    })), [])
-    files = optional(list(object({
-      content            = optional(string)
-      source_path        = optional(string)
-      target_path        = string
-      uid                = optional(number)
-      gid                = optional(number)
-      mode               = optional(string, "0755")
-      create_directories = optional(bool, false)
-    })), [])
-  }))
-
-  default = []
-}
-
-
-variable "path_to_gpg_private_key" {
-  type        = string
-  description = "Path to a GPG key. Cannot have a password. Optional."
-  default     = ""
-}
-
-variable "gpg_private_key_content" {
-  type        = string
-  description = "URL-encoded GPG private key content"
-  default     = ""
-}
-
-variable "smtp_host" {
-  type    = string
-  default = "smtp.sendgrid.net"
-}
-
-variable "smtp_port" {
-  type    = number
-  default = 587
-}
-
-variable "smtp_username" {
-  type    = string
-  default = "apikey"
-}
-
-variable "smtp_password" {
-  type        = string
-  default     = ""
-  description = "Often your API key. Optional unless using SMTP/custom domain."
-}
-
-variable "architecture" {
-  type        = string
-  default     = "amd64"
-  description = "CPU architecture"
-}
-
-variable "enable_repo_mirroring" {
-  type        = bool
-  default     = false
-  description = "Enable repository mirroring functionality. Requires GPG key."
 }
 
 variable "postgresql" {
+  description = "Configuration overrides for the postgresql charm. Set to null to skip."
   type = object({
-    app_name = optional(string, "postgresql")
-    channel  = optional(string, "14/stable")
-    config = optional(map(string), {
-      plugin_plpython3u_enable     = true
-      plugin_ltree_enable          = true
-      plugin_intarray_enable       = true
-      plugin_debversion_enable     = true
-      plugin_pg_trgm_enable        = true
-      experimental_max_connections = 500
-    })
+    app_name    = optional(string, "postgresql")
+    channel     = optional(string, "16/stable")
+    config      = optional(map(string), {})
     constraints = optional(string, "arch=amd64")
-    revision    = optional(number)
-    base        = optional(string, "ubuntu@22.04")
-    units       = optional(number, 1)
-  })
-
-  default = {}
-}
-
-variable "haproxy" {
-  type = object({
-    app_name = optional(string, "haproxy")
-    channel  = optional(string, "latest/edge")
-    config = optional(map(string), {
-      default_timeouts            = "queue 60000, connect 5000, client 120000, server 120000"
-      global_default_bind_options = "no-tlsv10"
-      services                    = ""
-      ssl_cert                    = "SELFSIGNED"
-    })
-    constraints = optional(string, "arch=amd64")
-    revision    = optional(number)
-    base        = optional(string, "ubuntu@22.04")
-    units       = optional(number, 1)
-  })
-
-  default = {}
-}
-
-variable "rabbitmq_server" {
-  type = object({
-    app_name = optional(string, "rabbitmq-server")
-    channel  = optional(string, "latest/edge")
-    config = optional(map(string), {
-      consumer-timeout = 259200000
-    })
-    constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
     revision    = optional(number)
     base        = optional(string, "ubuntu@24.04")
     units       = optional(number, 1)
   })
-
   default = {}
+}
+
+variable "haproxy" {
+  description = "Configuration overrides for the HAProxy charm."
+  type = object({
+    app_name    = optional(string, "haproxy")
+    channel     = optional(string, "2.8/edge")
+    config      = optional(map(string), {})
+    constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 1)
+  })
+  default = {}
+}
+
+variable "rabbitmq_server" {
+  description = "Configuration overrides for the rabbitmq-server charm. Set to null to skip."
+  type = object({
+    app_name    = optional(string, "rabbitmq-server")
+    channel     = optional(string, "latest/edge")
+    config      = optional(map(string), {})
+    constraints = optional(string, "arch=amd64")
+    resources   = optional(map(string), {})
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 1)
+  })
+  default = {}
+}
+
+variable "tls_certificates" {
+  description = "Configuration for the certificates charm deployed. Currently only integrated with HAProxy automatically. Set to null to skip deployment."
+  type = object({
+    app_name    = optional(string, "tls-certificates")
+    channel     = optional(string, "1/stable")
+    charm_name  = optional(string, "self-signed-certificates")
+    constraints = optional(string, "arch=amd64")
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+  })
+  default = {}
+}
+
+variable "landscape_client" {
+  description = "Configuration for demo landscape-client machines. Units controls how many demo client machines are created."
+  type = object({
+    app_name    = optional(string, "landscape-client")
+    channel     = optional(string, "latest/stable")
+    config      = optional(map(string), {})
+    constraints = optional(string, "arch=amd64")
+    revision    = optional(number)
+    base        = optional(string, "ubuntu@24.04")
+    units       = optional(number, 3)
+  })
+  default = {}
+}
+
+variable "wait_for_landscape" {
+  description = "Wait for Landscape Server to finish deploying before completing the apply."
+  default     = true
+  type        = bool
+}
+
+variable "ubuntu_pro_token" {
+  description = "Ubuntu Pro token. Passed to Landscape Client to register with Landscape Server."
+  type        = string
+  sensitive   = true
 }

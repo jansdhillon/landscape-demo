@@ -1,36 +1,25 @@
+# © 2026 Canonical Ltd.
+
+locals {
+  model = var.create_model ? juju_model.landscape[0] : data.juju_model.landscape[0]
+}
+
+
+data "juju_model" "landscape" {
+  count = var.create_model ? 0 : 1
+  name  = var.model_name
+}
+
 resource "juju_model" "landscape" {
   count       = var.create_model ? 1 : 0
-  name        = local.model
+  name        = var.model_name
   constraints = "arch=${var.architecture}"
-
-}
-
-resource "juju_ssh_key" "model_ssh_key" {
-  model      = var.workspace_name
-  payload    = trimspace(file(var.path_to_ssh_key))
-  depends_on = [juju_model.landscape]
-}
-
-# Wait for Landscape Server model to stabilize
-resource "terraform_data" "juju_wait_for_landscape" {
-  depends_on = [module.landscape_server, juju_model.landscape]
-  provisioner "local-exec" {
-    command = <<-EOT
-      juju wait-for model $MODEL --timeout 3600s --query='forEach(units, unit => (unit.workload-status == "active" || unit.workload-status == "blocked"))'
-    EOT
-    environment = {
-      MODEL = var.create_model ? juju_model.landscape[0].name : local.model
-
-    }
-  }
 }
 
 module "landscape_server" {
-  source = "git::https://github.com/canonical/terraform-juju-landscape.git//modules/landscape-scalable?ref=v0.1.0"
+  source = "git::https://github.com/canonical/landscape-server-operator//terraform/product/modules/landscape-scalable?ref=rev446"
 
-  model = juju_model.landscape[0].name
-
-  depends_on = [juju_model.landscape]
+  model_uuid = local.model.uuid
 
   landscape_server = {
     app_name    = var.landscape_server.app_name
@@ -39,106 +28,136 @@ module "landscape_server" {
     units       = var.landscape_server.units
     constraints = var.landscape_server.constraints
     revision    = var.landscape_server.revision
+    resources   = var.landscape_server.resources
     config = merge(var.landscape_server.config, {
       admin_email      = var.admin_email
       admin_password   = var.admin_password
       admin_name       = var.admin_name
       registration_key = var.registration_key
-      landscape_ppa    = var.landscape_ppa
-      min_install      = var.min_install
+      root_url         = "https://${var.landscape_root_url}/"
+      autoregistration = "true"
+      min_install      = "true"
+      demo_data        = "true"
     })
   }
 
-  postgresql = var.postgresql
+  postgresql       = var.postgresql
+  haproxy          = var.haproxy
+  rabbitmq_server  = var.rabbitmq_server
+  tls_certificates = var.tls_certificates
 
-  haproxy = var.haproxy
-
-  rabbitmq_server = var.rabbitmq_server
 }
 
-# Setup Postfix (if configured)
-resource "terraform_data" "setup_postfix" {
-  depends_on = [terraform_data.juju_wait_for_landscape]
+# Demo client machines
+resource "juju_application" "ubuntu" {
+  name        = "ubuntu"
+  model_uuid  = juju_model.clients.uuid
+  units       = var.landscape_client.units
+  constraints = var.landscape_client.constraints
 
-  triggers_replace = {
-    smtp_host     = var.smtp_host
-    smtp_port     = var.smtp_port
-    smtp_username = var.smtp_username
-    smtp_password = var.smtp_password
-    fqdn          = local.root_url
-    domain        = var.domain
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      SMTP_HOST='${self.triggers_replace.smtp_host}'
-      SMTP_PORT='${self.triggers_replace.smtp_port}'
-      SMTP_USERNAME='${self.triggers_replace.smtp_username}'
-      SMTP_PASSWORD='${self.triggers_replace.smtp_password}'
-      FQDN='${self.triggers_replace.fqdn}'
-      DOMAIN='${self.triggers_replace.domain}'
-      MODEL='${var.workspace_name}'
-
-      juju scp -m "$MODEL" "${path.module}/setup_postfix.sh" landscape-server/leader:/tmp/setup_postfix.sh
-      juju exec -m "$MODEL" --application landscape-server -- \
-        "sudo chmod +x /tmp/setup_postfix.sh && /tmp/setup_postfix.sh \"$SMTP_HOST\" \"$SMTP_PORT\" \"$SMTP_USERNAME\" \"$SMTP_PASSWORD\" \"$FQDN\" \"$DOMAIN\""
-    EOT
-  }
-
-  lifecycle {
-    ignore_changes = all
-  }
-
-  count = local.using_smtp ? 1 : 0
-}
-
-data "external" "get_haproxy_ip" {
-  program = ["bash", "${path.module}/get_haproxy_ip.sh", var.workspace_name]
-
-  depends_on = [module.landscape_server]
-}
-
-# Make REST API requests to Landscape for setup
-resource "terraform_data" "setup_landscape" {
-  depends_on = [terraform_data.juju_wait_for_landscape]
-
-  triggers_replace = {
-    haproxy_ip              = data.external.get_haproxy_ip.result.ip_address
-    admin_email             = var.admin_email
-    admin_password          = var.admin_password
-    gpg_private_key_content = var.gpg_private_key_content
-    series                  = tolist(var.lxd_vms)[0].image_alias
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-    HAPROXY_IP='${self.triggers_replace.haproxy_ip}'
-    ADMIN_EMAIL='${self.triggers_replace.admin_email}'
-    ADMIN_PASSWORD='${self.triggers_replace.admin_password}'
-    GPG_PRIVATE_KEY_CONTENT='${self.triggers_replace.gpg_private_key_content}'
-    SERIES='${self.triggers_replace.series}'
-    bash ${path.module}/setup_landscape.sh "$HAPROXY_IP" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" "$GPG_PRIVATE_KEY_CONTENT" "$SERIES"
-    EOT
-  }
-
-  lifecycle {
-    # only run once
-    ignore_changes = all
+  charm {
+    name = "ubuntu"
+    base = var.landscape_client.base
   }
 }
 
 
+resource "juju_application" "ubuntu_pro" {
+  name       = "ubuntu-pro"
+  model_uuid = juju_model.clients.uuid
+  charm {
+    name = "ubuntu-advantage"
+    base = var.landscape_client.base
+  }
+
+  config = {
+    token = var.ubuntu_pro_token
+  }
+
+}
+
+# landscape-client charm deployed on the demo machines.
+# The charm handles registration.
 module "landscape_client" {
-  source                  = "./client"
-  landscape_root_url      = local.self_signed ? data.external.get_haproxy_ip.result.ip_address : module.landscape_server.landscape_root_url
-  landscape_account_name  = "standalone"
-  registration_key        = var.registration_key
-  pro_token               = var.pro_token
-  ppa                     = var.landscape_ppa
-  ubuntu_core_series      = var.ubuntu_core_series
-  ubuntu_core_count       = var.ubuntu_core_count
-  ubuntu_core_device_name = var.ubuntu_core_device_name
-  workspace_name          = var.workspace_name
-  lxd_vms                 = var.lxd_vms
-  architecture            = var.architecture
+  source = "./modules/landscape-client"
+
+  model_uuid = juju_model.clients.uuid
+  app_name   = var.landscape_client.app_name
+  channel    = var.landscape_client.channel
+  revision   = var.landscape_client.revision
+
+  config = merge(var.landscape_client.config, {
+    url              = "https://${var.landscape_root_url}/message-system"
+    ping-url         = "http://${var.landscape_root_url}/ping"
+    account-name     = "standalone"
+    registration-key = var.registration_key
+  })
+
+}
+
+
+resource "juju_integration" "landscape_client_ubuntu" {
+  model_uuid = juju_model.clients.uuid
+
+  application {
+    name     = module.landscape_client.app_name
+    endpoint = "container"
+  }
+
+  application {
+    name     = juju_application.ubuntu.name
+    endpoint = "juju-info"
+  }
+
+}
+
+resource "juju_integration" "ubuntu_ubuntu_pro" {
+  model_uuid = juju_model.clients.uuid
+
+  application {
+    name = module.landscape_client.app_name
+    endpoint = "juju-info"
+  }
+
+  application {
+    name     = juju_application.ubuntu_pro.name
+    endpoint = "juju-info"
+  }
+
+}
+
+resource "terraform_data" "wait_for_landscape" {
+  provisioner "local-exec" {
+    command = <<EOF
+      juju wait-for application ${module.landscape_server.applications.landscape_server.app_name} \
+      --model ${local.model.name} \
+      --timeout 3600s \
+      --query='forEach(units, unit => unit.workload-status=="active")'
+  EOF
+  }
+
+  count = var.wait_for_landscape ? 1 : 0
+}
+
+data "external" "haproxy_ip" {
+  depends_on = [terraform_data.wait_for_landscape]
+
+  program = ["bash", "-c", <<-EOT
+    IP=$(juju status --model "${local.model.name}" --format=json \
+      | jq -r '.applications["${var.haproxy.app_name}"].units | to_entries[0].value["public-address"]')
+    printf '{"ip":"%s"}' "$IP"
+  EOT
+  ]
+}
+
+resource "juju_model" "clients" {
+  name = var.client_model_name
+
+  config = {
+    "cloudinit-userdata" = yamlencode({
+      preruncmd = [
+        "HOST=$(python3 -c \"from urllib.parse import urlparse; print(urlparse('${var.landscape_root_url}').hostname)\") && grep -qF \"$HOST\" /etc/hosts || echo \"${data.external.haproxy_ip.result.ip} $HOST\" >> /etc/hosts"
+      ]
+    })
+  }
 }
